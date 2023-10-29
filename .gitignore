@@ -17,6 +17,7 @@
 mono_crash.*
 
 # Build results
+.idea/
 [Dd]ependencies/
 [Dd]ebug/
 [Dd]ebugPublic/
