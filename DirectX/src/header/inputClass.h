@@ -7,7 +7,7 @@ class InputClass
 {
 public:
 	InputClass();
-	InputClass(InputClass&);
+	InputClass(const InputClass&);
 	~InputClass();
 
 	void Initialize();

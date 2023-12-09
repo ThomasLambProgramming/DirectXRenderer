@@ -27,7 +27,7 @@ bool SystemClass::Initialize()
 	screenHeight = 0;
 
 	//Init the windows api
-	InitializeWindows(screenWidth, screenWidth);
+	InitializeWindows(screenWidth, screenHeight);
 	
 	//create and init the input object, this will take the keyboard input from the user.
 	m_Input = new InputClass;
@@ -149,7 +149,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	ApplicationHandle = this;
 
 	//Get the instance of this application
-	m_hInstance = GetModuleHandle(NULL);
+	m_hinstance = GetModuleHandle(NULL);
 
 	//set the application name the L is to set it to the wide string
 	m_applicationName = L"Direct X Testing";
@@ -158,7 +158,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	wc.lpfnWndProc = WndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hInstance = m_hInstance;
+	wc.hInstance = m_hinstance;
 	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
 	wc.hIconSm = wc.hIcon;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -214,7 +214,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 		screenHeight,
 		NULL,
 		NULL,
-		m_hInstance,
+		m_hinstance,
 		NULL);
 
 	/*
@@ -258,8 +258,8 @@ void SystemClass::ShutdownWindows()
 	m_hwnd = NULL;
 
 	//remove the application instance
-	UnregisterClass(m_applicationName, m_hInstance);
-	m_hInstance = NULL;
+	UnregisterClass(m_applicationName, m_hinstance);
+	m_hinstance = NULL;
 
 	//release pointer to this class
 	ApplicationHandle = NULL;

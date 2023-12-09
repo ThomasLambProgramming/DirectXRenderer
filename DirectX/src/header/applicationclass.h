@@ -1,7 +1,8 @@
+// ReSharper disable CppClangTidyClangDiagnosticReservedMacroIdentifier
 #ifndef _APPLICATIONCLASS_H_
 #define _APPLICATIONCLASS_H_
 
-#include <Windows.h>
+#include "direct3dclass.h"
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -13,7 +14,7 @@ class ApplicationClass
 {
 public:
 	ApplicationClass();
-	ApplicationClass(ApplicationClass&);
+	ApplicationClass(const ApplicationClass&);
 	~ApplicationClass();
 
 	bool Initalize(int, int, HWND);
@@ -24,6 +25,8 @@ private:
 	bool Render();
 
 private:
+	D3DClass* m_Direct3D;
+	
 };
 
 #endif

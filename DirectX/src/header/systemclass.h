@@ -3,7 +3,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "inputclass.h"
 #include "applicationclass.h"
@@ -34,7 +34,7 @@ private:
 
 	//It specifies the application's Instance ID and is used in window creation. so im pre sure its just a fkn int, long long int as its 8 bytes
 	//HInstance is a handle needed by window creation, menus, and a whole host of other functions to identify the correct program and instance when passing commands or requesting data. Each instance of a program gets it's own memory space, it's own set of handles, it's own stack and so on... this handle --not a pointer, a handle-- is how Windows knows what's where.
-	HINSTANCE m_hInstance;
+	HINSTANCE m_hinstance;
 
 	//HWND is a window handle.
 	//Technically its a intptr because of course it is.

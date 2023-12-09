@@ -18,24 +18,30 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systemclass.cpp">
+    <ClCompile Include="src\cpp\applicationclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputClass.cpp">
+    <ClCompile Include="src\cpp\direct3dclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="applicationclass.cpp">
+    <ClCompile Include="src\cpp\inputClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\systemclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="systemclass.h">
+    <ClInclude Include="src\header\applicationclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inputClass.h">
+    <ClInclude Include="src\header\direct3dclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="applicationclass.h">
+    <ClInclude Include="src\header\inputClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\systemclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

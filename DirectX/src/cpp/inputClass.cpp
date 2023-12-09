@@ -4,7 +4,7 @@ InputClass::InputClass()
 {
 }
 
-InputClass::InputClass(InputClass&)
+InputClass::InputClass(const InputClass&)
 {
 }
 
