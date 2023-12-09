@@ -48,31 +48,34 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	//Store the vsync setting
 	m_vsync_enabled = vsync;
 
-	//Create a directx graphics interface factory
+	//Create a directx graphics interface factory (__uuidof returns expressions GUID globally unique identifier)
 	result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
 	if (FAILED(result))
 	{
 		return false;
 	}
+
+	//This will log all adapters (video cards) that are avaliable to the system.
+	//std::ofstream AdapterFile = std::ofstream("AdapterFile.txt");
+	//std::vector<std::string> adapterList = std::vector<std::string>();
+	//DXGI_ADAPTER_DESC adapterOutputForTesting;
+	//IDXGIAdapter* checkAdapter;
+	//for (int adapterCheck = 0; SUCCEEDED(factory->EnumAdapters(adapterCheck, &checkAdapter)); adapterCheck++)
+	//{
+	//	checkAdapter->GetDesc(&adapterOutputForTesting);
+	//	std::wstring ws = std::wstring(adapterOutputForTesting.Description);
+	//	adapterList.push_back(std::string(ws.begin(), ws.end()) + "\n");
+	//}
+	//if (!adapterList.empty())
+	//{
+	//	for (int j = 0; j < adapterList.size(); j++)
+	//	{
+	//		AdapterFile << adapterList[j];
+	//	}
+	//	AdapterFile.close();
+	//}
+
 	
-	std::ofstream AdapterFile = std::ofstream("AdapterFile.txt");
-	std::vector<std::string> adapterList = std::vector<std::string>();
-	DXGI_ADAPTER_DESC adapterOutputForTesting;
-	IDXGIAdapter* checkAdapter;
-	for (int adapterCheck = 0; SUCCEEDED(factory->EnumAdapters(adapterCheck, &checkAdapter)); adapterCheck++)
-	{
-		checkAdapter->GetDesc(&adapterOutputForTesting);
-		std::wstring ws = std::wstring(adapterOutputForTesting.Description);
-		adapterList.push_back(std::string(ws.begin(), ws.end()) + "\n");
-	}
-	if (!adapterList.empty())
-	{
-		for (int j = 0; j < adapterList.size(); j++)
-		{
-			AdapterFile << adapterList[j];
-		}
-		AdapterFile.close();
-	}
 	//use factory to create an adapter for the primary graphics interface (video card)
 	result = factory->EnumAdapters(0, &adapter);
 	if (FAILED(result))
@@ -165,8 +168,6 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	//set regular 32-bit surface for the back buffer
 	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	numerator = 0;
-	denominator = 0;
 	//set the refresh rate of the back buffer
 	if (m_vsync_enabled)
 	{
@@ -185,8 +186,9 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	//set the handle for the window to render to.
 	swapChainDesc.OutputWindow = hwnd;
 
-	//turn multisampling off.
+	//turn multisampling off. count=num multisamples per pixel.
 	swapChainDesc.SampleDesc.Count = 1;
+	//quality is between 0 and 1, the image quality level. dont really know what this does yet.
 	swapChainDesc.SampleDesc.Quality = 0;
 
 	//set to full screen or windows mode
@@ -198,8 +200,10 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	{
 		swapChainDesc.Windowed = true;
 	}
-	//set the scan line ordering and scaling to unspecified.
+	//set the scan line ordering and scaling to unspecified, flags indicating the method the raster uses to create an image on a surface
+	//we just set it to not have an order, im assuming because keeping it in order causes performance issues.
 	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	//scaling is how the image is stretched to fit an image according to the monitors resolution, we specify it doesnt.
 	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 
 	//discard the back buffer contents after presenting
@@ -208,9 +212,11 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	//dont set the advanced flags
 	swapChainDesc.Flags = 0;
 
-	//set the feature level to direct x 11
+	//set the feature level to direct x 11, this is really only for targeting specific hardware or potatoes, otherwise we do dx11
 	featureLevel = D3D_FEATURE_LEVEL_11_0;
 
+	//In Direct3D 11, a device is separated into a device object for creating resources and a device-context object, which performs rendering.
+	//Direct3D Object = creates and destroys resources(objects) and context which does rendering. (in other dx versions they were one object).
 	//Create the swap chain, Direct3D device and Direct3D device context.
 	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1, 
 										   D3D11_SDK_VERSION, &swapChainDesc, &m_swapChain, &m_device, NULL, &m_deviceContext);
@@ -220,15 +226,21 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 		return false;
 	}
 
-	//get pointer back to the buffer
+	//If the swap chain's swap effect is DXGI_SWAP_EFFECT_DISCARD, this method can only access the first buffer; for this situation, set the index to zero.
+	//get pointer back to the buffer, for the most part we just do 0 unless there is some specific magic being done (so for me never pretty much).
+	//Dont really get the __uuidof(type), (LPVOID*)&backBufferPtr) part but it gets the buffer in the form of a texture2d i think?
 	result = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferPtr);
 	if (FAILED(result))
 	{
 		return false;
 	}
 
+	//When rendering in Direct3D, you must establish the render target.
+	//This is a simple COM object that maintains a location in video memory for you to render into.
+	//In most cases (including our case) this is the back buffer.
 	//create the render target view with the back buffer pointer.
 	result = m_device->CreateRenderTargetView(backBufferPtr, NULL, &m_renderTargetView);
+	//rendertarget view is a framebuffer, its a texture we can bind to read/write to.
 	if (FAILED(result))
 	{
 		return false;
