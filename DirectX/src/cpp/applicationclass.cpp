@@ -55,7 +55,7 @@ bool ApplicationClass::Frame()
 
 bool ApplicationClass::Render()
 {
-    m_Direct3D->BeginScene(0.5f,0.5f,0.5f,1.0f);
+    m_Direct3D->BeginScene(1.0f,0.67f,0.1f,1.0f);
     m_Direct3D->EndScene();
     return true;
 }

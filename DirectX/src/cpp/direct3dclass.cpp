@@ -1,4 +1,7 @@
 ﻿#include "direct3dclass.h"
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 D3DClass::D3DClass()
 {
@@ -52,6 +55,24 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 		return false;
 	}
 	
+	std::ofstream AdapterFile = std::ofstream("AdapterFile.txt");
+	std::vector<std::string> adapterList = std::vector<std::string>();
+	DXGI_ADAPTER_DESC adapterOutputForTesting;
+	IDXGIAdapter* checkAdapter;
+	for (int adapterCheck = 0; SUCCEEDED(factory->EnumAdapters(adapterCheck, &checkAdapter)); adapterCheck++)
+	{
+		checkAdapter->GetDesc(&adapterOutputForTesting);
+		std::wstring ws = std::wstring(adapterOutputForTesting.Description);
+		adapterList.push_back(std::string(ws.begin(), ws.end()) + "\n");
+	}
+	if (!adapterList.empty())
+	{
+		for (int j = 0; j < adapterList.size(); j++)
+		{
+			AdapterFile << adapterList[j];
+		}
+		AdapterFile.close();
+	}
 	//use factory to create an adapter for the primary graphics interface (video card)
 	result = factory->EnumAdapters(0, &adapter);
 	if (FAILED(result))

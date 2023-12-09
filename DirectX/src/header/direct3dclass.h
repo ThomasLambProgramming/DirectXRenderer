@@ -7,11 +7,11 @@
  * of library dependencies, as if you had added it in the project properties at
  * Linker->Input->Additional dependencies
  */
-//Contains all direct3d functionality for setup and drawing 3d graphics with dx11
-//Tools to interface with the hardware on the computer, to get details on what graphics card, hz of display etc.
 //functionality for compiling shaders.
 #pragma comment(lib, "d3d11.lib")
+//Contains all direct3d functionality for setup and drawing 3d graphics with dx11
 #pragma comment(lib, "dxgi.lib")
+//Tools to interface with the hardware on the computer, to get details on what graphics card, hz of display etc.
 #pragma comment(lib, "d3dcompiler.lib")
 
 #include <d3d11.h>
