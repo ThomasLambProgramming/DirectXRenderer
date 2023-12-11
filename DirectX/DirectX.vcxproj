@@ -552,6 +552,10 @@
     <ClInclude Include="src\header\ModelClass.h" />
     <ClInclude Include="src\header\SystemClass.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\shaders\pixelshaders\" />
+    <Folder Include="src\shaders\vertexshaders\" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -645,7 +649,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header;$(ProjectDir)/src/cpp;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header;$(ProjectDir)/src/cpp;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
