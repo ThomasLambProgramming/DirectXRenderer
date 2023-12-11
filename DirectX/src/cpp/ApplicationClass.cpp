@@ -1,4 +1,4 @@
-#include "applicationclass.h"
+#include "ApplicationClass.h"
 
 ApplicationClass::ApplicationClass()
 {
@@ -17,7 +17,7 @@ ApplicationClass::~ApplicationClass()
 bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND hwnd)
 {
     bool result;
-    m_Direct3D = new D3DClass;
+    m_Direct3D = new Direct3DClass;
 
     result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)

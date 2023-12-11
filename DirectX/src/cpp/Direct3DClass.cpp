@@ -1,9 +1,9 @@
-﻿#include "direct3dclass.h"
+﻿#include "Direct3DClass.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-D3DClass::D3DClass()
+Direct3DClass::Direct3DClass()
 {
 	//Set all pointers to 0;
     m_swapChain = 0;
@@ -16,15 +16,15 @@ D3DClass::D3DClass()
 	m_rasterState = 0;
 }
 
-D3DClass::D3DClass(const D3DClass&)
+Direct3DClass::Direct3DClass(const Direct3DClass&)
 {
 }
 
-D3DClass::~D3DClass()
+Direct3DClass::~Direct3DClass()
 {
 }
 
-bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, float screenDepth, float screenNear)
+bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, float screenDepth, float screenNear)
 {
 	//hresult is an int, but bits are split into flags, the code result, and severity etc.
 	HRESULT result;
@@ -245,8 +245,11 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	{
 		return false;
 	}
+
+	//Back buffer= * to texture, rendertargetview is address of the render target inferface so im assuming stuff happens to interface with render target. but we affect the back buffer.
 	
-	//release pointer to the back buffer as we no longer need it.
+	
+	//release pointer to the back buffer as we no longer need it. 
 	backBufferPtr->Release();
 	backBufferPtr = 0;
 
@@ -282,7 +285,7 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
 
 	depthStencilDesc.StencilEnable = true;
-	depthStencilDesc.StencilReadMask = 0xFF;
+	depthStencilDesc.StencilReadMask = 0xFF; //1111 1111 (so all)
 	depthStencilDesc.StencilWriteMask = 0xFF;
 
 	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
@@ -309,7 +312,7 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 
 	//setup the depth stencil view description
 	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; // just means it will be accessed as a 2d texture. fml dx has horrid naming.
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 	//create the depth stencil view
@@ -319,6 +322,7 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 		return false;
 	}
 
+	//these are our render targets. (ooga booga the big important words)
 	//Bind the render target view and depth stencil buffer to the output render pipeline
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 
@@ -359,19 +363,19 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	fieldOfView = 3.141592654f / 4.0f;
 	screenAspect = (float)screenWidth / (float)screenHeight;
 
+	//XMMatrixPerspectiveFovLH = Left handed projection matrix function.
 	//create the projection matrix for 3D rendering.
 	m_projectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, screenNear, screenDepth);
 
 	m_worldMatrix = XMMatrixIdentity();
-
-	//create an orthographic projection matrix for 2D rendering
+	//create an orthographic projection matrix for 2D rendering, this allows us to skip the 3d rendering.
 	m_orthoMatrix = XMMatrixOrthographicLH((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 
 	return true;
 	
 }
 
-void D3DClass::Shutdown()
+void Direct3DClass::Shutdown()
 {
 	//before shutting down set to windowed mode or when you relase the swap chain it will throw an exception
 	if (m_swapChain)
@@ -427,7 +431,7 @@ void D3DClass::Shutdown()
 	return;
 }
 
-void D3DClass::BeginScene(float red, float green, float blue, float alpha)
+void Direct3DClass::BeginScene(float red, float green, float blue, float alpha)
 {
 	float color[4];
 	//setup color to clear the buffer to.
@@ -445,7 +449,7 @@ void D3DClass::BeginScene(float red, float green, float blue, float alpha)
 	return;
 }
 
-void D3DClass::EndScene()
+void Direct3DClass::EndScene()
 {
 	//present the back buffer to the screen since rendering is complete
 	if (m_vsync_enabled)
@@ -461,49 +465,49 @@ void D3DClass::EndScene()
 	return;
 }
 
-ID3D11Device* D3DClass::GetDevice()
+ID3D11Device* Direct3DClass::GetDevice()
 {
 	return m_device;
 }
 
-ID3D11DeviceContext* D3DClass::GetDeviceContext()
+ID3D11DeviceContext* Direct3DClass::GetDeviceContext()
 {
 	return m_deviceContext;
 }
 
-void D3DClass::GetProjectionMatrix(XMMATRIX& projectionMatrix)
+void Direct3DClass::GetProjectionMatrix(XMMATRIX& projectionMatrix)
 {
 	projectionMatrix = m_projectionMatrix;
 	return;
 }
 
-void D3DClass::GetWorldMatrix(XMMATRIX& worldMatrix)
+void Direct3DClass::GetWorldMatrix(XMMATRIX& worldMatrix)
 {
 	worldMatrix = m_worldMatrix;
 	return;
 }
 
-void D3DClass::GetOrthoMatrix(XMMATRIX& orthoMatrix)
+void Direct3DClass::GetOrthoMatrix(XMMATRIX& orthoMatrix)
 {
 	orthoMatrix = m_orthoMatrix;
 	return;
 }
 
-void D3DClass::GetVideoCardInfo(char* cardName, int& memory)
+void Direct3DClass::GetVideoCardInfo(char* cardName, int& memory)
 {
 	strcpy_s(cardName, 128, m_videoCardDescription);
 	memory = m_videoCardMemory;
 	return;
 }
 
-void D3DClass::SetBackBufferRenderTarget()
+void Direct3DClass::SetBackBufferRenderTarget()
 {
 	//bind the render target view and depth stencil buffer to the output render pipeline,
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 	return;
 }
 
-void D3DClass::ResetViewport()
+void Direct3DClass::ResetViewport()
 {
 	//set the viewport
 	m_deviceContext->RSSetViewports(1, &m_viewport);

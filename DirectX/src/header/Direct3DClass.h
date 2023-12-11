@@ -18,12 +18,12 @@
 #include <directxmath.h>
 using namespace DirectX;
 
-class D3DClass 
+class Direct3DClass 
 {
 public:
-    D3DClass();
-    D3DClass(const D3DClass&);
-    ~D3DClass();
+    Direct3DClass();
+    Direct3DClass(const Direct3DClass&);
+    ~Direct3DClass();
 
     //HWND = handle to a window.
     bool Initialize(int, int, bool, HWND, bool, float, float);

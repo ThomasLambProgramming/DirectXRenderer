@@ -2,7 +2,7 @@
 #ifndef _APPLICATIONCLASS_H_
 #define _APPLICATIONCLASS_H_
 
-#include "direct3dclass.h"
+#include "Direct3DClass.h"
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -25,7 +25,7 @@ private:
 	bool Render();
 
 private:
-	D3DClass* m_Direct3D;
+	Direct3DClass* m_Direct3D;
 	
 };
 
