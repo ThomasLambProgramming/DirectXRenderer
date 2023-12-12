@@ -542,6 +542,7 @@
       <SDLCheck>true</SDLCheck>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="src\shaders\pixelshaders\color.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\header\ApplicationClass.h" />
@@ -553,8 +554,7 @@
     <ClInclude Include="src\header\SystemClass.h" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="src\shaders\pixelshaders\" />
-    <Folder Include="src\shaders\vertexshaders\" />
+    <ClCompile Include="src\shaders\vertexshaders\color.hlsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
