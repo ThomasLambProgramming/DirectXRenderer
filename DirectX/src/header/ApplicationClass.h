@@ -3,6 +3,9 @@
 #define _APPLICATIONCLASS_H_
 
 #include "Direct3DClass.h"
+#include "CameraClass.h"
+#include "ModelClass.h"
+#include "ColorShaderClass.h"
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -26,7 +29,9 @@ private:
 
 private:
 	Direct3DClass* m_Direct3D;
-	
+	CameraClass* m_Camera;
+	ModelClass* m_Model;
+	ColorShaderClass* m_ColorShader;
 };
 
 #endif

@@ -24,13 +24,13 @@ bool ColorShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle)
     int error;
     
     //Set name of vertex and pixel shader
-    error = wcscpy_s(vsFileName, 128, L"../src/shaders/vertexshaders/color.hlsl");
+    error = wcscpy_s(vsFileName, 128, L"./src/shaders/colorVS.hlsl");
     if (error != 0)
     {
         return false;
     }
 
-    error = wcscpy_s(vsFileName, 128, L"../src/shaders/pixelshaders/color.hlsl");
+    error = wcscpy_s(psFileName, 128, L"./src/shaders/colorPS.hlsl");
     if (error != 0)
     {
         return false;
@@ -44,7 +44,7 @@ bool ColorShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle)
     return true;
 }
 
-void ColorShaderClass::ShutDown()
+void ColorShaderClass::Shutdown()
 {
     ShutdownShader();
     return;
@@ -116,7 +116,7 @@ bool ColorShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowHan
         0,
         &pixelShaderBuffer,
         &errorMessage);
-    
+
     if (FAILED(result))
     {
         //shader failed to compile so now we check the error message
@@ -201,7 +201,13 @@ bool ColorShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowHan
     {
         return false;
     }
+
+    if (!vertexShaderBuffer)
+    {
+        vertexShaderBuffer = 0;
+    }
     
+    return true;
 }
 
 void ColorShaderClass::ShutdownShader()
