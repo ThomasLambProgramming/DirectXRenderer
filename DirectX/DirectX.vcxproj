@@ -637,7 +637,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/src;$(ProjectDir)/src/header/;$(ProjectDir)/src/cpp/;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</IncludePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</ExternalIncludePath>
     <SourcePath>$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
@@ -677,7 +677,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header;$(ProjectDir)/src/cpp;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header/;$(ProjectDir)/src/cpp/;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
