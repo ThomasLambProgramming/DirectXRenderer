@@ -709,11 +709,15 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header/;$(ProjectDir)/src/cpp/;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>call $(SolutionDir)DirectX\CopyRequriedFilesIntoBuild</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
