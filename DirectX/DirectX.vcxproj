@@ -542,6 +542,7 @@
       <SDLCheck>true</SDLCheck>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="src\cpp\TextureClass.cpp" />
     <FxCompile Include="src\shaders\colorPS.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -574,6 +575,32 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ColorVertexShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ColorVertexShader</EntryPointName>
     </FxCompile>
+    <FxCompile Include="src\shaders\texturePS.hlsl">
+      <ObjectFileOutput>D:\PersonalProjects\DirectXRenderer\x64\Debug\textureVS.cso</ObjectFileOutput>
+      <TrackerLogDirectory>x64\Debug\DirectX.tlog\</TrackerLogDirectory>
+      <EntryPointName>ColorPixelShader</EntryPointName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ShaderModel>5.0</ShaderModel>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <DisableOptimizations>true</DisableOptimizations>
+      <EnableDebuggingInformation>true</EnableDebuggingInformation>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </FxCompile>
+    <FxCompile Include="src\shaders\textureVS.hlsl">
+      <ObjectFileOutput>D:\PersonalProjects\DirectXRenderer\x64\Debug\%(Filename).cso</ObjectFileOutput>
+      <TrackerLogDirectory>x64\Debug\DirectX.tlog\</TrackerLogDirectory>
+      <EntryPointName>ColorPixelShader</EntryPointName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ShaderModel>5.0</ShaderModel>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <DisableOptimizations>true</DisableOptimizations>
+      <EnableDebuggingInformation>true</EnableDebuggingInformation>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\header\ApplicationClass.h" />
@@ -583,6 +610,10 @@
     <ClInclude Include="src\header\InputClass.h" />
     <ClInclude Include="src\header\ModelClass.h" />
     <ClInclude Include="src\header\SystemClass.h" />
+    <ClInclude Include="src\header\TextureClass.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="data\stone01.tga" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
