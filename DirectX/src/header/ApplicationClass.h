@@ -5,7 +5,8 @@
 #include "Direct3DClass.h"
 #include "CameraClass.h"
 #include "ModelClass.h"
-#include "ColorShaderClass.h"
+//#include "ColorShaderClass.h"
+#include "TextureShaderClass.h"
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -31,7 +32,8 @@ private:
 	Direct3DClass* m_Direct3D;
 	CameraClass* m_Camera;
 	ModelClass* m_Model;
-	ColorShaderClass* m_ColorShader;
+	//ColorShaderClass* m_ColorShader;
+	TextureShaderClass* m_TextureShader;
 };
 
 #endif

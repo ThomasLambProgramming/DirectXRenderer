@@ -19,9 +19,9 @@ TextureShaderClass::~TextureShaderClass()
 
 bool TextureShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle)
 {
-    bool result = true;
+    bool result;
     wchar_t vsFileName[128];
-    wchar_t psFileName[128] = L"";
+    wchar_t psFileName[128];
     int error;
     
     error = wcscpy_s(vsFileName, 128, L"./src/shaders/textureVS.hlsl");
@@ -29,7 +29,7 @@ bool TextureShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle)
     {
         return false;
     }
-    error = wcscpy_s(vsFileName, 128, L"./src/shaders/texturePS.hlsl");
+    error = wcscpy_s(psFileName, 128, L"./src/shaders/texturePS.hlsl");
     if (error != 0)
     {
         return false;
@@ -40,7 +40,6 @@ bool TextureShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle)
     {
         return false;
     }
-    
     return true;
 }
 
@@ -50,7 +49,6 @@ void TextureShaderClass::Shutdown()
     ShutdownShader();
     return;
 }
-
 bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, XMMATRIX a_World, XMMATRIX a_View,
                           XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView)
 {
@@ -130,20 +128,20 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     }
 
     polygonLayout[0].SemanticName = "POSITION";
-    polygonLayout[0].SemanticIndex = 0;
-    polygonLayout[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    polygonLayout[0].InputSlot = 0;
-    polygonLayout[0].AlignedByteOffset = 0;
-    polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-    polygonLayout[0].InstanceDataStepRate = 0;
-    
-    polygonLayout[1].SemanticName = "TEXCOORD0";
-    polygonLayout[1].SemanticIndex = 0;
-    polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-    polygonLayout[1].InputSlot = 0;
-    polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-    polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-    polygonLayout[1].InstanceDataStepRate = 0;
+	polygonLayout[0].SemanticIndex = 0;
+	polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	polygonLayout[0].InputSlot = 0;
+	polygonLayout[0].AlignedByteOffset = 0;
+	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	polygonLayout[0].InstanceDataStepRate = 0;
+
+	polygonLayout[1].SemanticName = "TEXCOORD";
+	polygonLayout[1].SemanticIndex = 0;
+	polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+	polygonLayout[1].InputSlot = 0;
+	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	polygonLayout[1].InstanceDataStepRate = 0;
 
     //size of array / individual element size
     numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
@@ -199,6 +197,9 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     
     return true;
 }
+
+
+
 
 void TextureShaderClass::ShutdownShader()
 {

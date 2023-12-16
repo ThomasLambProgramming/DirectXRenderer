@@ -1,2 +1,0 @@
-NVIDIA GeForce RTX 4070 Ti
-Microsoft Basic Render Driver

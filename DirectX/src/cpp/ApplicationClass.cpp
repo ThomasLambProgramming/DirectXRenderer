@@ -6,7 +6,8 @@ ApplicationClass::ApplicationClass()
     m_Direct3D = 0;
     m_Camera = 0;
     m_Model = 0;
-    m_ColorShader = 0;
+    //m_ColorShader = 0;
+	m_TextureShader = 0;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&)
@@ -17,15 +18,16 @@ ApplicationClass::~ApplicationClass()
 {
 }
 
-bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND hwnd)
+bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_WindowHandle)
 {
+	char textureFilename[128];
     bool result;
     m_Direct3D = new Direct3DClass;
 
-    result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
+    result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, a_WindowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)
     {
-        MessageBox(hwnd, L"Could not initialize Direct3D", L"Error", MB_OK);
+        MessageBox(a_WindowHandle, L"Could not initialize Direct3D", L"Error", MB_OK);
         return false;
     }
 
@@ -37,19 +39,25 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND hwnd)
     //create a new model
     m_Model = new ModelClass;
 
-    result = m_Model->Initialize(m_Direct3D->GetDevice());
+	strcpy_s(textureFilename, "./data/stone01.tga");
+	
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFilename);
     if (!result)
     {
-        MessageBox(hwnd, L"Could not initialize model object", L"Error", MB_OK);
+        MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
         return false;
     }
+	
     //create and init the color shader;
-	m_ColorShader = new ColorShaderClass;
-    result = m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	//m_ColorShader = new ColorShaderClass;
+    //result = m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+
+	m_TextureShader = new TextureShaderClass;
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle);
 
     if (!result)
     {
-        MessageBox(hwnd, L"Could not initialize Color shader object", L"Error", MB_OK);
+        MessageBox(a_WindowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
         return false;
     }
 
@@ -67,13 +75,20 @@ void ApplicationClass::Shutdown()
     }
 
     // Release the color shader object.
-	if (m_ColorShader)
-	{
-		m_ColorShader->Shutdown();
-		delete m_ColorShader;
-		m_ColorShader = 0;
-	}
+	//if (m_ColorShader)
+	//{
+	//	m_ColorShader->Shutdown();
+	//	delete m_ColorShader;
+	//	m_ColorShader = 0;
+	//}
 
+	if (m_TextureShader)
+	{
+		m_TextureShader->Shutdown();
+		delete m_TextureShader;
+		m_TextureShader = 0;
+	}
+	
 	// Release the model object.
 	if (m_Model)
 	{
@@ -124,7 +139,10 @@ bool ApplicationClass::Render()
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 
 	//render the model using the color shader
-	result = m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
+	//result = m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
+
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
+		m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
 	if (!result)
 	{
 		return false;

@@ -4,6 +4,7 @@ ModelClass::ModelClass()
 {
     m_VertexBuffer = 0;
     m_IndexBuffer = 0;
+	m_Texture = 0;
 }
 
 ModelClass::ModelClass(const ModelClass&)
@@ -14,7 +15,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device)
+bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName)
 {
     bool result;
     //init the vert/index buffers
@@ -23,11 +24,19 @@ bool ModelClass::Initialize(ID3D11Device* a_Device)
     {
         return false;
     }
+
+	result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName);
+	if (!result)
+	{
+		return false;
+	}
+	
     return true;
 }
 
 void ModelClass::Shutdown()
 {
+	ReleaseTexture();
     ShutdownBuffers();
     return;
 }
@@ -40,6 +49,36 @@ void ModelClass::Render(ID3D11DeviceContext* a_DeviceContext)
 int ModelClass::GetIndexCount()
 {
     return m_IndexCount;
+}
+
+ID3D11ShaderResourceView* ModelClass::GetTexture()
+{
+	return m_Texture->GetTexture();
+}
+
+bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName)
+{
+	bool result;
+
+	//create and initalize the texture object;
+	m_Texture = new TextureClass;
+	result = m_Texture->Initialize(a_Device, a_DeviceContext, a_FileName);
+	if (!result)
+	{
+		return false;
+	}
+	return true;
+}
+
+void ModelClass::ReleaseTexture()
+{
+	if (m_Texture)
+	{
+		m_Texture->Shutdown();
+		delete m_Texture;
+		m_Texture = 0;
+	}
+	return;
 }
 
 bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
@@ -71,15 +110,15 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
     
     //bottom left
     vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);
-	vertices[0].color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
 
     //top middle
 	vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
 
     //bottom right
 	vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);
-	vertices[2].color = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	vertices[2].texture  = XMFLOAT2(1.0f, 1.0f);
 
     // Load the index array with data, small note we always go clockwise in terms of vert order otherwise it will render it the wrong way around.
 	indices[0] = 0;  // Bottom left.
