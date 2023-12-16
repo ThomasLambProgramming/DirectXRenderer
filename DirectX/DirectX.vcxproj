@@ -543,6 +543,7 @@
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
     <ClCompile Include="src\cpp\TextureClass.cpp" />
+    <ClCompile Include="src\cpp\TextureShaderClass.cpp" />
     <FxCompile Include="src\shaders\colorPS.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -611,6 +612,7 @@
     <ClInclude Include="src\header\ModelClass.h" />
     <ClInclude Include="src\header\SystemClass.h" />
     <ClInclude Include="src\header\TextureClass.h" />
+    <ClInclude Include="src\header\TextureShaderClass.h" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="data\stone01.tga" />
