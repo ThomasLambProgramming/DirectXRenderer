@@ -2,12 +2,12 @@
 
 ApplicationClass::ApplicationClass()
 {
-    //Safety setting to 0;
+    //Safety setting to 0/nullptr;
     m_Direct3D = 0;
     m_Camera = 0;
     m_Model = 0;
-    //m_ColorShader = 0;
 	m_TextureShader = 0;
+	m_LightClass = 0;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&)
@@ -61,6 +61,9 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
         return false;
     }
 
+	m_LightClass = new LightClass;
+	m_LightClass->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f); //white light.
+	m_LightClass->m_LightDirection = XMFLOAT3(0.0f,0.0f,1.0f); // forwards.
     
     return true;
 }
@@ -74,14 +77,12 @@ void ApplicationClass::Shutdown()
         m_Direct3D = 0;
     }
 
-    // Release the color shader object.
-	//if (m_ColorShader)
-	//{
-	//	m_ColorShader->Shutdown();
-	//	delete m_ColorShader;
-	//	m_ColorShader = 0;
-	//}
-
+    if (m_LightClass)
+    {
+	    delete m_LightClass;
+    	m_LightClass = 0;
+    }
+	
 	if (m_TextureShader)
 	{
 		m_TextureShader->Shutdown();
@@ -108,9 +109,14 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame()
 {
+	static float rotation = 0.0f;
     bool result;
-    //Render Scene
-    result = Render();
+
+	//(no damn clue what this number is supposed to be).
+	rotation -= 0.0174532825f * 0.1f;
+	
+	//Render Scene
+    result = Render(rotation);
     
     if (!result)
     {
@@ -120,7 +126,7 @@ bool ApplicationClass::Frame()
     return true;
 }
 
-bool ApplicationClass::Render()
+bool ApplicationClass::Render(float a_Rotation)
 {
     XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
     bool result;
@@ -135,6 +141,7 @@ bool ApplicationClass::Render()
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 
+	worldMatrix = XMMatrixRotationY(a_Rotation);
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 
@@ -142,7 +149,7 @@ bool ApplicationClass::Render()
 	//result = m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
 
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
-		m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
+		m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(), m_LightClass->m_LightDirection, m_LightClass->m_DiffuseColor);
 	if (!result)
 	{
 		return false;
