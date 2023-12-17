@@ -4,7 +4,9 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "TextureClass.h"
+#include <fstream>
 
+using namespace std;
 using namespace DirectX;
 
 class ModelClass
@@ -16,13 +18,19 @@ private:
         XMFLOAT2 texture;
         XMFLOAT3 normal;
     };
+    struct ModelType
+    {
+        float x,y,z;
+        float tu,tv;
+        float nx,ny,nz;
+    };
     
 public:
     ModelClass();
     ModelClass(const ModelClass&);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName);
+    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName);
     void Shutdown();
     void Render(ID3D11DeviceContext* a_DeviceContext);
 
@@ -31,6 +39,8 @@ public:
     ID3D11ShaderResourceView* GetTexture();
     
 private:
+    bool LoadModel(char* a_ModelFileName);
+    void ReleaseModel();
     bool InitializeBuffers(ID3D11Device* a_Device);
     void ShutdownBuffers();
     void RenderBuffers(ID3D11DeviceContext* a_DeviceContext);
@@ -45,5 +55,6 @@ private:
     int m_IndexCount;
 
     TextureClass* m_Texture;
+    ModelType* m_Model;
 };
 #endif

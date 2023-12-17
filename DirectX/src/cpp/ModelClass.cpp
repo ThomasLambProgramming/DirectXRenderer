@@ -5,6 +5,7 @@ ModelClass::ModelClass()
     m_VertexBuffer = 0;
     m_IndexBuffer = 0;
 	m_Texture = 0;
+	m_Model = 0;
 }
 
 ModelClass::ModelClass(const ModelClass&)
@@ -15,9 +16,16 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName)
+bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName)
 {
     bool result;
+
+	//load the model data
+	result = LoadModel(a_ModelFileName);
+	if (!result)
+	{
+		return false;
+	}
     //init the vert/index buffers
     result = InitializeBuffers(a_Device);
     if (!result)
@@ -36,6 +44,7 @@ bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devic
 
 void ModelClass::Shutdown()
 {
+	ReleaseModel();
 	ReleaseTexture();
     ShutdownBuffers();
     return;
@@ -54,6 +63,71 @@ int ModelClass::GetIndexCount()
 ID3D11ShaderResourceView* ModelClass::GetTexture()
 {
 	return m_Texture->GetTexture();
+}
+
+bool ModelClass::LoadModel(char* a_ModelFileName)
+{
+	ifstream fin;
+    char input;
+    int i;
+
+
+    // Open the model file.
+    fin.open(a_ModelFileName);
+
+    // If it could not open the file then exit.
+    if(fin.fail())
+    {
+        return false;
+    }
+
+    // Read up to the value of vertex count.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+
+    // Read in the vertex count.
+    fin >> m_VertexCount;
+
+    // Set the number of indices to be the same as the vertex count.
+    m_IndexCount = m_VertexCount;
+
+    // Create the model using the vertex count that was read in.
+    m_Model = new ModelType[m_VertexCount];
+
+    // Read up to the beginning of the data.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+    fin.get(input);
+    fin.get(input);
+
+    // Read in the vertex data.
+    for(i = 0; i < m_VertexCount; i++)
+    {
+        fin >> m_Model[i].x >> m_Model[i].y >> m_Model[i].z;
+        fin >> m_Model[i].tu >> m_Model[i].tv;
+        fin >> m_Model[i].nx >> m_Model[i].ny >> m_Model[i].nz;
+    }
+
+    // Close the model file.
+    fin.close();
+
+    return true;
+}
+
+void ModelClass::ReleaseModel()
+{
+	if (m_Model)
+	{
+		delete [] m_Model;
+		m_Model = 0;
+	}
+	return;
 }
 
 bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName)
@@ -90,10 +164,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
     D3D11_SUBRESOURCE_DATA vertexData;
     D3D11_SUBRESOURCE_DATA indexData;
     HRESULT result;
-
-    //Set num of vertices and indices in the arrays
-    m_VertexCount = 3;
-    m_IndexCount = 3;
+	int i;
 
     //create vertex array
     vertices = new VertexType[m_VertexCount];
@@ -107,26 +178,15 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
         return false;
     }
 
-    
-    //bottom left
-    vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);
-	vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
-	vertices[0].normal = XMFLOAT3(0.0f,0.0f,-1.0f);
+	// Load the vertex array and index array with data.
+	for(i=0; i<m_VertexCount; i++)
+	{
+		vertices[i].position = XMFLOAT3(m_Model[i].x, m_Model[i].y, m_Model[i].z);
+		vertices[i].texture = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
+		vertices[i].normal = XMFLOAT3(m_Model[i].nx, m_Model[i].ny, m_Model[i].nz);
 
-    //top middle
-	vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
-	vertices[1].normal = XMFLOAT3(0.0f,0.0f,-1.0f);
-
-    //bottom right
-	vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);
-	vertices[2].texture  = XMFLOAT2(1.0f, 1.0f);
-	vertices[2].normal = XMFLOAT3(0.0f,0.0f,-1.0f);
-
-    // Load the index array with data, small note we always go clockwise in terms of vert order otherwise it will render it the wrong way around.
-	indices[0] = 0;  // Bottom left.
-	indices[1] = 1;  // Top middle.
-	indices[2] = 2;  // Bottom right.
+		indices[i] = i;
+	}
 
     //setup description of the static vertex buffer.
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
