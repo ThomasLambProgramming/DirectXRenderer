@@ -13,4 +13,7 @@ public:
 public:
     XMFLOAT3 m_LightDirection;
     XMFLOAT4 m_DiffuseColor;
+    XMFLOAT4 m_AmbientColor;
+    XMFLOAT4 m_SpecularColor;
+    float m_SpecularPower;
 };

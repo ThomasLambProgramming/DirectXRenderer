@@ -8,6 +8,7 @@ TextureShaderClass::TextureShaderClass()
     m_MatrixBuffer = 0;
     m_SampleState = 0;
     m_LightBuffer = 0;
+    m_CameraBuffer = 0;
 }
 
 TextureShaderClass::TextureShaderClass(const TextureShaderClass& a_Copy)
@@ -51,12 +52,12 @@ void TextureShaderClass::Shutdown()
     return;
 }
 bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, XMMATRIX a_World, XMMATRIX a_View,
-                          XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor)
+                          XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower)
 {
     bool result;
 
     //set shader params that will be used for rendering
-    result = SetShaderParams(a_DeviceContext, a_World, a_View, a_Projection, a_ShaderResourceView, a_LightDirection, a_DiffuseColor);
+    result = SetShaderParams(a_DeviceContext, a_World, a_View, a_Projection, a_ShaderResourceView, a_LightDirection, a_DiffuseColor, a_AmbientColor, a_CameraPosition, a_SpecularColor, a_SpecularPower);
 
     if (!result)
     {
@@ -80,6 +81,7 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     D3D11_BUFFER_DESC matrixBufferDesc;
     D3D11_BUFFER_DESC lightBufferDesc;
     D3D11_SAMPLER_DESC samplerDesc;
+    D3D11_BUFFER_DESC cameraBufferDesc;
 
     //init the pointers this func will use to null
     errorMessage = 0;
@@ -200,6 +202,20 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     samplerDesc.MinLOD = 0;
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
+    
+    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    cameraBufferDesc.MiscFlags = 0;
+    cameraBufferDesc.StructureByteStride = 0;
+
+    result = a_Device->CreateBuffer(&cameraBufferDesc, NULL, &m_CameraBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
     result = a_Device->CreateSamplerState(&samplerDesc, &m_SampleState);
     if (FAILED(result))
     {
@@ -258,6 +274,11 @@ void TextureShaderClass::ShutdownShader()
         m_LightBuffer->Release();
         m_LightBuffer = 0;
     }
+    if (m_CameraBuffer)
+    {
+        m_CameraBuffer->Release();
+        m_CameraBuffer = 0;
+    }
     return;
 }
 
@@ -289,13 +310,14 @@ void TextureShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HW
 }
 
 bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext, XMMATRIX a_World, XMMATRIX a_View,
-                                   XMMATRIX a_Projection, ID3D11ShaderResourceView* a_Texture,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor)
+                                   XMMATRIX a_Projection, ID3D11ShaderResourceView* a_Texture,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
     MatrixBufferType* dataPtr;
     LightBufferType* dataPtr2;
-    unsigned int bufferNumer;
+    CameraBufferType* dataPtr3;
+    unsigned int bufferNumber;
 
     //transpose the matrices to prepare them for the shader.
     a_World = XMMatrixTranspose(a_World);
@@ -319,11 +341,24 @@ bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext, X
 
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
 
-    bufferNumer = 0;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumer, 1, &m_MatrixBuffer);
+    bufferNumber = 0;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
     a_DeviceContext->PSSetShaderResources(0,1, &a_Texture);
 
+    result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    dataPtr3 = (CameraBufferType*)mappedSubresource.pData;
+    dataPtr3->cameraPosition = a_CameraPosition;
+    dataPtr3->padding = 0.0f;
+    a_DeviceContext->Unmap(m_CameraBuffer, 0);
 
+    //we set buffer number to 1 instead of 0 before setting the camera buffer because it is the second buffer in the vert shader, first being the matrix buffer
+    bufferNumber = 1;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
+    
     result = a_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
@@ -332,11 +367,13 @@ bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext, X
     //get pointer to the data in the lighting constant buffer
     dataPtr2 = (LightBufferType*)mappedSubresource.pData;
     dataPtr2->lightDirection = a_LightDirection;
-    dataPtr2->padding = 0.0f;
+    dataPtr2->specularPower = a_SpecularPower;
+    dataPtr2->specularColor = a_SpecularColor;
     dataPtr2->diffuseColor = a_DiffuseColor;
+    dataPtr2->ambientColor = a_AmbientColor;
     a_DeviceContext->Unmap(m_LightBuffer, 0);
-    bufferNumer = 0;
-    a_DeviceContext->PSSetConstantBuffers(bufferNumer, 1, &m_LightBuffer);
+    bufferNumber = 0;
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightBuffer);
     
     return true;
 }

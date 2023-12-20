@@ -18,9 +18,18 @@ class TextureShaderClass
     };
     struct LightBufferType
     {
+        XMFLOAT4 ambientColor;
         XMFLOAT4 diffuseColor;
+        //Look at the alightment of the variables to make sure its in chunks of 4.
         XMFLOAT3 lightDirection;
-        float padding; //added extra padding so structure is a multiple of 16 for createbuffer function requirements
+        float specularPower;
+
+        XMFLOAT4 specularColor;
+    };
+    struct CameraBufferType
+    {
+        XMFLOAT3 cameraPosition;
+        float padding;
     };
     
 public:
@@ -31,7 +40,7 @@ public:
 
     bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle);
     void Shutdown();
-    bool Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, XMMATRIX a_World, XMMATRIX a_View, XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView, XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor);
+    bool Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, XMMATRIX a_World, XMMATRIX a_View, XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView, XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower);
     
 private:
     
@@ -39,7 +48,7 @@ private:
     void ShutdownShader();
     void OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath);
 
-    bool SetShaderParams(ID3D11DeviceContext* a_DeviceContext, XMMATRIX a_World, XMMATRIX a_View, XMMATRIX a_Projection, ID3D11ShaderResourceView* a_Texture, XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor);
+    bool SetShaderParams(ID3D11DeviceContext* a_DeviceContext, XMMATRIX a_World, XMMATRIX a_View, XMMATRIX a_Projection, ID3D11ShaderResourceView* a_Texture, XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower);
     void RenderShader(ID3D11DeviceContext* a_DeviceContext, int );
 
 private:
@@ -51,4 +60,5 @@ private:
     //Used to interface with the texture shader.
     ID3D11SamplerState* m_SampleState;
     ID3D11Buffer* m_LightBuffer;
+    ID3D11Buffer* m_CameraBuffer;
 };
