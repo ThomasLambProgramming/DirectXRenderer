@@ -53,5 +53,6 @@ float4 LightPixelShader(PixelInputType a_Input) : SV_TARGET
 
     color = saturate(saturate(colorSum) * textureColor * specular);
     color = saturate(color * ambientColor);
+    color = float4(1.0f,1.0f,1.0f,1.0f);
     return color;
 }

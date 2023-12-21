@@ -71,7 +71,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	{
 		m_Lights[i].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f); //white light.
 		m_Lights[i].m_AmbientColor = XMFLOAT4(0.15f,0.15f,0.15f,1.0f); //white light.
-		m_Lights[i].m_LightDirection = XMFLOAT3(0.0f,-1.0f,0.0f);
+		m_Lights[i].m_LightDirection = XMFLOAT3(0.0f,0.0f,0.0f);
 		m_Lights[i].m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 		m_Lights[i].m_SpecularPower = 32.0f;
 	}
@@ -79,7 +79,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	m_Lights[0].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f); //white light.
 	m_Lights[1].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f); //white light.
 	m_Lights[2].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f); //white light.
-	m_Lights[3].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,0.0f,1.0f); //white light.
+	m_Lights[3].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f); //white light.
 	
     return true;
 }
