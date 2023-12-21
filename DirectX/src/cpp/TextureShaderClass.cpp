@@ -51,13 +51,18 @@ void TextureShaderClass::Shutdown()
     ShutdownShader();
     return;
 }
-bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, XMMATRIX a_World, XMMATRIX a_View,
-                          XMMATRIX a_Projection, ID3D11ShaderResourceView* a_ShaderResourceView,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower)
+
+bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext,
+                                int a_IndexCount,
+                                ID3D11ShaderResourceView* a_ShaderResourceView,
+                                MatrixBufferType a_MatrixBufferData,
+                                CameraBufferType a_CameraBufferData,
+                                LightBufferType a_LightBufferData[])
 {
     bool result;
 
     //set shader params that will be used for rendering
-    result = SetShaderParams(a_DeviceContext, a_World, a_View, a_Projection, a_ShaderResourceView, a_LightDirection, a_DiffuseColor, a_AmbientColor, a_CameraPosition, a_SpecularColor, a_SpecularPower);
+    result = SetShaderParams(a_DeviceContext, a_ShaderResourceView, a_MatrixBufferData, a_CameraBufferData, a_LightBufferData);
 
     if (!result)
     {
@@ -170,6 +175,29 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     vertexShaderBuffer = 0;
     pixelShaderBuffer = 0;
 
+    
+    //Filter is the most important element of the sampler. it tells the sampler how to pick what pixels to be used or combine to create the final look of the texture on the polygon face.
+    //the filter below is more expensive but gives a good(it says best but hmmm) visual result. it tells the sampler to use lin-interp for minification, magnifiction and mip-level sampling.
+    //the wrapping for uv set so its never greater than 0-1 anything outside of that wraps around and the rest of these settings are defaults for the sampler.
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    samplerDesc.BorderColor[0] = 0;
+    samplerDesc.BorderColor[1] = 0;
+    samplerDesc.BorderColor[2] = 0;
+    samplerDesc.BorderColor[3] = 0;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    result = a_Device->CreateSamplerState(&samplerDesc, &m_SampleState);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
     matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -183,24 +211,6 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     {
         return false;
     }
-
-    //Filter is the most important element of the sampler. it tells the sampler how to pick what pixels to be used or combine to create the final look of the texture on the polygon face.
-    //the filter below is more expensive but gives a good(it says best but hmmm) visual result. it tells the sampler to use lin-interp for minification, magnifiction and mip-level sampling.
-    //the wrapping for uv set so its never greater than 0-1 anything outside of that wraps around and the rest of these settings are defaults for the sampler.
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.MipLODBias = 0.0f;
-    samplerDesc.MaxAnisotropy = 1;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    samplerDesc.BorderColor[0] = 0;
-    samplerDesc.BorderColor[1] = 0;
-    samplerDesc.BorderColor[2] = 0;
-    samplerDesc.BorderColor[3] = 0;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
     
     cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -216,14 +226,9 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
         return false;
     }
     
-    result = a_Device->CreateSamplerState(&samplerDesc, &m_SampleState);
-    if (FAILED(result))
-    {
-        return false;
-    }
 
     lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    lightBufferDesc.ByteWidth = sizeof(LightBufferType);
+    lightBufferDesc.ByteWidth = sizeof(LightBufferType) * NUM_LIGHTS;
     lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     lightBufferDesc.MiscFlags = 0;
@@ -309,21 +314,28 @@ void TextureShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HW
     return;
 }
 
-bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext, XMMATRIX a_World, XMMATRIX a_View,
-                                   XMMATRIX a_Projection, ID3D11ShaderResourceView* a_Texture,  XMFLOAT3 a_LightDirection, XMFLOAT4 a_DiffuseColor, XMFLOAT4 a_AmbientColor, XMFLOAT3 a_CameraPosition, XMFLOAT4 a_SpecularColor, float a_SpecularPower)
+bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
+                                         ID3D11ShaderResourceView* a_Texture,
+                                         MatrixBufferType a_MatrixBufferData,
+                                         CameraBufferType a_CameraBufferData,
+                                         LightBufferType a_LightBufferData[])
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-    MatrixBufferType* dataPtr;
-    LightBufferType* dataPtr2;
-    CameraBufferType* dataPtr3;
+    MatrixBufferType* matrixDataPtr;
+    LightBufferType* lightDataPtr;
+    CameraBufferType* cameraDataPtr;
     unsigned int bufferNumber;
 
     //transpose the matrices to prepare them for the shader.
-    a_World = XMMatrixTranspose(a_World);
-    a_View = XMMatrixTranspose(a_View);
-    a_Projection = XMMatrixTranspose(a_Projection);
+    a_MatrixBufferData.world = XMMatrixTranspose(a_MatrixBufferData.world);
+    a_MatrixBufferData.view = XMMatrixTranspose(a_MatrixBufferData.view);
+    a_MatrixBufferData.projection = XMMatrixTranspose(a_MatrixBufferData.projection);
 
+    //I believe this has something to do with the register(t0) and etc. look this up later.
+    a_DeviceContext->PSSetShaderResources(0,1, &a_Texture);
+    
+    //Data 1 / MATRIX BUFFER-----------------------------------------
     //lock the constant buffer so we can write to it.
     result = a_DeviceContext->Map(m_MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
@@ -332,48 +344,67 @@ bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext, X
     }
 
     //get a pointer to the data in the constant buffer
-    dataPtr = (MatrixBufferType*)mappedSubresource.pData;
+    matrixDataPtr = (MatrixBufferType*)mappedSubresource.pData;
 
     //copy the data into the buffer
-    dataPtr->world = a_World;
-    dataPtr->view = a_View;
-    dataPtr->projection = a_Projection;
+    matrixDataPtr->world = a_MatrixBufferData.world; 
+    matrixDataPtr->view = a_MatrixBufferData.view;
+    matrixDataPtr->projection = a_MatrixBufferData.projection;
 
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
 
     bufferNumber = 0;
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
-    a_DeviceContext->PSSetShaderResources(0,1, &a_Texture);
+    //End Buffer 1----------------------------------------------------
 
-    result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    if (FAILED(result))
-    {
-        return false;
-    }
-    dataPtr3 = (CameraBufferType*)mappedSubresource.pData;
-    dataPtr3->cameraPosition = a_CameraPosition;
-    dataPtr3->padding = 0.0f;
-    a_DeviceContext->Unmap(m_CameraBuffer, 0);
-
-    //we set buffer number to 1 instead of 0 before setting the camera buffer because it is the second buffer in the vert shader, first being the matrix buffer
-    bufferNumber = 1;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
     
+
+
+    //Data 2 / LIGHT BUFFER-----------------------------------------
     result = a_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
         return false;
     }
     //get pointer to the data in the lighting constant buffer
-    dataPtr2 = (LightBufferType*)mappedSubresource.pData;
-    dataPtr2->lightDirection = a_LightDirection;
-    dataPtr2->specularPower = a_SpecularPower;
-    dataPtr2->specularColor = a_SpecularColor;
-    dataPtr2->diffuseColor = a_DiffuseColor;
-    dataPtr2->ambientColor = a_AmbientColor;
+    lightDataPtr = (LightBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        lightDataPtr[i].ambientColor = a_LightBufferData[i].ambientColor;
+        lightDataPtr[i].diffuseColor = a_LightBufferData[i].diffuseColor;
+        lightDataPtr[i].lightDirection = a_LightBufferData[i].lightDirection;
+        lightDataPtr[i].lightPosition = a_LightBufferData[i].lightPosition;
+        lightDataPtr[i].specularPower = a_LightBufferData[i].specularPower;
+        lightDataPtr[i].specularColor = a_LightBufferData[i].specularColor;
+    }
     a_DeviceContext->Unmap(m_LightBuffer, 0);
+    //buffer number is set for vs and ps separately
     bufferNumber = 0;
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightBuffer);
+    bufferNumber = 2;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightBuffer);
+    //End Buffer 2----------------------------------------------------
+
+
+
+    
+    //CAMERA BUFFER-----------------------------------------
+    //we set buffer number to 1 instead of 0 before setting the camera buffer because it is the second buffer in the vert shader, first being the matrix buffer
+    result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
+    cameraDataPtr->cameraPosition = a_CameraBufferData.cameraPosition;
+    cameraDataPtr->padding = 0.0f;
+    a_DeviceContext->Unmap(m_CameraBuffer, 0);
+    
+    bufferNumber = 1;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
+    
+    //End Buffer 3----------------------------------------------------
     
     return true;
 }

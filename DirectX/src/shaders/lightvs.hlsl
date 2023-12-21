@@ -1,3 +1,6 @@
+//Defines.
+#define NUM_LIGHTS 4
+
 cbuffer MatrixBuffer
 {
     matrix worldMatrix;
@@ -8,6 +11,15 @@ cbuffer CameraBuffer
 {
     float3 cameraPosition;
     float padding;
+}
+cbuffer LightBuffer
+{
+    float4 ambientColor;
+    float4 diffuseColor[NUM_LIGHTS];
+    float4 lightPosition[NUM_LIGHTS];
+    float3 lightDirection;
+    float specularPower;
+    float4 specularColor;
 }
 
 struct VertexInputType
@@ -23,10 +35,14 @@ struct PixelInputType
     float2 tex : TEXCOORD0;
     float3 normal : NORMAL;
     float3 viewDirection : TEXCOORD1;
+    float3 lightPosition[NUM_LIGHTS] : TEXCOORD2;
 };
+
 
 PixelInputType LightVertexShader(VertexInputType a_Input)
 {
+    int i;
+    
     PixelInputType output;
     float4 worldPosition;
     
@@ -44,6 +60,13 @@ PixelInputType LightVertexShader(VertexInputType a_Input)
     worldPosition = mul(a_Input.position, worldMatrix);
     output.viewDirection = cameraPosition.xyz - worldPosition.xyz;
     output.viewDirection = normalize(output.viewDirection);
+
+    for (i = 0; i < NUM_LIGHTS; i++)
+    {
+        //its not really light position moreso directions to lights from the vertex position.
+        //no clue why rastertek calls it positions when its a direction.
+        output.lightPosition[i] = normalize(lightPosition[i].xyz - worldPosition.xyz);
+    }
     
     return output;
     

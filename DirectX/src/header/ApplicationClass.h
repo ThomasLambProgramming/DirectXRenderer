@@ -34,7 +34,8 @@ private:
 	ModelClass* m_Model;
 	
 	TextureShaderClass* m_TextureShader;
-	LightClass* m_LightClass;
+	LightClass* m_Lights;
+	int m_numLights;
 };
 
 #endif
