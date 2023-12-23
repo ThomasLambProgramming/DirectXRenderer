@@ -16,21 +16,13 @@ struct MatrixBufferType
     XMMATRIX view;
     XMMATRIX projection;
 };
-struct LightBufferType
+struct LightColorBufferType 
 {
-    XMFLOAT4 ambientColor;
-    XMFLOAT4 diffuseColor;
-    XMFLOAT4 lightPosition;
-    
-    //Look at the alightment of the variables to make sure its in chunks of 4.
-    XMFLOAT3 lightDirection;
-    float specularPower;
-    XMFLOAT4 specularColor;
+    XMFLOAT4 lightDiffuse[NUM_LIGHTS];
 };
-struct CameraBufferType
+struct LightPositionBufferType
 {
-    XMFLOAT3 cameraPosition;
-    float padding;
+    XMFLOAT4 lightPosition[NUM_LIGHTS];
 };
 
 class TextureShaderClass
@@ -48,8 +40,8 @@ public:
                 int a_IndexCount,
                 ID3D11ShaderResourceView* a_ShaderResourceView,
                 MatrixBufferType a_MatrixBufferData,
-                CameraBufferType a_CameraBufferData,
-                LightBufferType a_LightBufferData[]);
+                LightPositionBufferType a_LightPositionBufferData,
+                LightColorBufferType a_LightColorBufferData);
     
 private:
     
@@ -60,8 +52,8 @@ private:
     bool SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                         ID3D11ShaderResourceView* a_Texture,
                         MatrixBufferType a_MatrixBufferData,
-                        CameraBufferType a_CameraBufferData,
-                        LightBufferType a_LightBufferData[]);
+                        LightPositionBufferType a_LightPositionBufferData,
+                        LightColorBufferType a_LightColorBufferData);
     
     void RenderShader(ID3D11DeviceContext* a_DeviceContext, int );
 
@@ -74,6 +66,6 @@ private:
     ID3D11SamplerState* m_SampleState;
 
     ID3D11Buffer* m_MatrixBuffer;
-    ID3D11Buffer* m_LightBuffer;
-    ID3D11Buffer* m_CameraBuffer;
+    ID3D11Buffer* m_LightPositionBuffer;
+    ID3D11Buffer* m_LightColorBuffer;
 };

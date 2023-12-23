@@ -7,8 +7,8 @@ TextureShaderClass::TextureShaderClass()
     m_InputLayout = 0;
     m_MatrixBuffer = 0;
     m_SampleState = 0;
-    m_LightBuffer = 0;
-    m_CameraBuffer = 0;
+    m_LightPositionBuffer = 0;
+    m_LightColorBuffer = 0;
 }
 
 TextureShaderClass::TextureShaderClass(const TextureShaderClass& a_Copy)
@@ -56,13 +56,13 @@ bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext,
                                 int a_IndexCount,
                                 ID3D11ShaderResourceView* a_ShaderResourceView,
                                 MatrixBufferType a_MatrixBufferData,
-                                CameraBufferType a_CameraBufferData,
-                                LightBufferType a_LightBufferData[])
+                                LightPositionBufferType a_LightPositionBufferData,
+                                LightColorBufferType  a_LightColorBufferData)
 {
     bool result;
 
     //set shader params that will be used for rendering
-    result = SetShaderParams(a_DeviceContext, a_ShaderResourceView, a_MatrixBufferData, a_CameraBufferData, a_LightBufferData);
+    result = SetShaderParams(a_DeviceContext, a_ShaderResourceView, a_MatrixBufferData, a_LightPositionBufferData, a_LightColorBufferData);
 
     if (!result)
     {
@@ -84,9 +84,9 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
-    D3D11_BUFFER_DESC lightBufferDesc;
+    D3D11_BUFFER_DESC lightPositionBufferDesc;
+    D3D11_BUFFER_DESC lightColorBufferDesc;
     D3D11_SAMPLER_DESC samplerDesc;
-    D3D11_BUFFER_DESC cameraBufferDesc;
 
     //init the pointers this func will use to null
     errorMessage = 0;
@@ -213,28 +213,28 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_Device, HWND a_WindowH
     }
 
     
-    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
-    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    cameraBufferDesc.MiscFlags = 0;
-    cameraBufferDesc.StructureByteStride = 0;
+    lightPositionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightPositionBufferDesc.ByteWidth = sizeof(LightPositionBufferType);
+    lightPositionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightPositionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightPositionBufferDesc.MiscFlags = 0;
+    lightPositionBufferDesc.StructureByteStride = 0;
 
-    result = a_Device->CreateBuffer(&cameraBufferDesc, NULL, &m_CameraBuffer);
+    result = a_Device->CreateBuffer(&lightPositionBufferDesc, NULL, &m_LightPositionBuffer);
+
     if (FAILED(result))
     {
         return false;
     }
-    
 
-    lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    lightBufferDesc.ByteWidth = sizeof(LightBufferType) * NUM_LIGHTS;
-    lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    lightBufferDesc.MiscFlags = 0;
-    lightBufferDesc.StructureByteStride = 0;
+    lightColorBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightColorBufferDesc.ByteWidth = sizeof(LightColorBufferType);
+    lightColorBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightColorBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightColorBufferDesc.MiscFlags = 0;
+    lightColorBufferDesc.StructureByteStride = 0;
 
-    result = a_Device->CreateBuffer(&lightBufferDesc, NULL, &m_LightBuffer);
+    result = a_Device->CreateBuffer(&lightColorBufferDesc, NULL, &m_LightColorBuffer);
 
     if (FAILED(result))
     {
@@ -274,57 +274,30 @@ void TextureShaderClass::ShutdownShader()
         m_PixelShader->Release();
         m_PixelShader = 0;
     }
-    if (m_LightBuffer)
+    if (m_LightPositionBuffer)
     {
-        m_LightBuffer->Release();
-        m_LightBuffer = 0;
+        m_LightPositionBuffer->Release();
+        m_LightPositionBuffer = 0;
     }
-    if (m_CameraBuffer)
+    if (m_LightColorBuffer)
     {
-        m_CameraBuffer->Release();
-        m_CameraBuffer = 0;
+        m_LightColorBuffer->Release();
+        m_LightColorBuffer = 0;
     }
-    return;
-}
-
-void TextureShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath)
-{
-    char* compileErrors;
-    unsigned long long bufferSize, i;
-    ofstream fout;
-
-    //get pointer to the errer message text buffer
-    compileErrors = (char*)(a_ErrorMessage->GetBufferPointer());
-
-    //get length of the message
-    bufferSize = a_ErrorMessage->GetBufferSize();
-
-    //open a file to write the error message to.
-    fout.open("ShaderError.txt");
-    for (i = 0; i < bufferSize; i++)
-    {
-        fout << compileErrors[i];
-    }
-    fout.close();
-
-    a_ErrorMessage->Release();
-    a_ErrorMessage = 0;
-
-    MessageBox(a_WindowHandle, L"Error compiling shader. Check ShaderError.txt for message.", a_FilePath, MB_OK);
     return;
 }
 
 bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                                          ID3D11ShaderResourceView* a_Texture,
                                          MatrixBufferType a_MatrixBufferData,
-                                         CameraBufferType a_CameraBufferData,
-                                         LightBufferType a_LightBufferData[])
+                                         LightPositionBufferType a_LightPositionBufferData,
+                                         LightColorBufferType a_LightColorBufferData)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
     MatrixBufferType* matrixDataPtr;
-    LightBufferType* lightDataPtr;
-    CameraBufferType* cameraDataPtr;
+    LightPositionBufferType* lightPositionDataPtr;
+    LightColorBufferType* lightColorDataPtr;
     unsigned int bufferNumber;
 
     //transpose the matrices to prepare them for the shader.
@@ -361,49 +334,40 @@ bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
 
 
     //Data 2 / LIGHT BUFFER-----------------------------------------
-    result = a_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    result = a_DeviceContext->Map(m_LightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
         return false;
     }
     //get pointer to the data in the lighting constant buffer
-    lightDataPtr = (LightBufferType*)mappedSubresource.pData;
+    lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
     for (int i = 0; i < NUM_LIGHTS; i++)
     {
-        lightDataPtr[i].ambientColor = a_LightBufferData[i].ambientColor;
-        lightDataPtr[i].diffuseColor = a_LightBufferData[i].diffuseColor;
-        lightDataPtr[i].lightDirection = a_LightBufferData[i].lightDirection;
-        lightDataPtr[i].lightPosition = a_LightBufferData[i].lightPosition;
-        lightDataPtr[i].specularPower = a_LightBufferData[i].specularPower;
-        lightDataPtr[i].specularColor = a_LightBufferData[i].specularColor;
+        lightPositionDataPtr->lightPosition[i] = a_LightPositionBufferData.lightPosition[i];
     }
-    a_DeviceContext->Unmap(m_LightBuffer, 0);
+    a_DeviceContext->Unmap(m_LightPositionBuffer, 0);
     //buffer number is set for vs and ps separately
-    bufferNumber = 0;
-    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightBuffer);
-    bufferNumber = 2;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightBuffer);
+    bufferNumber = 1;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
     //End Buffer 2----------------------------------------------------
 
-
-
     
-    //CAMERA BUFFER-----------------------------------------
-    //we set buffer number to 1 instead of 0 before setting the camera buffer because it is the second buffer in the vert shader, first being the matrix buffer
-    result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    //Data 3 / LIGHT BUFFER-----------------------------------------
+    result = a_DeviceContext->Map(m_LightColorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
         return false;
     }
-
-    cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
-    cameraDataPtr->cameraPosition = a_CameraBufferData.cameraPosition;
-    cameraDataPtr->padding = 0.0f;
-    a_DeviceContext->Unmap(m_CameraBuffer, 0);
-    
-    bufferNumber = 1;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
-    
+    //get pointer to the data in the lighting constant buffer
+    lightColorDataPtr = (LightColorBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        lightColorDataPtr->lightDiffuse[i] = a_LightColorBufferData.lightDiffuse[i];
+    }
+    a_DeviceContext->Unmap(m_LightColorBuffer, 0);
+    //buffer number is set for vs and ps separately
+    bufferNumber = 0;
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightColorBuffer);
     //End Buffer 3----------------------------------------------------
     
     return true;
@@ -417,4 +381,30 @@ void TextureShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int 
     a_DeviceContext->PSSetShader(m_PixelShader, NULL, 0);
     a_DeviceContext->PSSetSamplers(0, 1, &m_SampleState);
     a_DeviceContext->DrawIndexed(a_IndexCount, 0, 0);
+}
+void TextureShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath)
+{
+    char* compileErrors;
+    unsigned long long bufferSize, i;
+    ofstream fout;
+
+    //get pointer to the errer message text buffer
+    compileErrors = (char*)(a_ErrorMessage->GetBufferPointer());
+
+    //get length of the message
+    bufferSize = a_ErrorMessage->GetBufferSize();
+
+    //open a file to write the error message to.
+    fout.open("ShaderError.txt");
+    for (i = 0; i < bufferSize; i++)
+    {
+        fout << compileErrors[i];
+    }
+    fout.close();
+
+    a_ErrorMessage->Release();
+    a_ErrorMessage = 0;
+
+    MessageBox(a_WindowHandle, L"Error compiling shader. Check ShaderError.txt for message.", a_FilePath, MB_OK);
+    return;
 }

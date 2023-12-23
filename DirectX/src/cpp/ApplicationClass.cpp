@@ -35,7 +35,8 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     //create camera
     m_Camera = new CameraClass;
     //set initial position of camera
-    m_Camera->SetPosition(0.0f,2.0f,-12.0f);
+    m_Camera->SetPosition(0.0f,5.0f,-12.0f);
+	m_Camera->SetRotation(25, 0 ,0);
 
     //create a new model
     m_Model = new ModelClass;
@@ -67,20 +68,17 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	
 	m_Lights = new LightClass[m_numLights];
 
-	for (int i = 0; i < m_numLights; i++)
-	{
-		m_Lights[i].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f); //white light.
-		m_Lights[i].m_AmbientColor = XMFLOAT4(0.15f,0.15f,0.15f,1.0f); //white light.
-		m_Lights[i].m_LightDirection = XMFLOAT3(0.0f,0.0f,0.0f);
-		m_Lights[i].m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-		m_Lights[i].m_SpecularPower = 32.0f;
-	}
-    
-	m_Lights[0].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f); //white light.
-	m_Lights[1].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f); //white light.
-	m_Lights[2].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f); //white light.
-	m_Lights[3].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f); //white light.
-	
+	m_Lights[0].m_DiffuseColor = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);  // Red
+    m_Lights[0].m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f, 1.0f);
+
+    m_Lights[1].m_DiffuseColor = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);  // Green
+    m_Lights[1].m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f, 1.0f);
+
+    m_Lights[2].m_DiffuseColor = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);  // Blue
+    m_Lights[2].m_Position = XMFLOAT4(-3.0f, 1.0f, -3.0f, 1.0f);
+
+    m_Lights[3].m_DiffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);  // White
+    m_Lights[3].m_Position = XMFLOAT4(3.0f, 1.0f, -3.0f, 1.0f);
     return true;
 }
 
@@ -144,11 +142,10 @@ bool ApplicationClass::Frame()
 
 bool ApplicationClass::Render(float a_Rotation)
 {
-    XMMATRIX rotateMatrix, translateMatrix;
 
 	MatrixBufferType matrixBuffer;
-	LightBufferType lightBuffer[4];
-	CameraBufferType cameraBuffer = CameraBufferType();
+	LightPositionBufferType lightPositionBuffer;
+	LightColorBufferType lightColorBuffer;
     bool result;
 	
     //clear buffers to begin the scene
@@ -162,33 +159,27 @@ bool ApplicationClass::Render(float a_Rotation)
 	m_Camera->GetViewMatrix(matrixBuffer.view);
 	m_Direct3D->GetProjectionMatrix(matrixBuffer.projection);
 
-	rotateMatrix = XMMatrixRotationY(a_Rotation);
-	translateMatrix = XMMatrixTranslation(-2.0f, 0.0f, 0.0f);
-	matrixBuffer.world = XMMatrixMultiply(rotateMatrix, translateMatrix);
+    //XMMATRIX rotateMatrix, translateMatrix;
+	//rotateMatrix = XMMatrixRotationY(a_Rotation);
+	//translateMatrix = XMMatrixTranslation(-2.0f, 0.0f, 0.0f);
+	//matrixBuffer.world = XMMatrixMultiply(rotateMatrix, translateMatrix);
 
-	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
-	m_Model->Render(m_Direct3D->GetDeviceContext());
-
-	cameraBuffer.cameraPosition = m_Camera->GetPosition();
-	cameraBuffer.padding = 0.0f;
 
 	for (int i = 0; i < m_numLights; i++)
 	{
-		lightBuffer[i].ambientColor = m_Lights[i].m_AmbientColor;
-		lightBuffer[i].diffuseColor = m_Lights[i].m_DiffuseColor;
-		lightBuffer[i].lightDirection = m_Lights[i].m_LightDirection; 
-		lightBuffer[i].lightPosition = m_Lights[i].m_Position;
-		lightBuffer[i].specularColor = m_Lights[i].m_SpecularColor;
-		lightBuffer[i].specularPower = m_Lights[i].m_SpecularPower;
+		lightPositionBuffer.lightPosition[i] = m_Lights[i].m_Position; 
+		lightColorBuffer.lightDiffuse[i] = m_Lights[i].m_DiffuseColor; 
 	}
 	
+	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
+	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 									 m_Model->GetIndexCount(),
 									 m_Model->GetTexture(),
 									 matrixBuffer,
-									 cameraBuffer,
-									 lightBuffer);
+									 lightPositionBuffer,
+									 lightColorBuffer);
 	if (!result)
 	{
 		return false;
@@ -197,18 +188,3 @@ bool ApplicationClass::Render(float a_Rotation)
     m_Direct3D->EndScene();
     return true;
 }
-//Exmaple of how we can add rotation and scaling to a model and render it again to make it appear like there is multiple of an object.
-//scaleMatrix = XMMatrixScaling(0.5f,0.5f,0.5f);
-//rotateMatrix = XMMatrixRotationX(a_Rotation);
-//translateMatrix = XMMatrixTranslation(2.0f, 0.0f, 0.0f);
-//
-//srMatrix = XMMatrixMultiply(scaleMatrix, rotateMatrix);
-//worldMatrix = XMMatrixMultiply(srMatrix, translateMatrix);
-//
-//
-//result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
-//	m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture(), m_Lights->m_LightDirection, m_Lights->m_DiffuseColor, m_Lights->m_AmbientColor, m_Camera->GetPosition(), m_Lights->m_SpecularColor, m_Lights->m_SpecularPower);
-//if (!result)
-//{
-//	return false;
-//}
