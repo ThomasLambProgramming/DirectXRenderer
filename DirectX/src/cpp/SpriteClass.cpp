@@ -1,26 +1,27 @@
-﻿#include "BitmapClass.h"
+﻿#include "SpriteClass.h"
 
 
-BitmapClass::BitmapClass()
+
+SpriteClass::SpriteClass()
 {
     m_VertexBuffer = 0;
     m_IndexBuffer = 0;
-    m_Texture = 0;
+    m_Textures = 0;
 }
 
-BitmapClass::BitmapClass(const BitmapClass&)
+SpriteClass::SpriteClass(const SpriteClass&)
 {
 }
 
-BitmapClass::~BitmapClass()
+SpriteClass::~SpriteClass()
 {
 }
 
-bool BitmapClass::Initialize(ID3D11Device* a_Device,
+bool SpriteClass::Initialize(ID3D11Device* a_Device,
                              ID3D11DeviceContext* a_DeviceContext,
                              int a_ScreenWidth,
                              int a_ScreenHeight,
-                             char* a_TextureFilePath,
+                             char* a_SpriteFilePath,
                              int a_RenderX,
                              int a_RenderY)
 {
@@ -30,6 +31,7 @@ bool BitmapClass::Initialize(ID3D11Device* a_Device,
 
     m_RenderX = a_RenderX;
     m_RenderY = a_RenderY;
+    m_frameTime = 0;
 
     //init the vertex and index buffer to hold the geometry for the texture plane.
     result = InitializeBuffers(a_Device);
@@ -38,7 +40,7 @@ bool BitmapClass::Initialize(ID3D11Device* a_Device,
         return false;
     }
 
-    result = LoadTexture(a_Device, a_DeviceContext, a_TextureFilePath);
+    result = LoadTextures(a_Device, a_DeviceContext, a_SpriteFilePath);
     if (!result)
     {
         return false;
@@ -47,13 +49,13 @@ bool BitmapClass::Initialize(ID3D11Device* a_Device,
     return true;
 }
 
-void BitmapClass::Shutdown()
+void SpriteClass::Shutdown()
 {
-    ReleaseTexture();
+    ReleaseTextures();
     ShutdownBuffers();
 }
 
-bool BitmapClass::Render(ID3D11DeviceContext* a_DeviceContext)
+bool SpriteClass::Render(ID3D11DeviceContext* a_DeviceContext)
 {
     bool result;
 
@@ -69,24 +71,38 @@ bool BitmapClass::Render(ID3D11DeviceContext* a_DeviceContext)
     return true;
 }
 
-int BitmapClass::GetIndexCount()
+void SpriteClass::Update(float a_DeltaTime)
+{
+    m_frameTime += a_DeltaTime;
+    if (m_frameTime <= m_cycleTime)
+        return;
+
+    m_frameTime -= m_cycleTime;
+    m_currentTexture++;
+    if (m_currentTexture == m_textureCount)
+    {
+        m_currentTexture = 0;
+    }
+    return;
+}
+
+int SpriteClass::GetIndexCount()
 {
     return m_IndexCount;
 }
 
-ID3D11ShaderResourceView* BitmapClass::GetTexture()
+ID3D11ShaderResourceView* SpriteClass::GetTexture()
 {
-    return m_Texture->GetTexture();
+    return m_Textures[m_currentTexture].GetTexture();
 }
 
-void BitmapClass::SetRenderLocation(int a_PosX, int a_PosY)
+void SpriteClass::SetRenderLocation(int a_PosX, int a_PosY)
 {
     m_RenderX = a_PosX;
     m_RenderY = a_PosY;
-    return;
 }
 
-bool BitmapClass::InitializeBuffers(ID3D11Device* a_Device)
+bool SpriteClass::InitializeBuffers(ID3D11Device* a_Device)
 {
     VertexType* vertices;
     unsigned long* indices;
@@ -156,7 +172,7 @@ bool BitmapClass::InitializeBuffers(ID3D11Device* a_Device)
     return true;
 }
 
-void BitmapClass::ShutdownBuffers()
+void SpriteClass::ShutdownBuffers()
 {
     if (m_IndexBuffer)
     {
@@ -170,7 +186,7 @@ void BitmapClass::ShutdownBuffers()
     }
 }
 
-bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
+bool SpriteClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
 {
     float left,right,top,bottom;
     VertexType* vertices;
@@ -233,7 +249,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
     return true;
 }
 
-void BitmapClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
+void SpriteClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
 {
     unsigned int stride;
     unsigned int offset;
@@ -249,29 +265,80 @@ void BitmapClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
     return;
 }
 
-bool BitmapClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFilePath)
+bool SpriteClass::LoadTextures(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_SpriteFilePath)
 {
+char textureFilename[128];
+    ifstream fin;
+    int i, j;
+    char input;
     bool result;
-    m_Texture = new TextureClass;
-    result = m_Texture->Initialize(a_Device, a_DeviceContext, a_TextureFilePath);
-    if (!result)
+
+
+    // Open the sprite info data file.
+    fin.open(a_SpriteFilePath);
+    if(fin.fail())
     {
         return false;
     }
-    //store the size in pixels that this bipmap should be rendered at.
-    m_bitmapHeight = m_Texture->GetHeight();
-    m_bitmapWidth = m_Texture->GetWidth();
+
+    // Read in the number of textures.
+    fin >> m_textureCount;
+
+    // Create and initialize the texture array with the texture count from the file.
+    m_Textures = new TextureClass[m_textureCount];
+
+    // Read to start of next line.
+    fin.get(input);
+
+    // Read in each texture file name.
+    for(i=0; i<m_textureCount; i++)
+    {
+        j=0;
+        fin.get(input);
+        while(input != '\n')
+        {
+            textureFilename[j] = input;
+            j++;
+            fin.get(input);
+        }
+        textureFilename[j] = '\0';
+
+        // Once you have the filename then load the texture in the texture array.
+        result = m_Textures[i].Initialize(a_Device, a_DeviceContext, textureFilename);
+        if(!result)
+        {
+            return false;
+        }
+    }
+
+    // Read in the cycle time.
+    fin >> m_cycleTime;
+
+    // Convert the integer milliseconds to float representation.
+    m_cycleTime = m_cycleTime * 0.001f;
+
+    // Close the file.
+    fin.close();
+
+    // Get the dimensions of the first texture and use that as the dimensions of the 2D sprite images.
+    m_bitmapWidth = m_Textures[0].GetWidth();
+    m_bitmapHeight = m_Textures[0].GetHeight();
+
+    // Set the starting texture in the cycle to be the first one in the list.
+    m_currentTexture = 0;
 
     return true;
 }
 
-void BitmapClass::ReleaseTexture()
+void SpriteClass::ReleaseTextures()
 {
-    if (m_Texture)
+    if (!m_Textures)
+        return;
+    
+    for (int i = 0; i < m_textureCount; i++)
     {
-        m_Texture->Shutdown();
-        delete m_Texture;
-        m_Texture = 0;
+        m_Textures[i].Shutdown();
     }
-    return;
+    delete [] m_Textures;
+    m_Textures = 0;
 }

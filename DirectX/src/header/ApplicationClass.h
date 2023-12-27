@@ -7,8 +7,9 @@
 #include "ModelClass.h"
 #include "TextureShaderClass.h"
 #include "LightClass.h"
-#include "BitmapClass.h"
+#include "SpriteClass.h"
 #include "TextureNoLightingShaderClass.h"
+#include "TimerClass.h"
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -38,7 +39,8 @@ private:
 	TextureShaderClass* m_TextureShader;
 	TextureNoLightingShaderClass* m_TextureNoLightingShader;
 	
-	BitmapClass* m_Bitmap;
+	SpriteClass* m_Sprite;
+	TimerClass* m_Timer;
 	LightClass* m_Lights;
 	int m_numLights;
 };

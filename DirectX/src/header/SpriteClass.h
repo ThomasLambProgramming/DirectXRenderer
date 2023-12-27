@@ -1,11 +1,14 @@
 ﻿#pragma once
 
 #include <DirectXMath.h>
-using namespace DirectX;
+#include <fstream>
 
 #include "TextureClass.h"
 
-class BitmapClass
+using namespace DirectX;
+using namespace std;
+
+class SpriteClass
 {
 public:
 
@@ -15,20 +18,21 @@ public:
         XMFLOAT2 texture;
     };
     
-    BitmapClass();
-    BitmapClass(const BitmapClass&);
-    ~BitmapClass();
+    SpriteClass();
+    SpriteClass(const SpriteClass&);
+    ~SpriteClass();
 
     bool Initialize(ID3D11Device* a_Device,
                     ID3D11DeviceContext* a_DeviceContext,
                     int a_ScreenWidth,
                     int a_ScreenHeight,
-                    char* a_TextureFilePath,
+                    char* a_SpriteFilePath,
                     int a_RenderX,
                     int a_RenderY);
     void Shutdown();
     bool Render(ID3D11DeviceContext* a_DeviceContext);
 
+    void Update(float a_DeltaTime);
     int GetIndexCount();
     ID3D11ShaderResourceView* GetTexture();
 
@@ -43,8 +47,8 @@ private:
     bool UpdateBuffers(ID3D11DeviceContext* a_DeviceContext);
     void RenderBuffers(ID3D11DeviceContext* a_DeviceContext);
 
-    bool LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FilePath);
-    void ReleaseTexture();
+    bool LoadTextures(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_SpriteFilePath);
+    void ReleaseTextures();
 
 //The BitmapClass will need to maintain some extra information that a 3D model wouldn't such as
 //the screen size,
@@ -57,6 +61,9 @@ private:
     int m_bitmapWidth, m_bitmapHeight;
     int m_RenderX, m_RenderY;
     int m_prevPosX, m_prevPosY;
-    TextureClass* m_Texture;
+    TextureClass* m_Textures;
+    float m_frameTime;
+    float m_cycleTime;
+    int m_currentTexture, m_textureCount;
 
 };

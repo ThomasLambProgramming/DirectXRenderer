@@ -8,8 +8,9 @@ ApplicationClass::ApplicationClass()
     m_Model = 0;
 	m_TextureShader = 0;
 	m_Lights = 0;
-	m_Bitmap = 0;
+	m_Sprite = 0;
 	m_TextureNoLightingShader = 0;
+	m_Timer = 0;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&)
@@ -22,7 +23,8 @@ ApplicationClass::~ApplicationClass()
 
 bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_WindowHandle)
 {
-	char textureFilename[128];
+	char planeFileName[128];
+	char spriteFileName[128];
 	char modelFileName[128];
     bool result;
     m_Direct3D = new Direct3DClass;
@@ -38,15 +40,15 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     m_Camera = new CameraClass;
     //set initial position of camera
     m_Camera->SetPosition(0.0f,5.0f,-12.0f);
-	m_Camera->SetRotation(25, 0 ,0);
+	//m_Camera->SetRotation(25, 0 ,0);
 
     //create a new model
     m_Model = new ModelClass;
 
-	strcpy_s(textureFilename, "./data/stone01.tga");
+	strcpy_s(planeFileName, "./data/stone01.tga");
 	strcpy_s(modelFileName, "./data/plane.txt");
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFilename, modelFileName);
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), planeFileName, modelFileName);
     if (!result)
     {
         MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -91,9 +93,17 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     m_Lights[3].m_DiffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);  // White
     m_Lights[3].m_Position = XMFLOAT4(3.0f, 1.0f, -3.0f, 1.0f);
 
-	m_Bitmap = new BitmapClass;
-	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, textureFilename, 50, 50);
 	
+	strcpy_s(spriteFileName, "./data/sprite_data_01.txt");
+	m_Sprite = new SpriteClass;
+	result = m_Sprite->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, spriteFileName, 50, 50);
+	
+	if (!result)
+		return false;
+
+
+	m_Timer = new TimerClass;
+	result = m_Timer->Initialize();
 	if (!result)
 		return false;
 	
@@ -108,12 +118,19 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = 0;
     }
-	if (m_Bitmap)
+	if (m_Sprite)
 	{
-		m_Bitmap->Shutdown();
-		m_Bitmap = 0;
+		m_Sprite->Shutdown();
+		delete m_Sprite;
+		m_Sprite = 0;
 	}
 
+	if (m_Timer)
+	{
+		delete m_Timer;
+		m_Timer = 0;
+	}
+	
     if (m_Lights)
     {
 	    delete [] m_Lights;
@@ -152,9 +169,14 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame()
 {
+	float deltaTime;
 	static float rotation = 0.0f;
     bool result;
 
+	m_Timer->Frame();
+	deltaTime = m_Timer->GetDeltaTime();
+	m_Sprite->Update(deltaTime);
+	
 	//(no damn clue what this number is supposed to be).
 	rotation -= 0.0174532825f * 0.1f;
 	
@@ -219,13 +241,13 @@ bool ApplicationClass::Render(float a_Rotation)
 	m_Direct3D->TurnZBufferOff();
 
 	//m_Bitmap->UpdateHeight(400);
-	result = m_Bitmap->Render(m_Direct3D->GetDeviceContext());
+	result = m_Sprite->Render(m_Direct3D->GetDeviceContext());
 	if (!result)
 	{
 		return false;
 	}
 	m_Direct3D->GetOrthoMatrix(matrixBuffer.projection);
-	result = m_TextureNoLightingShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Bitmap->GetTexture());
+	result = m_TextureNoLightingShader->Render(m_Direct3D->GetDeviceContext(), m_Sprite->GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Sprite->GetTexture());
 	if (!result)
 	{
 		return false;
