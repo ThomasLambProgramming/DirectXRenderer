@@ -8,6 +8,8 @@ ApplicationClass::ApplicationClass()
     m_Model = 0;
 	m_TextureShader = 0;
 	m_Lights = 0;
+	m_Bitmap = 0;
+	m_TextureNoLightingShader = 0;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&)
@@ -64,6 +66,15 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
         return false;
     }
 
+	m_TextureNoLightingShader = new TextureNoLightingShaderClass;
+	result = m_TextureNoLightingShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle);
+	
+    if (!result)
+    {
+	    MessageBox(a_WindowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+    	return false;
+    }
+	
 	m_numLights = 4;
 	
 	m_Lights = new LightClass[m_numLights];
@@ -79,6 +90,13 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 
     m_Lights[3].m_DiffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);  // White
     m_Lights[3].m_Position = XMFLOAT4(3.0f, 1.0f, -3.0f, 1.0f);
+
+	m_Bitmap = new BitmapClass;
+	result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, textureFilename, 50, 50);
+	
+	if (!result)
+		return false;
+	
     return true;
 }
 
@@ -90,6 +108,11 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = 0;
     }
+	if (m_Bitmap)
+	{
+		m_Bitmap->Shutdown();
+		m_Bitmap = 0;
+	}
 
     if (m_Lights)
     {
@@ -102,6 +125,12 @@ void ApplicationClass::Shutdown()
 		m_TextureShader->Shutdown();
 		delete m_TextureShader;
 		m_TextureShader = 0;
+	}
+	if (m_TextureNoLightingShader)
+	{
+		m_TextureNoLightingShader->Shutdown();
+		delete m_TextureNoLightingShader;
+		m_TextureNoLightingShader = 0;
 	}
 	
 	// Release the model object.
@@ -142,7 +171,6 @@ bool ApplicationClass::Frame()
 
 bool ApplicationClass::Render(float a_Rotation)
 {
-
 	MatrixBufferType matrixBuffer;
 	LightPositionBufferType lightPositionBuffer;
 	LightColorBufferType lightColorBuffer;
@@ -184,7 +212,26 @@ bool ApplicationClass::Render(float a_Rotation)
 	{
 		return false;
 	}
+
+	//sets location
+	//m_Bitmap->SetRenderLocation(50, 100);
 	
+	m_Direct3D->TurnZBufferOff();
+
+	//m_Bitmap->UpdateHeight(400);
+	result = m_Bitmap->Render(m_Direct3D->GetDeviceContext());
+	if (!result)
+	{
+		return false;
+	}
+	m_Direct3D->GetOrthoMatrix(matrixBuffer.projection);
+	result = m_TextureNoLightingShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Bitmap->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+	
+	m_Direct3D->TurnZBufferOn();
     m_Direct3D->EndScene();
     return true;
 }

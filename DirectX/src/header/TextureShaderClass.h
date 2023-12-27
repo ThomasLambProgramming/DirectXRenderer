@@ -43,6 +43,8 @@ public:
                 LightPositionBufferType a_LightPositionBufferData,
                 LightColorBufferType a_LightColorBufferData);
     
+    ID3D11ShaderResourceView* GetTexture() {return m_Texture;}
+    
 private:
     
     bool InitializeShader(ID3D11Device* a_Device, HWND a_WindowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName);
@@ -68,4 +70,6 @@ private:
     ID3D11Buffer* m_MatrixBuffer;
     ID3D11Buffer* m_LightPositionBuffer;
     ID3D11Buffer* m_LightColorBuffer;
+
+    ID3D11ShaderResourceView* m_Texture;
 };

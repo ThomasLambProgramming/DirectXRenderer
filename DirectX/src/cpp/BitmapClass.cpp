@@ -1,0 +1,277 @@
+﻿#include "BitmapClass.h"
+
+
+BitmapClass::BitmapClass()
+{
+    m_VertexBuffer = 0;
+    m_IndexBuffer = 0;
+    m_Texture = 0;
+}
+
+BitmapClass::BitmapClass(const BitmapClass&)
+{
+}
+
+BitmapClass::~BitmapClass()
+{
+}
+
+bool BitmapClass::Initialize(ID3D11Device* a_Device,
+                             ID3D11DeviceContext* a_DeviceContext,
+                             int a_ScreenWidth,
+                             int a_ScreenHeight,
+                             char* a_TextureFilePath,
+                             int a_RenderX,
+                             int a_RenderY)
+{
+    bool result;
+    m_screenHeight = a_ScreenHeight;
+    m_screenWidth = a_ScreenWidth;
+
+    m_RenderX = a_RenderX;
+    m_RenderY = a_RenderY;
+
+    //init the vertex and index buffer to hold the geometry for the texture plane.
+    result = InitializeBuffers(a_Device);
+    if (!result)
+    {
+        return false;
+    }
+
+    result = LoadTexture(a_Device, a_DeviceContext, a_TextureFilePath);
+    if (!result)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void BitmapClass::Shutdown()
+{
+    ReleaseTexture();
+    ShutdownBuffers();
+}
+
+bool BitmapClass::Render(ID3D11DeviceContext* a_DeviceContext)
+{
+    bool result;
+
+    //update buffer if bitmap position has changed from previous render
+    result = UpdateBuffers(a_DeviceContext);
+    if (!result)
+    {
+        return false;
+    }
+
+    //Put vertex and index buffers on graphics pipeline to prepare for drawing.
+    RenderBuffers(a_DeviceContext);
+    return true;
+}
+
+int BitmapClass::GetIndexCount()
+{
+    return m_IndexCount;
+}
+
+ID3D11ShaderResourceView* BitmapClass::GetTexture()
+{
+    return m_Texture->GetTexture();
+}
+
+void BitmapClass::SetRenderLocation(int a_PosX, int a_PosY)
+{
+    m_RenderX = a_PosX;
+    m_RenderY = a_PosY;
+    return;
+}
+
+bool BitmapClass::InitializeBuffers(ID3D11Device* a_Device)
+{
+    VertexType* vertices;
+    unsigned long* indices;
+    D3D11_BUFFER_DESC vertexBufferDesc;
+    D3D11_BUFFER_DESC indexBufferDesc;
+    D3D11_SUBRESOURCE_DATA vertexData;
+    D3D11_SUBRESOURCE_DATA indexData;
+    HRESULT result;
+    int i;
+
+    //we check against previous value so if it is in the same location it doesnt cost cycles in updating the dynamic
+    //vertex buffer.
+    m_prevPosX = -1;
+    m_prevPosY = -1;
+
+    //We are making a square out of two triangles so 6 points are needed. (dont think we are doing vert duping.)
+    m_vertexCount = 6;
+    m_IndexCount = m_vertexCount;
+
+    vertices = new VertexType[m_vertexCount];
+    indices = new unsigned long[m_IndexCount];
+
+    memset(vertices, 0, (sizeof(VertexType) * m_vertexCount));
+
+    for (i = 0; i < m_IndexCount; i++)
+        indices[i] = i;
+
+    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
+    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    vertexBufferDesc.MiscFlags = 0;
+    vertexBufferDesc.StructureByteStride = 0;
+
+    vertexData.pSysMem = vertices;
+    vertexData.SysMemPitch = 0;
+    vertexData.SysMemSlicePitch = 0;
+
+    result = a_Device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_VertexBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    //Buffer doesnt change basically at all since all 6 indices will be the same.
+    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_IndexCount;
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+    indexBufferDesc.StructureByteStride = 0;
+
+    indexData.pSysMem = indices;
+    indexData.SysMemPitch = 0;
+    indexData.SysMemSlicePitch = 0;
+
+    result = a_Device->CreateBuffer(&indexBufferDesc, &indexData, &m_IndexBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    delete [] vertices;
+    delete [] indices;
+    vertices = 0;
+    indices = 0;
+
+    return true;
+}
+
+void BitmapClass::ShutdownBuffers()
+{
+    if (m_IndexBuffer)
+    {
+        m_IndexBuffer->Release();
+        m_IndexBuffer = 0;
+    }
+    if (m_VertexBuffer)
+    {
+        m_VertexBuffer->Release();
+        m_VertexBuffer = 0;
+    }
+}
+
+bool BitmapClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
+{
+    float left,right,top,bottom;
+    VertexType* vertices;
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    VertexType* dataPtr;
+    HRESULT result;
+
+    //If the image has not moved then we dont want to update the buffer.
+    if ((m_prevPosX == m_RenderX) && (m_prevPosY == m_RenderY))
+        return true;
+
+    m_prevPosX = m_RenderX;
+    m_prevPosY = m_RenderY;
+
+    vertices = new VertexType[m_vertexCount];
+    left = (float)(m_screenWidth / 2) * -1 + (float)m_RenderX;
+    right = left + (float)m_bitmapWidth;
+
+    top = (float)(m_screenHeight / 2) - (float)m_RenderY;
+    bottom = top - (float)m_bitmapHeight;
+
+    //copied the vertex data as its just a pain to write out for no reason.
+    // Load the vertex array with data.
+    // First triangle.
+    vertices[0].position = XMFLOAT3(left, top, 0.0f);  // Top left.
+    vertices[0].texture = XMFLOAT2(0.0f, 0.0f);
+
+    vertices[1].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right.
+    vertices[1].texture = XMFLOAT2(1.0f, 1.0f);
+
+    vertices[2].position = XMFLOAT3(left, bottom, 0.0f);  // Bottom left.
+    vertices[2].texture = XMFLOAT2(0.0f, 1.0f);
+
+    // Second triangle.
+    vertices[3].position = XMFLOAT3(left, top, 0.0f);  // Top left.
+    vertices[3].texture = XMFLOAT2(0.0f, 0.0f);
+
+    vertices[4].position = XMFLOAT3(right, top, 0.0f);  // Top right.
+    vertices[4].texture = XMFLOAT2(1.0f, 0.0f);
+
+    vertices[5].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right.
+    vertices[5].texture = XMFLOAT2(1.0f, 1.0f);
+
+    result = a_DeviceContext->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    //get a pointer to the data in the const buffer.
+    dataPtr = (VertexType*)mappedResource.pData;
+    //dst, src, memsize
+    memcpy(dataPtr, (void*)vertices, (sizeof(VertexType) * m_vertexCount));
+
+    a_DeviceContext->Unmap(m_VertexBuffer, 0);
+    dataPtr = 0;
+    delete [] vertices;
+    vertices = 0;
+    
+    return true;
+}
+
+void BitmapClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
+{
+    unsigned int stride;
+    unsigned int offset;
+
+    stride = sizeof(VertexType);
+    offset = 0;
+    
+    a_DeviceContext->IASetVertexBuffers(0,1, &m_VertexBuffer, &stride, &offset);
+    a_DeviceContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    //set the type of primitive that should be rendered from this vert buffer. eg triangles
+    a_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    
+    return;
+}
+
+bool BitmapClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFilePath)
+{
+    bool result;
+    m_Texture = new TextureClass;
+    result = m_Texture->Initialize(a_Device, a_DeviceContext, a_TextureFilePath);
+    if (!result)
+    {
+        return false;
+    }
+    //store the size in pixels that this bipmap should be rendered at.
+    m_bitmapHeight = m_Texture->GetHeight();
+    m_bitmapWidth = m_Texture->GetWidth();
+
+    return true;
+}
+
+void BitmapClass::ReleaseTexture()
+{
+    if (m_Texture)
+    {
+        m_Texture->Shutdown();
+        delete m_Texture;
+        m_Texture = 0;
+    }
+    return;
+}
