@@ -15,7 +15,7 @@ FontShaderClass::FontShaderClass()
 }
 
 
-FontShaderClass::FontShaderClass(const FontShaderClass& other)
+FontShaderClass::FontShaderClass(const FontShaderClass& a_Copy)
 {
 }
 
@@ -285,8 +285,6 @@ void FontShaderClass::ShutdownShader()
 		m_vertexShader->Release();
 		m_vertexShader = 0;
 	}
-	
-
 	return;
 }
 

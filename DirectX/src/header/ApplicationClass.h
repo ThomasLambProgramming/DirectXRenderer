@@ -10,6 +10,11 @@
 #include "SpriteClass.h"
 #include "TextureNoLightingShaderClass.h"
 #include "TimerClass.h"
+#include "TextClass.h"
+#include "FontClass.h"
+#include "FontShaderClass.h"
+
+class FontShaderClass;
 
 //GLOBALS
 const bool FULL_SCREEN = false;
@@ -43,6 +48,11 @@ private:
 	TimerClass* m_Timer;
 	LightClass* m_Lights;
 	int m_numLights;
+
+	FontShaderClass* m_FontShader;
+	FontClass* m_Font;
+	TextClass* m_TextString1;
+	TextClass* m_TextString2;
 };
 
 #endif

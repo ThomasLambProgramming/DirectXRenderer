@@ -1,5 +1,4 @@
-#ifndef _TEXTURENOLIGHTINGSHADERCLASS_H_
-#define _TEXTURENOLIGHTINGSHADERCLASS_H_
+#pragma once
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -24,7 +23,7 @@ private:
 
 public:
 	FontShaderClass();
-	FontShaderClass(const FontShaderClass&);
+	FontShaderClass(const FontShaderClass& a_Copy);
 	~FontShaderClass();
 
 	bool Initialize(ID3D11Device*, HWND);
@@ -47,5 +46,3 @@ private:
 	ID3D11Buffer* m_pixelColorBuffer;
 	ID3D11SamplerState* m_sampleState;
 };
-
-#endif
