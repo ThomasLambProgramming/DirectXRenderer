@@ -5,7 +5,7 @@
 #include "Direct3DClass.h"
 #include "CameraClass.h"
 #include "ModelClass.h"
-#include "TextureShaderClass.h"
+#include "ShaderClass.h"
 #include "InputClass.h"
 
 #include <Windows.h>
@@ -41,7 +41,7 @@ private:
 	CameraClass* m_Camera;
 	ModelClass* m_Model;
 	
-	TextureShaderClass* m_TextureShader;
+	ShaderClass* m_TextureShader;
 	
 	int m_fps;
 	int m_count;

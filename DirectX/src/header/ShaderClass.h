@@ -10,7 +10,7 @@ const int NUM_LIGHTS = 4;
 using namespace DirectX;
 using namespace std;
 
-class TextureShaderClass
+class ShaderClass
 {
 private:
     struct MatrixBufferType
@@ -27,9 +27,9 @@ private:
     
 public:
 
-    TextureShaderClass();
-    TextureShaderClass(const TextureShaderClass& a_Copy);
-    ~TextureShaderClass();
+    ShaderClass();
+    ShaderClass(const ShaderClass& a_Copy);
+    ~ShaderClass();
 
     bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights);
     void Shutdown();

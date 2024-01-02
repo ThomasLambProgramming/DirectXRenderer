@@ -169,7 +169,6 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\FontShaderClass.cpp" />
     <ClCompile Include="src\cpp\SpriteClass.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -320,7 +319,6 @@
       <AdditionalIncludeDirectories>F:\PersonalProjects\DirectX\DirectX\/src;F:\PersonalProjects\DirectX\DirectX\/src/header;F:\PersonalProjects\DirectX\DirectX\/src/cpp;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\ColorShaderClass.cpp" />
     <ClCompile Include="src\cpp\Direct3DClass.cpp" />
     <ClCompile Include="src\cpp\InputClass.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
@@ -696,8 +694,7 @@
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
     <ClCompile Include="src\cpp\TextureClass.cpp" />
-    <ClCompile Include="src\cpp\TextureNoLightingShaderClass.cpp" />
-    <ClCompile Include="src\cpp\TextureShaderClass.cpp" />
+    <ClCompile Include="src\cpp\ShaderClass.cpp" />
     <ClCompile Include="src\cpp\TimerClass.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -803,10 +800,8 @@
   <ItemGroup>
     <ClInclude Include="src\header\ApplicationClass.h" />
     <ClInclude Include="src\header\FontClass.h" />
-    <ClInclude Include="src\header\FontShaderClass.h" />
     <ClInclude Include="src\header\SpriteClass.h" />
     <ClInclude Include="src\header\CameraClass.h" />
-    <ClInclude Include="src\header\ColorShaderClass.h" />
     <ClInclude Include="src\header\Direct3DClass.h" />
     <ClInclude Include="src\header\InputClass.h" />
     <ClInclude Include="src\header\LightClass.h" />
@@ -814,8 +809,7 @@
     <ClInclude Include="src\header\SystemClass.h" />
     <ClInclude Include="src\header\TextClass.h" />
     <ClInclude Include="src\header\TextureClass.h" />
-    <ClInclude Include="src\header\TextureNoLightingShaderClass.h" />
-    <ClInclude Include="src\header\TextureShaderClass.h" />
+    <ClInclude Include="src\header\ShaderClass.h" />
     <ClInclude Include="src\header\TimerClass.h" />
   </ItemGroup>
   <ItemGroup>

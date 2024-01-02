@@ -1,25 +1,23 @@
-﻿#include "TextureShaderClass.h"
+﻿#include "ShaderClass.h"
 
-TextureShaderClass::TextureShaderClass()
+ShaderClass::ShaderClass()
 {
     m_VertexShader = 0;
     m_PixelShader = 0;
     m_InputLayout = 0;
     m_MatrixBuffer = 0;
     m_SampleState = 0;
-    //m_LightPositionBuffer = 0;
-    //m_LightColorBuffer = 0;
 }
 
-TextureShaderClass::TextureShaderClass(const TextureShaderClass& a_Copy)
+ShaderClass::ShaderClass(const ShaderClass& a_Copy)
 {
 }
 
-TextureShaderClass::~TextureShaderClass()
+ShaderClass::~ShaderClass()
 {
 }
 
-bool TextureShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights)
+bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights)
 {
     bool result;
     wchar_t vsFileName[128];
@@ -47,13 +45,13 @@ bool TextureShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle,
     return true;
 }
 
-void TextureShaderClass::Shutdown()
+void ShaderClass::Shutdown()
 {
     //shutdown vert and pixel shaders + any other related objects shutdown.
     ShutdownShader();
 }
 
-bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, ID3D11ShaderResourceView* a_ShaderResourceView, MatrixBufferType a_MatrixBufferData)
+bool ShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount, ID3D11ShaderResourceView* a_ShaderResourceView, MatrixBufferType a_MatrixBufferData)
 {
     bool result;
 
@@ -67,7 +65,7 @@ bool TextureShaderClass::Render(ID3D11DeviceContext* a_DeviceContext, int a_Inde
     return true;
 }
 
-ID3D11ShaderResourceView* TextureShaderClass::GetTexture(int a_textureNumber)
+ID3D11ShaderResourceView* ShaderClass::GetTexture(int a_textureNumber)
 {
     switch(a_textureNumber)
     {
@@ -80,17 +78,17 @@ ID3D11ShaderResourceView* TextureShaderClass::GetTexture(int a_textureNumber)
     }
 }
 
-bool TextureShaderClass::AllowsLights()
+bool ShaderClass::AllowsLights()
 {
     return m_AllowLights;
 }
 
-bool TextureShaderClass::HasBlendingEnabled()
+bool ShaderClass::HasBlendingEnabled()
 {
     return m_BlendTexture1 || m_BlendTexture2;
 }
 
-bool TextureShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, int a_amountOfBlendTextures)
+bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, int a_amountOfBlendTextures)
 {
     HRESULT result;
     ID3D10Blob* errorMessage;
@@ -262,7 +260,7 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowH
 
 
 
-void TextureShaderClass::ShutdownShader()
+void ShaderClass::ShutdownShader()
 {
     //release all pointers
     if (m_SampleState)
@@ -293,7 +291,7 @@ void TextureShaderClass::ShutdownShader()
     
 }
 
-bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
+bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                                          ID3D11ShaderResourceView* a_Texture,
                                          MatrixBufferType a_MatrixBufferData)
 {
@@ -377,7 +375,7 @@ bool TextureShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     return true;
 }
 
-void TextureShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount)
+void ShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount)
 {
     //set the vertex input layout
     a_DeviceContext->IASetInputLayout(m_InputLayout);
@@ -386,7 +384,7 @@ void TextureShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int 
     a_DeviceContext->PSSetSamplers(0, 1, &m_SampleState);
     a_DeviceContext->DrawIndexed(a_IndexCount, 0, 0);
 }
-void TextureShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath)
+void ShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath)
 {
     char* compileErrors;
     unsigned long long bufferSize, i;

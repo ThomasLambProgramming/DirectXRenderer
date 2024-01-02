@@ -55,7 +55,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
         return false;
     }
 	
-	m_TextureShader = new TextureShaderClass;
+	m_TextureShader = new ShaderClass;
 	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle);
 	
     if (!result)

@@ -4,6 +4,7 @@
 //Can take in lights and blend multiple textures.
 //Mainly used for testing multiple different texture stuff so I do not
 //have to rewrite the shaders / buffer information for testing something new
+//Amazing that light sampling, multi texture, color pixel shaders all use almost the same vertex shader.
 
 cbuffer MatrixBuffer
 {
