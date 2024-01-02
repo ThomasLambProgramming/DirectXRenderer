@@ -773,21 +773,6 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <None Include="src\shaders\colorPS.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\colorVS.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\fontps.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\fontvs.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\lightps.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="src\shaders\texturePS.hlsl">
       <ObjectFileOutput>D:\PersonalProjects\DirectXRenderer\x64\Debug\textureVS.cso</ObjectFileOutput>
       <TrackerLogDirectory>x64\Debug\DirectX.tlog\</TrackerLogDirectory>
@@ -835,15 +820,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="data\stone01.tga" />
-    <None Include="src\shaders\texturenolightps.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\texturenolightvs.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="src\shaders\lightvs.hlsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

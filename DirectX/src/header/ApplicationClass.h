@@ -6,18 +6,11 @@
 #include "CameraClass.h"
 #include "ModelClass.h"
 #include "TextureShaderClass.h"
-#include "LightClass.h"
-#include "SpriteClass.h"
-#include "TextureNoLightingShaderClass.h"
-#include "TimerClass.h"
-#include "TextClass.h"
-#include "FontClass.h"
-#include "FontShaderClass.h"
 #include "InputClass.h"
 
 #include <Windows.h>
 #include <mmsystem.h>
-# pragma comment(lib, "winmm.lib")
+#pragma comment(lib, "winmm.lib")
 
 class FontShaderClass;
 
@@ -49,25 +42,11 @@ private:
 	ModelClass* m_Model;
 	
 	TextureShaderClass* m_TextureShader;
-	TextureNoLightingShaderClass* m_TextureNoLightingShader;
 	
-	SpriteClass* m_Sprite;
-	TimerClass* m_Timer;
-	LightClass* m_Lights;
-	int m_numLights;
-
-	FontShaderClass* m_FontShader;
-	FontClass* m_Font;
-	TextClass* m_TextString1;
-	TextClass* m_TextString2;
-
-	//Fps
 	int m_fps;
 	int m_count;
 	unsigned long m_startTime;
 	int m_previousFps;
-	TextClass* m_fpstext;
-	TextClass* m_MouseStrings;
 };
 
 #endif
