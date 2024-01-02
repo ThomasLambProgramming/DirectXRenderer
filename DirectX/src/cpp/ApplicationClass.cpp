@@ -15,7 +15,7 @@ ApplicationClass::ApplicationClass()
 	m_TextString1 = 0;
 	m_TextString2 = 0;
 	m_Font = 0;
-
+    m_MouseStrings = 0;
 	m_fps = 0;
 	m_count = 0;
 }
@@ -34,12 +34,13 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	char spriteFileName[128];
 	char modelFileName[128];
 
+	char mouseString1[32], mouseString2[32], mouseString3[32];
 	char testString[32];
 	char testString2[32];
 	
     bool result;
 
-	m_startTime = (unsigned long)timeGetTime();
+	m_startTime = timeGetTime();
     m_Direct3D = new Direct3DClass;
 
     result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, a_WindowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
@@ -156,6 +157,29 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	strcpy_s(fpsString, "Fps: 0");
 	m_fpstext = new TextClass;
 	result = m_fpstext->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, fpsString, 50, 10, 0.0f, 1.0f, 0.0f);
+
+
+	strcpy_s(mouseString1, "Mouse X: 0");
+    strcpy_s(mouseString2, "Mouse Y: 0");
+    strcpy_s(mouseString3, "Mouse Button: No");
+	m_MouseStrings = new TextClass[3];
+	result = m_MouseStrings[0].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString1, 10, 10, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	result = m_MouseStrings[1].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString1, 10, 35, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
+
+	result = m_MouseStrings[2].Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, mouseString1, 10, 60, 1.0f, 1.0f, 1.0f);
+	if(!result)
+	{
+		return false;
+	}
 	
 	if (!result)
 		return false;
@@ -183,7 +207,15 @@ void ApplicationClass::Shutdown()
 		delete m_Sprite;
 		m_Sprite = 0;
 	}
+	if(m_MouseStrings)
+    {
+        m_MouseStrings[0].Shutdown();
+        m_MouseStrings[1].Shutdown();
+        m_MouseStrings[2].Shutdown();
 
+        delete [] m_MouseStrings;
+        m_MouseStrings = 0;
+    }
 	if (m_Timer)
 	{
 		delete m_Timer;
@@ -249,30 +281,27 @@ void ApplicationClass::Shutdown()
     return;
 }
 
-bool ApplicationClass::Frame()
+bool ApplicationClass::Frame(InputClass* a_InputClass)
 {
-	float deltaTime;
-	static float rotation = 0.0f;
-    bool result;
-
 	m_Timer->Frame();
-	deltaTime = m_Timer->GetDeltaTime();
+	float deltaTime = m_Timer->GetDeltaTime();
 	m_Sprite->Update(deltaTime);
-	
-	//(no damn clue what this number is supposed to be).
-	rotation -= 0.0174532825f * 0.1f;
+
+	int mouseX, mouseY;
+	bool mouseDown;
+
+	if (a_InputClass->IsEscapePressed())
+		return false;
+
+	a_InputClass->GetMouseLocation(mouseX, mouseY);
+	mouseDown = a_InputClass->IsMousePressed(0);
+
+	if (!UpdateMouseStrings(mouseX, mouseY, mouseDown))
+		return false;
 	
 	UpdateFps();
-	
 	//Render Scene
-    result = Render(rotation);
-    
-    if (!result)
-    {
-        return false;
-    }
-    
-    return true;
+    return Render(0.00174532825f);
 }
 
 bool ApplicationClass::Render(float a_Rotation)
@@ -354,12 +383,17 @@ bool ApplicationClass::Render(float a_Rotation)
 
 	m_fpstext->Render(m_Direct3D->GetDeviceContext());
 	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_fpstext->GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Font->GetTexture(), m_fpstext->GetPixelColor());
-
 	if (!result)
 		return false;
-	
-	m_Direct3D->DisableAlphaBlending();
 
+	for (int i = 0; i < 3; i++)
+	{
+		m_MouseStrings[i].Render(m_Direct3D->GetDeviceContext());
+		if (!m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_MouseStrings[i].GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Font->GetTexture(), m_MouseStrings[i].GetPixelColor()))
+			return false;
+	}
+
+	m_Direct3D->DisableAlphaBlending();
 	m_Direct3D->TurnZBufferOn();
     m_Direct3D->EndScene();
     return true;
@@ -415,6 +449,35 @@ bool ApplicationClass::UpdateFps()
 	}
 	result = m_fpstext->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
 	if (!result)
+		return false;
+
+	return true;
+}
+
+bool ApplicationClass::UpdateMouseStrings(int posX, int posY, bool a_MouseDown)
+{
+	char tempString[16], finalString[32];
+
+	sprintf_s(tempString, "%d", posX);
+	strcpy_s(finalString, "Mouse X: ");
+	strcat_s(finalString, tempString);
+
+	if (!m_MouseStrings[0].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 90, 1.0f,1.0f,1.0f))
+		return false;
+
+	sprintf_s(tempString, "%d", posY);
+	strcpy_s(finalString, "Mouse Y: ");
+	strcat_s(finalString, tempString);
+
+	if (!m_MouseStrings[1].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 115, 1.0f,1.0f,1.0f))
+		return false;
+
+	if (a_MouseDown)
+		strcpy_s(finalString, "Mouse Button: Yes");
+	else
+		strcpy_s(finalString, "Mouse Button: No");
+
+	if (!m_MouseStrings[2].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 135, 1.0f,1.0f,1.0f))
 		return false;
 
 	return true;

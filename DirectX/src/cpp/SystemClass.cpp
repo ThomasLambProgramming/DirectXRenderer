@@ -31,8 +31,10 @@ bool SystemClass::Initialize()
 	
 	//create and init the input object, this will take the keyboard input from the user.
 	m_Input = new InputClass;
-	m_Input->Initialize();
-
+	result = m_Input->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
+	if (!result)
+		return false;
+	
 	//Create and init the application class object. this will handle all the graphics for the application.
 	m_Application = new ApplicationClass;
 	
@@ -104,25 +106,7 @@ void SystemClass::Run()
 
 LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-	switch (umsg)
-	{
-		//check for key press on keyboard
-		case WM_KEYDOWN:
-		{
-			//if a key is pressed down send it into the input object to set
-			m_Input->KeyDown((unsigned int)wparam);
-			return 0;
-		}
-		case WM_KEYUP:
-		{
-			//if a key is pressed up send it into the input object to unset
-			m_Input->KeyUp((unsigned int)wparam);
-			return 0;
-		}
-		//any other messages send to the default message handler as our application isnt going to use them.
-		default:
-			return DefWindowProc(hwnd, umsg, wparam, lparam);
-	}
+	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 bool SystemClass::Frame()
@@ -130,12 +114,13 @@ bool SystemClass::Frame()
 	bool result;
 
 	//check if esc key pressed to exit application
-	if (m_Input->IsKeyDown(VK_ESCAPE))
+	if (!m_Input->Frame())
+		return false;
+
+	if (!m_Application->Frame(m_Input))
 		return false;
 	
-	//do the frame processing for the application class obj
-	result = m_Application->Frame();
-	return result;
+	return true;
 }
 
 void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)

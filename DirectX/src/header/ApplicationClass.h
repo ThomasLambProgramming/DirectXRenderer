@@ -13,6 +13,7 @@
 #include "TextClass.h"
 #include "FontClass.h"
 #include "FontShaderClass.h"
+#include "InputClass.h"
 
 #include <Windows.h>
 #include <mmsystem.h>
@@ -35,11 +36,12 @@ public:
 
 	bool Initalize(int, int, HWND);
 	void Shutdown();
-	bool Frame();
+	bool Frame(InputClass* a_InputClass);
 
 private:
 	bool Render(float a_Rotation);
 	bool UpdateFps();
+	bool UpdateMouseStrings(int posX, int posY, bool a_MouseDown);
 
 private:
 	Direct3DClass* m_Direct3D;
@@ -65,6 +67,7 @@ private:
 	unsigned long m_startTime;
 	int m_previousFps;
 	TextClass* m_fpstext;
+	TextClass* m_MouseStrings;
 };
 
 #endif
