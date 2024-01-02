@@ -14,6 +14,10 @@
 #include "FontClass.h"
 #include "FontShaderClass.h"
 
+#include <Windows.h>
+#include <mmsystem.h>
+# pragma comment(lib, "winmm.lib")
+
 class FontShaderClass;
 
 //GLOBALS
@@ -35,6 +39,7 @@ public:
 
 private:
 	bool Render(float a_Rotation);
+	bool UpdateFps();
 
 private:
 	Direct3DClass* m_Direct3D;
@@ -53,6 +58,13 @@ private:
 	FontClass* m_Font;
 	TextClass* m_TextString1;
 	TextClass* m_TextString2;
+
+	//Fps
+	int m_fps;
+	int m_count;
+	unsigned long m_startTime;
+	int m_previousFps;
+	TextClass* m_fpstext;
 };
 
 #endif

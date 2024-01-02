@@ -15,6 +15,9 @@ ApplicationClass::ApplicationClass()
 	m_TextString1 = 0;
 	m_TextString2 = 0;
 	m_Font = 0;
+
+	m_fps = 0;
+	m_count = 0;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&)
@@ -35,6 +38,8 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	char testString2[32];
 	
     bool result;
+
+	m_startTime = (unsigned long)timeGetTime();
     m_Direct3D = new Direct3DClass;
 
     result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, a_WindowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
@@ -145,6 +150,15 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	result = m_TextString2->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, testString2, 10, 50, 1.0f, 1.0f, 0.0f);
 	if (!result)
 		return false;
+
+	m_previousFps = -1;
+	char fpsString[32];
+	strcpy_s(fpsString, "Fps: 0");
+	m_fpstext = new TextClass;
+	result = m_fpstext->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, 32, m_Font, fpsString, 50, 10, 0.0f, 1.0f, 0.0f);
+	
+	if (!result)
+		return false;
 	
     return true;
 }
@@ -157,6 +171,12 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = 0;
     }
+	if (m_fpstext)
+	{
+		m_fpstext->Shutdown();
+		delete m_fpstext;
+		m_fpstext = 0;
+	}
 	if (m_Sprite)
 	{
 		m_Sprite->Shutdown();
@@ -241,6 +261,8 @@ bool ApplicationClass::Frame()
 	
 	//(no damn clue what this number is supposed to be).
 	rotation -= 0.0174532825f * 0.1f;
+	
+	UpdateFps();
 	
 	//Render Scene
     result = Render(rotation);
@@ -329,9 +351,71 @@ bool ApplicationClass::Render(float a_Rotation)
 	{
 		return false;
 	}
+
+	m_fpstext->Render(m_Direct3D->GetDeviceContext());
+	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(), m_fpstext->GetIndexCount(), matrixBuffer.world, matrixBuffer.view, matrixBuffer.projection, m_Font->GetTexture(), m_fpstext->GetPixelColor());
+
+	if (!result)
+		return false;
+	
 	m_Direct3D->DisableAlphaBlending();
 
 	m_Direct3D->TurnZBufferOn();
     m_Direct3D->EndScene();
     return true;
+}
+
+bool ApplicationClass::UpdateFps()
+{
+	int fps;
+	char tempString[16], finalString[16];
+	float red, green, blue;
+	bool result;
+	
+	m_count++;
+    	
+	if (timeGetTime() >= (m_startTime + 1000))
+	{
+		m_fps = m_count;
+		m_count = 0;
+		m_startTime = timeGetTime();
+	}
+	fps = m_fps;
+
+	if (m_previousFps == fps)
+	{
+		return true;
+	}
+	m_previousFps = fps;
+	
+	if (fps > 99999)
+	{
+		fps = 99999;
+	}
+	sprintf_s(tempString, "%d", fps);
+	strcpy_s(finalString, "Fps: ");
+	strcat_s(finalString, tempString);
+	if (fps >= 60)
+	{
+		red = 0.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+	if (fps < 60)
+	{
+		red = 1.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+	if (fps < 30)
+	{
+		red = 1.0f;
+		green = 0.0f;
+		blue = 0.0f;
+	}
+	result = m_fpstext->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
+	if (!result)
+		return false;
+
+	return true;
 }
