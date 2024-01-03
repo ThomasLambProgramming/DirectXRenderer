@@ -1,5 +1,7 @@
 #include "ApplicationClass.h"
 
+#include <complex>
+
 ApplicationClass::ApplicationClass()
 {
     //Safety setting to 0/nullptr;
@@ -56,7 +58,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     }
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 1, true);
 	
     if (!result)
     {
@@ -121,9 +123,11 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 
 bool ApplicationClass::Render(float a_Rotation)
 {
-	MatrixBufferType matrixBuffer;
-	//LightPositionBufferType lightPositionBuffer;
-	//LightColorBufferType lightColorBuffer;
+	XMMATRIX world;
+	XMMATRIX view;
+	XMMATRIX projection;
+	XMFLOAT4 lightPositions[NUM_LIGHTS];
+	XMFLOAT4 lightDiffuse[NUM_LIGHTS];
     bool result;
 	
     //clear buffers to begin the scene
@@ -133,9 +137,9 @@ bool ApplicationClass::Render(float a_Rotation)
     m_Camera->Render();
 
     //get all the matrices
-	m_Direct3D->GetWorldMatrix(matrixBuffer.world);
-	m_Camera->GetViewMatrix(matrixBuffer.view);
-	m_Direct3D->GetProjectionMatrix(matrixBuffer.projection);
+	m_Direct3D->GetWorldMatrix(world);
+	m_Camera->GetViewMatrix(view);
+	m_Direct3D->GetProjectionMatrix(projection);
 
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
@@ -143,7 +147,13 @@ bool ApplicationClass::Render(float a_Rotation)
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 									 m_Model->GetIndexCount(),
 									 m_Model->GetTexture(),
-									 matrixBuffer);
+									 m_Model->GetTexture(),
+									 m_Model->GetTexture(),
+									 world,
+									 view,
+									 projection,
+									 lightPositions,
+									 lightDiffuse);
 	if (!result)
 	{
 		return false;

@@ -90,6 +90,8 @@ ID3D11ShaderResourceView* ShaderClass::GetTexture(int a_textureNumber)
             return m_BlendTexture1;
         case 2:
             return m_BlendTexture2;
+        default:
+            return m_Texture;
     }
 }
 
@@ -175,7 +177,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 
     polygonLayout[1].SemanticName = "COLOR";
 	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	polygonLayout[1].InputSlot = 0;
 	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -189,16 +191,16 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 	polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[2].InstanceDataStepRate = 0;
     
-	polygonLayout[3].SemanticName = "TEXCOORD1";
-	polygonLayout[3].SemanticIndex = 0;
+	polygonLayout[3].SemanticName = "TEXCOORD";
+	polygonLayout[3].SemanticIndex = 1;
 	polygonLayout[3].Format = DXGI_FORMAT_R32G32_FLOAT;
 	polygonLayout[3].InputSlot = 0;
 	polygonLayout[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 	polygonLayout[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[3].InstanceDataStepRate = 0;
     
-	polygonLayout[4].SemanticName = "TEXCOORD2";
-	polygonLayout[4].SemanticIndex = 0;
+	polygonLayout[4].SemanticName = "TEXCOORD";
+	polygonLayout[4].SemanticIndex = 2;
 	polygonLayout[4].Format = DXGI_FORMAT_R32G32_FLOAT;
 	polygonLayout[4].InputSlot = 0;
 	polygonLayout[4].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
@@ -394,7 +396,6 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     a_world = XMMatrixTranspose(a_world);
     a_view = XMMatrixTranspose(a_view);
     a_projection = XMMatrixTranspose(a_projection);
-
 
 
 #pragma region VertexShaderBuffers

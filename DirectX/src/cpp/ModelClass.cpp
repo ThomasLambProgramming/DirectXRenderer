@@ -179,11 +179,17 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
     }
 
 	// Load the vertex array and index array with data.
-	for(i=0; i<m_VertexCount; i++)
+	for(i = 0; i < m_VertexCount; i++)
 	{
 		vertices[i].position = XMFLOAT3(m_Model[i].x, m_Model[i].y, m_Model[i].z);
+		vertices[i].color = XMFLOAT3(1.0f,1.0f,1.0f);
 		vertices[i].texture = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
+		vertices[i].blendTexture1 = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
+		vertices[i].blendTexture2 = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
 		vertices[i].normal = XMFLOAT3(m_Model[i].nx, m_Model[i].ny, m_Model[i].nz);
+		vertices[i].tangent = XMFLOAT3(0.0f,0.0f,0.0f);
+		vertices[i].binormal = XMFLOAT3(0.0f,0.0f,0.0f);
+		vertices[i].padding = XMFLOAT3(0.0f,0.0f,0.0f);
 
 		indices[i] = i;
 	}

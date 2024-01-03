@@ -111,8 +111,6 @@ LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM 
 
 bool SystemClass::Frame()
 {
-	bool result;
-
 	//check if esc key pressed to exit application
 	if (!m_Input->Frame())
 		return false;

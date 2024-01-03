@@ -53,17 +53,17 @@ float4 TextureMultiLightPixelShader(PixelInputType a_input) : SV_TARGET
         colorArray[i] = LightColor[i] * lightIntensity[i];
     }
 
-    for (int i = 0; i < NUM_LIGHTS; i++)
+    for (int j = 0; j < NUM_LIGHTS; j++)
     {
-        colorSum.r += colorArray[i].r;
-        colorSum.g += colorArray[i].g;
-        colorSum.b += colorArray[i].b;
+        colorSum.r += colorArray[j].r;
+        colorSum.g += colorArray[j].g;
+        colorSum.b += colorArray[j].b;
     }
     float4 color = saturate(colorSum) * textureColor;
     return color;
 }
 
-float4 TextureMultiSamplePixelShader(PixelInputType a_input)
+float4 TextureMultiSamplePixelShader(PixelInputType a_input) : SV_TARGET
 {
     float4 color1 = ShaderTexture1.Sample(Sampler, a_input.tex);
     float4 color2 = ShaderTexture2.Sample(Sampler, a_input.tex);

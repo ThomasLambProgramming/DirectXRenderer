@@ -14,9 +14,21 @@ class ModelClass
 private:
     struct VertexType
     {
+        //8
         XMFLOAT3 position;
+        XMFLOAT3 color;
         XMFLOAT2 texture;
+
+        //4
+        XMFLOAT2 blendTexture1;
+        XMFLOAT2 blendTexture2;
+
+        //12
         XMFLOAT3 normal;
+        XMFLOAT3 tangent; 
+        XMFLOAT3 binormal;
+        XMFLOAT3 padding;
+        //24 bytes?
     };
     struct ModelType
     {
