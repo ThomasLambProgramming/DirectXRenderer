@@ -22,7 +22,7 @@ cbuffer LightInformationBuffer
 struct VertexInputType
 {
     float4 position : POSITION;
-    float4 color : Color;
+    float4 color : COLOR;
     float2 tex: TEXCOORD0;
     float2 blendTex1 : TEXCOORD1;
     float2 blendTex2 : TEXCOORD2;
