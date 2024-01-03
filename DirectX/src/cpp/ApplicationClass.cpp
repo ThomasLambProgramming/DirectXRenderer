@@ -24,6 +24,8 @@ ApplicationClass::~ApplicationClass()
 bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_WindowHandle)
 {
 	char textureFileName[128];
+	char blendTexture1FileName[128];
+	char blendTexture2FileName[128];
 	char modelFileName[128];
 
     bool result;
@@ -48,9 +50,12 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     m_Model = new ModelClass;
 
 	strcpy_s(textureFileName, "./data/stone01.tga");
+	//strcpy_s(blendTexture1FileName, "./data/dirt01.tga");
+	strcpy_s(blendTexture1FileName, "./data/light01.tga");
+	strcpy_s(blendTexture2FileName, "./data/alpha01.tga");
 	strcpy_s(modelFileName, "./data/plane.txt");
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName);
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName);
     if (!result)
     {
         MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -58,7 +63,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     }
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 1, true);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 3, true);
 	
     if (!result)
     {
@@ -146,9 +151,9 @@ bool ApplicationClass::Render(float a_Rotation)
 	
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 									 m_Model->GetIndexCount(),
-									 m_Model->GetTexture(),
-									 m_Model->GetTexture(),
-									 m_Model->GetTexture(),
+									 m_Model->GetTexture(0),
+									 m_Model->GetTexture(1),
+									 m_Model->GetTexture(2),
 									 world,
 									 view,
 									 projection,

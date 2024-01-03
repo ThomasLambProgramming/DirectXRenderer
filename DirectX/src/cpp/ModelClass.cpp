@@ -16,7 +16,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName)
+bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2)
 {
     bool result;
 
@@ -33,10 +33,26 @@ bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devic
         return false;
     }
 
-	result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName);
+	result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName, 0);
 	if (!result)
 	{
 		return false;
+	}
+	if (a_BlendTextureFileName1)
+	{
+		result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName1, 1);
+		if (!result)
+		{
+			return false;
+		}
+	}
+	if (a_BlendTextureFileName2)
+	{
+		result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName2, 2);
+		if (!result)
+		{
+			return false;
+		}
 	}
 	
     return true;
@@ -60,8 +76,15 @@ int ModelClass::GetIndexCount()
     return m_IndexCount;
 }
 
-ID3D11ShaderResourceView* ModelClass::GetTexture()
+ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture)
 {
+	if (a_texture == 0)
+		return m_Texture->GetTexture();
+	if (a_texture == 1)
+		return m_blendTexture1->GetTexture();
+	if (a_texture == 2)
+		return m_blendTexture2->GetTexture();
+
 	return m_Texture->GetTexture();
 }
 
@@ -130,13 +153,28 @@ void ModelClass::ReleaseModel()
 	return;
 }
 
-bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName)
+bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName, int a_texId)
 {
 	bool result;
 
-	//create and initalize the texture object;
-	m_Texture = new TextureClass;
-	result = m_Texture->Initialize(a_Device, a_DeviceContext, a_FileName);
+	if (a_texId == 0)
+	{
+		//create and initalize the texture object;
+		m_Texture = new TextureClass;
+		result = m_Texture->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
+	if (a_texId == 1)
+	{
+		//create and initalize the texture object;
+		m_blendTexture1 = new TextureClass;
+		result = m_blendTexture1->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
+	if (a_texId == 2)
+	{
+		//create and initalize the texture object;
+		m_blendTexture2 = new TextureClass;
+		result = m_blendTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
 	if (!result)
 	{
 		return false;

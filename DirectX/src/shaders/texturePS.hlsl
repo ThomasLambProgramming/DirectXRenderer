@@ -71,7 +71,7 @@ float4 TextureMultiSamplePixelShader(PixelInputType a_input) : SV_TARGET
     return blendColor;
 }
 
-float4 TextureLightMapTexturePixelShader(PixelInputType a_input)
+float4 TextureLightMapPixelShader(PixelInputType a_input) : SV_TARGET
 {
     float4 color1 = ShaderTexture1.Sample(Sampler, a_input.tex);
     float4 lightColor = ShaderTexture2.Sample(Sampler, a_input.tex);
@@ -79,7 +79,7 @@ float4 TextureLightMapTexturePixelShader(PixelInputType a_input)
     return blendColor;
 }
 
-float4 TextureAlphaMapPixelShader(PixelInputType a_input)
+float4 TextureAlphaMapPixelShader(PixelInputType a_input) : SV_TARGET
 {
     float4 color1 = ShaderTexture1.Sample(Sampler, a_input.tex);
     float4 color2 = ShaderTexture2.Sample(Sampler, a_input.tex);

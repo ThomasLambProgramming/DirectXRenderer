@@ -42,13 +42,13 @@ public:
     ModelClass(const ModelClass&);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName);
+    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2);
     void Shutdown();
     void Render(ID3D11DeviceContext* a_DeviceContext);
 
     int GetIndexCount();
 
-    ID3D11ShaderResourceView* GetTexture();
+    ID3D11ShaderResourceView* GetTexture(int a_texture = 0);
     
 private:
     bool LoadModel(char* a_ModelFileName);
@@ -57,7 +57,7 @@ private:
     void ShutdownBuffers();
     void RenderBuffers(ID3D11DeviceContext* a_DeviceContext);
 
-    bool LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName);
+    bool LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName, int a_texId);
     void ReleaseTexture();
     
 private:
@@ -67,6 +67,8 @@ private:
     int m_IndexCount;
 
     TextureClass* m_Texture;
+    TextureClass* m_blendTexture1;
+    TextureClass* m_blendTexture2;
     ModelType* m_Model;
 };
 #endif

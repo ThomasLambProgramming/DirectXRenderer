@@ -139,6 +139,8 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureMultiSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     else if (a_amountOfBlendTextures == 2)
         result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureAlphaMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+    else if (a_amountOfBlendTextures == 3)
+        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureLightMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     //Im an idiot and will probably accidentally add 3 blend textures and it will fail so default to no blending in that case.
     else
         result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureSingleSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
