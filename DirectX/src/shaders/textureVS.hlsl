@@ -16,6 +16,7 @@ cbuffer MatrixBuffer
 cbuffer LightInformationBuffer
 {
     float4 lightPosition[NUM_LIGHTS];
+    float4 LightColor[NUM_LIGHTS];
 }
 
 struct VertexInputType
@@ -26,6 +27,8 @@ struct VertexInputType
     float2 blendTex1 : TEXCOORD1;
     float2 blendTex2 : TEXCOORD2;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
 };
 
 struct PixelInputType
@@ -33,6 +36,8 @@ struct PixelInputType
     float4 position : SV_POSITION;
     float4 color : COLOR;
     float3 normal: NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float2 tex : TEXCOORD0;
     float2 blendTex1 : TEXCOORD1;
     float2 blendTex2 : TEXCOORD2;
@@ -40,26 +45,26 @@ struct PixelInputType
 };
 
 
-PixelInputType TextureVertexShader(VertexInputType a_Input)
+PixelInputType TextureVertexShader(VertexInputType a_input)
 {
     PixelInputType output;
 
-    a_Input.position.w = 1.0f;
+    a_input.position.w = 1.0f;
 
-    output.position = mul(a_Input.position, worldMatrix);
+    output.position = mul(a_input.position, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
-    output.tex = a_Input.tex;
-    output.blendTex1 = a_Input.blendTex1;
-    output.blendTex2 = a_Input.blendTex2;
+    output.tex = a_input.tex;
+    output.blendTex1 = a_input.blendTex1;
+    output.blendTex2 = a_input.blendTex2;
 
-    output.color = a_Input.color;
+    output.color = a_input.color;
 
-    output.normal = normalize(mul(a_Input.normal, worldMatrix));
+    output.normal = normalize(mul(a_input.normal, worldMatrix));
 
 
-    float4 worldPosition = mul(a_Input.position, worldMatrix);
+    float4 worldPosition = mul(a_input.position, worldMatrix);
     for (int i = 0; i < NUM_LIGHTS; i++)
         output.directionToLight[i] = normalize(lightPosition[i] - worldPosition.xyz);
 

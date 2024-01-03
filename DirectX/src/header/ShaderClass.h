@@ -21,8 +21,12 @@ private:
     };
     struct LightInformationBufferType 
     {
-        XMFLOAT4 lightDiffuse[NUM_LIGHTS];
         XMFLOAT4 lightPosition[NUM_LIGHTS];
+        XMFLOAT4 lightDiffuse[NUM_LIGHTS];
+    };
+    struct PixelBufferType
+    {
+        XMFLOAT4 pixelColor;
     };
     
 public:
@@ -51,10 +55,13 @@ private:
     void OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath);
 
     bool SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
-                        ID3D11ShaderResourceView* a_Texture,
-                        MatrixBufferType a_MatrixBufferData);
+                        ID3D11ShaderResourceView* a_Texture1,
+                        ID3D11ShaderResourceView* a_Texture2,
+                        ID3D11ShaderResourceView* a_Texture3,
+                        MatrixBufferType a_MatrixBufferData,
+                        LightInformationBufferType a_LightInfo);
     
-    void RenderShader(ID3D11DeviceContext* a_DeviceContext, int );
+    void RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount);
 
 private:
     ID3D11VertexShader* m_VertexShader;
@@ -66,9 +73,10 @@ private:
 
     ID3D11Buffer* m_MatrixBuffer;
     ID3D11Buffer* m_LightInformationBuffer;
+    ID3D11Buffer* m_PixelBuffer;
 
-    ID3D11ShaderResourceView* m_Texture;
     //Setup for multi texture blending. Limited to 2 blending textures at the moment.
+    ID3D11ShaderResourceView* m_Texture;
     ID3D11ShaderResourceView* m_BlendTexture1;
     ID3D11ShaderResourceView* m_BlendTexture2;
 

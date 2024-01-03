@@ -106,7 +106,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     vertexShaderBuffer = 0;
     pixelShaderBuffer = 0;
     
-    result = D3DCompileFromFile(a_vsFileName, NULL, NULL, "LightVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &vertexShaderBuffer, &errorMessage);
+    result = D3DCompileFromFile(a_vsFileName, NULL, NULL, "TextureVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &vertexShaderBuffer, &errorMessage);
     if (FAILED(result))
     {
         //if the shader failed to compile there should be a message
@@ -119,12 +119,12 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     }
     
     if (a_amountOfBlendTextures == 1)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "LightPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureMultiSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     else if (a_amountOfBlendTextures == 2)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "LightPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureAlphaMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     //Im an idiot and will probably accidentally add 3 blend textures and it will fail so default to no blending in that case.
     else
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "LightPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureSingleSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
         
         
     if (FAILED(result))
@@ -292,27 +292,76 @@ void ShaderClass::ShutdownShader()
 }
 
 bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
-                                         ID3D11ShaderResourceView* a_Texture,
-                                         MatrixBufferType a_MatrixBufferData)
+                        ID3D11ShaderResourceView* a_Texture1,
+                        ID3D11ShaderResourceView* a_Texture2,
+                        ID3D11ShaderResourceView* a_Texture3,
+                        MatrixBufferType a_MatrixBufferData,
+                        LightInformationBufferType a_LightInfo)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
     MatrixBufferType* matrixDataPtr;
-    //LightPositionBufferType* lightPositionDataPtr;
-    //LightColorBufferType* lightColorDataPtr;
+    LightInformationBufferType* lightInformationDataPtr;
     unsigned int bufferNumber;
-
+    
+    //I believe this has something to do with the register(t0) and etc. look this up later.
+    a_DeviceContext->PSSetShaderResources(0,1, &a_Texture1);
+    a_DeviceContext->PSSetShaderResources(1,1, &a_Texture2);
+    a_DeviceContext->PSSetShaderResources(2,1, &a_Texture3);
+    
     //transpose the matrices to prepare them for the shader.
     a_MatrixBufferData.world = XMMatrixTranspose(a_MatrixBufferData.world);
     a_MatrixBufferData.view = XMMatrixTranspose(a_MatrixBufferData.view);
     a_MatrixBufferData.projection = XMMatrixTranspose(a_MatrixBufferData.projection);
 
-    //I believe this has something to do with the register(t0) and etc. look this up later.
-    a_DeviceContext->PSSetShaderResources(0,1, &a_Texture);
-    
-    //Data 1 / MATRIX BUFFER-----------------------------------------
+
+
+#pragma region VertexShaderBuffers
+    //Buffer 1 / MATRIX BUFFER-----------------------------------------
     //lock the constant buffer so we can write to it.
     result = a_DeviceContext->Map(m_MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    //get a pointer to the data in the constant buffer
+    matrixDataPtr = (MatrixBufferType*)mappedSubresource.pData;
+    //copy the data into the buffer
+    matrixDataPtr->world = a_MatrixBufferData.world; 
+    matrixDataPtr->view = a_MatrixBufferData.view;
+    matrixDataPtr->projection = a_MatrixBufferData.projection;
+    a_DeviceContext->Unmap(m_MatrixBuffer, 0);
+    bufferNumber = 0;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
+    //End Buffer 1----------------------------------------------------
+
+
+    
+    //Buffer 2 / LIGHT INFO BUFFER-----------------------------------------
+    result = a_DeviceContext->Map(m_LightInformationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    lightInformationDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        lightInformationDataPtr->lightPosition[i] = a_LightInfo.lightPosition[i];
+        lightInformationDataPtr->lightDiffuse[i] = a_LightInfo.lightDiffuse[i];
+    }
+    a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
+    bufferNumber = 1;
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightInformationBuffer);
+    //As the pixel shader has the exact same setup we can just give the information here.
+    a_DeviceContext->PSSetConstantBuffers(0, 1, &m_LightInformationBuffer);
+    //End Buffer 2----------------------------------------------------
+#pragma endregion VertexShaderBuffers 
+
+    
+#pragma region PixelShaderBuffers
+    //Data 1 / MATRIX BUFFER-----------------------------------------
+    //lock the constant buffer so we can write to it.
+    result = a_DeviceContext->Map(m_PixelBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
         return false;
@@ -320,57 +369,18 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
 
     //get a pointer to the data in the constant buffer
     matrixDataPtr = (MatrixBufferType*)mappedSubresource.pData;
-
     //copy the data into the buffer
     matrixDataPtr->world = a_MatrixBufferData.world; 
     matrixDataPtr->view = a_MatrixBufferData.view;
     matrixDataPtr->projection = a_MatrixBufferData.projection;
-
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
-
     bufferNumber = 0;
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
     //End Buffer 1----------------------------------------------------
+#pragma endregion PixelShaderBuffers
 
     
-
-
-    //Data 2 / LIGHT BUFFER-----------------------------------------
-    //result = a_DeviceContext->Map(m_LightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    //if (FAILED(result))
-    //{
-    //    return false;
-    //}
-    ////get pointer to the data in the lighting constant buffer
-    //lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
-    //for (int i = 0; i < NUM_LIGHTS; i++)
-    //{
-    //    lightPositionDataPtr->lightPosition[i] = a_LightPositionBufferData.lightPosition[i];
-    //}
-    //a_DeviceContext->Unmap(m_LightPositionBuffer, 0);
-    ////buffer number is set for vs and ps separately
-    //bufferNumber = 1;
-    //a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
-    ////End Buffer 2----------------------------------------------------
-    //
-    //
-    ////Data 3 / LIGHT BUFFER-----------------------------------------
-    //result = a_DeviceContext->Map(m_LightColorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    //if (FAILED(result))
-    //{
-    //    return false;
-    //}
-    ////get pointer to the data in the lighting constant buffer
-    //lightColorDataPtr = (LightColorBufferType*)mappedSubresource.pData;
-    //for (int i = 0; i < NUM_LIGHTS; i++)
-    //{
-    //    lightColorDataPtr->lightDiffuse[i] = a_LightColorBufferData.lightDiffuse[i];
-    //}
-    //a_DeviceContext->Unmap(m_LightColorBuffer, 0);
-    ////buffer number is set for vs and ps separately
-    //bufferNumber = 0;
-    //a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightColorBuffer);
-    ////End Buffer 3----------------------------------------------------
+    
     
     return true;
 }
