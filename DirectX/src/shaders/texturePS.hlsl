@@ -1,31 +1,38 @@
-//#define NUM_LIGHTS 4
-//Sampler is for selecting pixels from the texture and it alls us to modify how pixels are written to the polygon face when shaded. (example from rastertek:
-//For example, if the polygon is really far away and only makes up 8 pixels on the screen then we use the sample state to figure out which pixels or what combination of pixels will actually be drawn from the original texture.)
-//There is Sampler2D which combines both but requires newer version of directx so wont be fully compatible
-
+#define NUM_LIGHTS 4
 Texture2D ShaderTexture1 : register(t0);
 Texture2D ShaderTexture2 : register(t1);
 Texture2D ShaderTexture3 : register(t2);
 
 Texture2D ReflectionTexture : register(t3);
+Texture2D RefractionTexture : register(t4);
 SamplerState Sampler : register(s0);
 
 cbuffer LightInformationBuffer
 {
-    float4 diffuseColor;
+    //Main light will be diffuseColor[0].
+    float4 diffuseColor[NUM_LIGHTS];
+    float4 specularColor;
     float specularPower;
-    //float4 specularColor;
     float3 lightDirection;
-    //float4 ambientColor;
+    float4 ambientColor;
 }
 cbuffer TranslationBuffer
 {
-    //Rastertek only has float1 for .x on texture but might as well make it for both x and y.
     float2 textureTranslation;
 }
 cbuffer TransparentBuffer
 {
     float blendAmount;
+}
+cbuffer WaterBuffer
+{
+    float waterTranslation;
+    float reflectRefractScale;
+    float2 waterPadding;
+}
+cbuffer PixelBuffer 
+{
+    float4 pixelColor;
 }
 
 struct PixelInputType
@@ -36,64 +43,38 @@ struct PixelInputType
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
     float3 viewDirection : TEXCOORD1;
-    //float fogFactor : FOG;
-    //float clip : SV_ClipDistance0;
-    //float4 reflectionPosition : TEXCOORD2;
+    float fogFactor : FOG;
+    float clip : SV_ClipDistance0;
+    float4 reflectionPosition : TEXCOORD2;
+    float4 refractionPosition : TEXCOORD3;
+    float3 lightPos[NUM_LIGHTS] : TEXCOORD4;
 };
 
 float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
 {
-    float4 textureColor;
-    float4 bumpMap;
-    float3 bumpNormal;
-    float3 lightDir;
-    float lightIntensity;
-    float4 color;
+    float4 textureColor = ShaderTexture1.Sample(Sampler, input.tex);
+    float4 normalMap = ShaderTexture2.Sample(Sampler, input.tex);
 
-    // Sample the pixel color from the color texture at this location.
-    textureColor = ShaderTexture1.Sample(Sampler, input.tex);
+    //make the normal map -1 to 1 not 0 to 1 as the normal map can give negative vectors.
+    normalMap = (normalMap * 2.0f) - 1.0f;
+    float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
 
-    // Sample the pixel from the normal map.
-    bumpMap = ShaderTexture2.Sample(Sampler, input.tex);
-
-    // Expand the range of the normal value from (0, +1) to (-1, +1).
-    bumpMap = (bumpMap * 2.0f) - 1.0f;
-
-    // Calculate the normal from the data in the normal map.
-    bumpNormal = (bumpMap.x * input.tangent) + (bumpMap.y * input.binormal) + (bumpMap.z * input.normal);
-
-    // Normalize the resulting bump normal.
-    bumpNormal = normalize(bumpNormal);
-
-    // Invert the light direction for calculations.
-    lightDir = -lightDirection;
-
-    // Calculate the amount of light on this pixel based on the normal map value.
-    lightIntensity = saturate(dot(bumpNormal, lightDir));
-    
-    // Determine the final amount of diffuse color based on the diffuse color combined with the light intensity.
-    color = saturate(diffuseColor * lightIntensity);
-    // Combine the final light color with the texture color.
-    color = color * textureColor;
-
+    //how much light will be on this pixel (-light direction to be towards light instead of towards normal) 
+    float lightIntensity = saturate(dot(bumpNormal, -lightDirection));
+    float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
     return color;
 }
 
 
 float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
 {
+    //This first section is the same as the normal map above.
     float4 textureColor = ShaderTexture1.Sample(Sampler, input.tex);
     float4 normalMap = ShaderTexture2.Sample(Sampler, input.tex);
-
     normalMap = (normalMap * 2.0f) - 1.0f;
-
-    // Calculate the normal from the data in the normal map.
     float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
-
-    //how much light will be on this pixel (-light direction to be towards light instead of towards normal) 
     float lightIntensity = saturate(dot(bumpNormal, -lightDirection));
-    
-    float4 color = saturate(diffuseColor * lightIntensity) * textureColor;
+    float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
 
     if (lightIntensity <= 0.0f)
         return color;
