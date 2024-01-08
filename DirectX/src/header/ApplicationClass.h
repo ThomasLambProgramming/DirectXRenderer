@@ -7,6 +7,7 @@
 #include "ModelClass.h"
 #include "ShaderClass.h"
 #include "InputClass.h"
+#include "LightClass.h"
 
 #include <Windows.h>
 #include <mmsystem.h>
@@ -40,6 +41,7 @@ private:
 	Direct3DClass* m_Direct3D;
 	CameraClass* m_Camera;
 	ModelClass* m_Model;
+	LightClass* m_MainLight;
 	
 	ShaderClass* m_TextureShader;
 	

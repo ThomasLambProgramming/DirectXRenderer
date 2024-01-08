@@ -14,35 +14,37 @@ class ModelClass
 private:
     struct VertexType
     {
-        //8
         XMFLOAT3 position;
-        XMFLOAT3 color;
         XMFLOAT2 texture;
-
-        //4
-        XMFLOAT2 blendTexture1;
-        XMFLOAT2 blendTexture2;
-
-        //12
         XMFLOAT3 normal;
         XMFLOAT3 tangent; 
         XMFLOAT3 binormal;
-        XMFLOAT3 padding;
-        //24 bytes?
     };
     struct ModelType
     {
         float x,y,z;
         float tu,tv;
         float nx,ny,nz;
+        float tx, ty, tz;
+        float bx, by, bz;
     };
-    
+    struct TempVertexType
+    {
+        float x, y, z;
+        float tu, tv;
+        float nx, ny, nz;
+    };
+
+    struct VectorType
+    {
+        float x, y, z;
+    };
 public:
     ModelClass();
     ModelClass(const ModelClass&);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2);
+    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1);
     void Shutdown();
     void Render(ID3D11DeviceContext* a_DeviceContext);
 
@@ -60,6 +62,8 @@ private:
     bool LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName, int a_texId);
     void ReleaseTexture();
     
+    void CalculateModelVectors();
+    void CalculateTangentBinormal(TempVertexType, TempVertexType, TempVertexType, VectorType&, VectorType&);
 private:
     ID3D11Buffer* m_VertexBuffer;
     ID3D11Buffer* m_IndexBuffer;
@@ -68,7 +72,6 @@ private:
 
     TextureClass* m_Texture;
     TextureClass* m_blendTexture1;
-    TextureClass* m_blendTexture2;
     ModelType* m_Model;
 };
 #endif

@@ -25,11 +25,12 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 {
 	char textureFileName[128];
 	char blendTexture1FileName[128];
-	char blendTexture2FileName[128];
 	char modelFileName[128];
 
     bool result;
 
+	
+	
 	m_startTime = timeGetTime();
     m_Direct3D = new Direct3DClass;
 
@@ -43,24 +44,14 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     //create camera
     m_Camera = new CameraClass;
     //set initial position of camera
-    m_Camera->SetPosition(0.0f,10.0f,-10.0f);
-	m_Camera->SetRotation(45, 0 ,0);
+    m_Camera->SetPosition(0.0f,0.0f,-5.0f);
 
     //create a new model
     m_Model = new ModelClass;
 
 	strcpy_s(textureFileName, "./data/stone01.tga");
-	//strcpy_s(blendTexture1FileName, "./data/dirt01.tga");
-	strcpy_s(blendTexture1FileName, "./data/light01.tga");
-	strcpy_s(blendTexture2FileName, "./data/alpha01.tga");
-	strcpy_s(modelFileName, "./data/plane.txt");
-	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName);
-    if (!result)
-    {
-        MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
-        return false;
-    }
+	strcpy_s(blendTexture1FileName, "./data/normal01.tga");
+	strcpy_s(modelFileName, "./data/cube.txt");
 	
 	m_TextureShader = new ShaderClass;
 	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 3, true);
@@ -70,6 +61,16 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	    MessageBox(a_WindowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
     	return false;
     }
+	
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName );
+    if (!result)
+    {
+        MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
+        return false;
+    }
+	m_MainLight = new LightClass;
+	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,0.0f,1.0f);
+	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	
     return true;
 }
@@ -82,6 +83,11 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = 0;
     }
+	if (m_MainLight)
+	{
+		delete m_MainLight;
+		m_MainLight = 0;
+	}
 	
 	if (m_TextureShader)
 	{
@@ -115,6 +121,15 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 	if (a_InputClass->IsEscapePressed())
 		return false;
 
+	static float rotation = 360.0f;
+	
+	 // Update the rotation variable each frame.
+    rotation -= 0.0174532925f * 0.25f;
+    if(rotation <= 0.0f)
+    {
+        rotation += 360.0f;
+    }
+
 	a_InputClass->GetMouseLocation(mouseX, mouseY);
 	mouseDown = a_InputClass->IsMousePressed(0);
 
@@ -123,7 +138,7 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 	
 	UpdateFps();
 	//Render Scene
-    return Render(0.00174532825f);
+    return Render(rotation);
 }
 
 bool ApplicationClass::Render(float a_Rotation)
@@ -131,8 +146,6 @@ bool ApplicationClass::Render(float a_Rotation)
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
-	XMFLOAT4 lightPositions[NUM_LIGHTS];
-	XMFLOAT4 lightDiffuse[NUM_LIGHTS];
     bool result;
 	
     //clear buffers to begin the scene
@@ -146,6 +159,8 @@ bool ApplicationClass::Render(float a_Rotation)
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
 
+	world = XMMatrixRotationY(a_Rotation);
+	
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 	
@@ -157,8 +172,8 @@ bool ApplicationClass::Render(float a_Rotation)
 									 world,
 									 view,
 									 projection,
-									 lightPositions,
-									 lightDiffuse);
+									 m_MainLight->m_DiffuseColor,
+									 m_MainLight->m_LightDirection);
 	if (!result)
 	{
 		return false;

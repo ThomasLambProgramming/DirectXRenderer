@@ -21,12 +21,9 @@ private:
     };
     struct LightInformationBufferType 
     {
-        XMFLOAT4 lightPosition[NUM_LIGHTS];
-        XMFLOAT4 lightDiffuse[NUM_LIGHTS];
-    };
-    struct PixelBufferType
-    {
-        XMFLOAT4 pixelColor;
+        XMFLOAT4 diffuseColor;
+        XMFLOAT3 lightDirection;
+        float padding;
     };
     
 public:
@@ -46,8 +43,8 @@ public:
                 XMMATRIX a_world,
                 XMMATRIX a_view,
                 XMMATRIX a_projection,
-                XMFLOAT4 a_lightPosition[NUM_LIGHTS],
-                XMFLOAT4 a_lightDiffuse[NUM_LIGHTS]);
+                XMFLOAT4 a_lightDiffuse,
+                XMFLOAT3 a_lightDirection);
     
     ID3D11ShaderResourceView* GetTexture(int a_textureNumber);
 
@@ -67,8 +64,8 @@ private:
                          XMMATRIX a_world,
                          XMMATRIX a_view,
                          XMMATRIX a_projection,
-                         XMFLOAT4 a_lightPosition[NUM_LIGHTS],
-                         XMFLOAT4 a_lightDiffuse[NUM_LIGHTS]);
+                         XMFLOAT4 a_lightDiffuse,
+                         XMFLOAT3 a_lightDirection);
     
     void RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount);
 

@@ -65,13 +65,13 @@ bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
                 XMMATRIX a_world,
                 XMMATRIX a_view,
                 XMMATRIX a_projection,
-                XMFLOAT4 a_lightPosition[NUM_LIGHTS],
-                XMFLOAT4 a_lightDiffuse[NUM_LIGHTS])
+                XMFLOAT4 a_lightDiffuse,
+                XMFLOAT3 a_lightDirection)
 {
     bool result;
 
     //set shader params that will be used for rendering
-    result = SetShaderParams(a_deviceContext, a_texture1, a_texture2, a_texture3, a_world, a_view, a_projection, a_lightPosition, a_lightDiffuse);
+    result = SetShaderParams(a_deviceContext, a_texture1, a_texture2, a_texture3, a_world, a_view, a_projection, a_lightDiffuse, a_lightDirection);
     if (!result)
         return false;
 
@@ -111,11 +111,10 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     ID3D10Blob* errorMessage;
     ID3D10Blob* vertexShaderBuffer;
     ID3D10Blob* pixelShaderBuffer;
-    D3D11_INPUT_ELEMENT_DESC polygonLayout[8];
+    D3D11_INPUT_ELEMENT_DESC polygonLayout[5];
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
     D3D11_BUFFER_DESC lightInfoBufferDesc;
-    D3D11_BUFFER_DESC pixelColorBufferDesc;
     D3D11_SAMPLER_DESC samplerDesc;
 
     //init the pointers this func will use to null
@@ -140,7 +139,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     else if (a_amountOfBlendTextures == 2)
         result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureAlphaMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     else if (a_amountOfBlendTextures == 3)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureLightMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "NormalMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
     //Im an idiot and will probably accidentally add 3 blend textures and it will fail so default to no blending in that case.
     else
         result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureSingleSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
@@ -177,61 +176,37 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[0].InstanceDataStepRate = 0;
 
-    polygonLayout[1].SemanticName = "COLOR";
+	polygonLayout[1].SemanticName = "TEXCOORD";
 	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	polygonLayout[1].InputSlot = 0;
 	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[1].InstanceDataStepRate = 0;
     
-	polygonLayout[2].SemanticName = "TEXCOORD";
-	polygonLayout[2].SemanticIndex = 0;
-	polygonLayout[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	polygonLayout[2].InputSlot = 0;
-	polygonLayout[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[2].InstanceDataStepRate = 0;
-    
-	polygonLayout[3].SemanticName = "TEXCOORD";
-	polygonLayout[3].SemanticIndex = 1;
-	polygonLayout[3].Format = DXGI_FORMAT_R32G32_FLOAT;
-	polygonLayout[3].InputSlot = 0;
-	polygonLayout[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[3].InstanceDataStepRate = 0;
-    
-	polygonLayout[4].SemanticName = "TEXCOORD";
-	polygonLayout[4].SemanticIndex = 2;
-	polygonLayout[4].Format = DXGI_FORMAT_R32G32_FLOAT;
-	polygonLayout[4].InputSlot = 0;
-	polygonLayout[4].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[4].InstanceDataStepRate = 0;
+    polygonLayout[2].SemanticName = "NORMAL";
+    polygonLayout[2].SemanticIndex = 0;
+    polygonLayout[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    polygonLayout[2].InputSlot = 0;
+    polygonLayout[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[2].InstanceDataStepRate = 0;
 
-    polygonLayout[5].SemanticName = "NORMAL";
-    polygonLayout[5].SemanticIndex = 0;
-    polygonLayout[5].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-    polygonLayout[5].InputSlot = 0;
-    polygonLayout[5].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-    polygonLayout[5].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-    polygonLayout[5].InstanceDataStepRate = 0;
+    polygonLayout[3].SemanticName = "TANGENT";
+    polygonLayout[3].SemanticIndex = 0;
+    polygonLayout[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    polygonLayout[3].InputSlot = 0;
+    polygonLayout[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[3].InstanceDataStepRate = 0;
 
-    polygonLayout[6].SemanticName = "TANGENT";
-    polygonLayout[6].SemanticIndex = 0;
-    polygonLayout[6].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-    polygonLayout[6].InputSlot = 0;
-    polygonLayout[6].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-    polygonLayout[6].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-    polygonLayout[6].InstanceDataStepRate = 0;
-
-    polygonLayout[7].SemanticName = "BINORMAL";
-    polygonLayout[7].SemanticIndex = 0;
-    polygonLayout[7].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-    polygonLayout[7].InputSlot = 0;
-    polygonLayout[7].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-    polygonLayout[7].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-    polygonLayout[7].InstanceDataStepRate = 0;
+    polygonLayout[4].SemanticName = "BINORMAL";
+    polygonLayout[4].SemanticIndex = 0;
+    polygonLayout[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    polygonLayout[4].InputSlot = 0;
+    polygonLayout[4].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[4].InstanceDataStepRate = 0;
 
     
     //size of array / individual element size
@@ -283,7 +258,6 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     {
         return false;
     }
-
     
     lightInfoBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     lightInfoBufferDesc.ByteWidth = sizeof(LightInformationBufferType);
@@ -297,20 +271,6 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
 
-    
-    pixelColorBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    pixelColorBufferDesc.ByteWidth = sizeof(PixelBufferType);
-    pixelColorBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    pixelColorBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    pixelColorBufferDesc.MiscFlags = 0;
-    pixelColorBufferDesc.StructureByteStride = 0;
-    result = a_device->CreateBuffer(&pixelColorBufferDesc, NULL, &m_PixelBuffer);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    
     return true;
 }
 
@@ -379,15 +339,13 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                         XMMATRIX a_world,
                         XMMATRIX a_view,
                         XMMATRIX a_projection,
-                        XMFLOAT4 a_lightPosition[NUM_LIGHTS],
-                        XMFLOAT4 a_lightDiffuse[NUM_LIGHTS])
+                        XMFLOAT4 a_lightDiffuse,
+                        XMFLOAT3 a_lightDirection)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
     MatrixBufferType* matrixDataPtr;
     LightInformationBufferType* lightInformationDataPtr;
-    PixelBufferType* pixelDataPtr;
-    unsigned int bufferNumber;
     
     //I believe this has something to do with the register(t0) and etc. look this up later.
     a_DeviceContext->PSSetShaderResources(0,1, &a_Texture1);
@@ -400,9 +358,6 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     a_projection = XMMatrixTranspose(a_projection);
 
 
-#pragma region VertexShaderBuffers
-
-    
     //Buffer 1 / MATRIX BUFFER-----------------------------------------
     //lock the constant buffer so we can write to it.
     result = a_DeviceContext->Map(m_MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
@@ -417,8 +372,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     matrixDataPtr->view = a_view;
     matrixDataPtr->projection = a_projection;
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
-    bufferNumber = 0;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
+    a_DeviceContext->VSSetConstantBuffers(0, 1, &m_MatrixBuffer);
     //End Buffer 1----------------------------------------------------
 
     
@@ -429,43 +383,16 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
         return false;
     }
     lightInformationDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
-    for (int i = 0; i < NUM_LIGHTS; i++)
-    {
-        lightInformationDataPtr->lightPosition[i] = a_lightPosition[i];
-        lightInformationDataPtr->lightDiffuse[i] = a_lightDiffuse[i];
-    }
+
+    lightInformationDataPtr->diffuseColor = a_lightDiffuse;
+    lightInformationDataPtr->lightDirection = a_lightDirection;
+    lightInformationDataPtr->padding = 0.0f;
+    
     a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
-    bufferNumber = 1;
-    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightInformationBuffer);
     //As the pixel shader has the exact same setup we can just give the information here.
     a_DeviceContext->PSSetConstantBuffers(0, 1, &m_LightInformationBuffer);
     //End Buffer 2----------------------------------------------------
 
-    
-#pragma endregion VertexShaderBuffers 
-
-    
-#pragma region PixelShaderBuffers
-
-    
-    //BUFFER 2 / PIXEL BUFFER-----------------------------------------
-    //lock the constant buffer so we can write to it.
-    result = a_DeviceContext->Map(m_PixelBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    //get a pointer to the data in the constant buffer
-    pixelDataPtr = (PixelBufferType*)mappedSubresource.pData;
-    //for now the pixel will just always be red.
-    pixelDataPtr->pixelColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
-    a_DeviceContext->Unmap(m_PixelBuffer, 0);
-    a_DeviceContext->PSSetConstantBuffers(1, 1, &m_PixelBuffer);
-    //End Buffer 2----------------------------------------------------
-
-    
-#pragma endregion PixelShaderBuffers
     return true;
 }
 
