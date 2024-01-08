@@ -4,7 +4,7 @@ ModelClass::ModelClass()
 {
     m_VertexBuffer = 0;
     m_IndexBuffer = 0;
-	m_Texture = 0;
+	m_texture = 0;
 	m_Model = 0;
 }
 
@@ -16,7 +16,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1)
+bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2)
 {
     bool result;
 
@@ -50,14 +50,14 @@ bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devic
 			return false;
 		}
 	}
-	//if (a_BlendTextureFileName2)
-	//{
-	//	result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName2, 2);
-	//	if (!result)
-	//	{
-	//		return false;
-	//	}
-	//}
+	if (a_BlendTextureFileName2)
+	{
+		result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName2, 2);
+		if (!result)
+		{
+			return false;
+		}
+	}
 	
     return true;
 }
@@ -82,13 +82,13 @@ int ModelClass::GetIndexCount()
 ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture)
 {
 	if (a_texture == 0)
-		return m_Texture->GetTexture();
+		return m_texture->GetTexture();
 	if (a_texture == 1)
 		return m_blendTexture1->GetTexture();
-	//if (a_texture == 2)
-	//	return m_blendTexture2->GetTexture();
+	if (a_texture == 2)
+		return m_blendTexture2->GetTexture();
 
-	return m_Texture->GetTexture();
+	return m_texture->GetTexture();
 }
 
 bool ModelClass::LoadModel(char* a_ModelFileName)
@@ -163,8 +163,8 @@ bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devi
 	if (a_texId == 0)
 	{
 		//create and initalize the texture object;
-		m_Texture = new TextureClass;
-		result = m_Texture->Initialize(a_Device, a_DeviceContext, a_FileName);
+		m_texture = new TextureClass;
+		result = m_texture->Initialize(a_Device, a_DeviceContext, a_FileName);
 	}
 	if (a_texId == 1)
 	{
@@ -172,12 +172,12 @@ bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devi
 		m_blendTexture1 = new TextureClass;
 		result = m_blendTexture1->Initialize(a_Device, a_DeviceContext, a_FileName);
 	}
-	//if (a_texId == 2)
-	//{
-	//	//create and initalize the texture object;
-	//	m_blendTexture2 = new TextureClass;
-	//	result = m_blendTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
-	//}
+	if (a_texId == 2)
+	{
+		//create and initalize the texture object;
+		m_blendTexture2 = new TextureClass;
+		result = m_blendTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
 	if (!result)
 	{
 		return false;
@@ -187,11 +187,11 @@ bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devi
 
 void ModelClass::ReleaseTexture()
 {
-	if (m_Texture)
+	if (m_texture)
 	{
-		m_Texture->Shutdown();
-		delete m_Texture;
-		m_Texture = 0;
+		m_texture->Shutdown();
+		delete m_texture;
+		m_texture = 0;
 	}
 	return;
 }
@@ -317,7 +317,7 @@ void ModelClass::CalculateModelVectors()
 {
     int faceCount, i, index;
     TempVertexType vertex1, vertex2, vertex3;
-    VectorType tangent, binormal;
+    XMFLOAT3 tangent, binormal;
 
 
     // Calculate the number of faces in the model.
@@ -380,7 +380,7 @@ void ModelClass::CalculateModelVectors()
     return;
 }
 
-void ModelClass::CalculateTangentBinormal(TempVertexType vertex1, TempVertexType vertex2, TempVertexType vertex3, VectorType& tangent, VectorType& binormal)
+void ModelClass::CalculateTangentBinormal(TempVertexType vertex1, TempVertexType vertex2, TempVertexType vertex3, XMFLOAT3& tangent, XMFLOAT3& binormal)
 {
     float vector1[3], vector2[3];
     float tuVector[2], tvVector[2];

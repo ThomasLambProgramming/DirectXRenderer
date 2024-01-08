@@ -25,7 +25,9 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 {
 	char textureFileName[128];
 	char blendTexture1FileName[128];
+	char blendTexture2FileName[128];
 	char modelFileName[128];
+	char shaderEntryPoint[128];
 
     bool result;
 
@@ -49,12 +51,14 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     //create a new model
     m_Model = new ModelClass;
 
-	strcpy_s(textureFileName, "./data/stone01.tga");
-	strcpy_s(blendTexture1FileName, "./data/normal01.tga");
+	strcpy_s(textureFileName, "./data/stone02.tga");
+	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
+	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(modelFileName, "./data/cube.txt");
+	strcpy_s(shaderEntryPoint, "SpecularMapPixelShader");
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 3, true);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 3, true, shaderEntryPoint);
 	
     if (!result)
     {
@@ -62,7 +66,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     	return false;
     }
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName );
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName);
     if (!result)
     {
         MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -172,6 +176,7 @@ bool ApplicationClass::Render(float a_Rotation)
 									 world,
 									 view,
 									 projection,
+									 m_Camera->GetPosition(),
 									 m_MainLight->m_DiffuseColor,
 									 m_MainLight->m_LightDirection);
 	if (!result)

@@ -12,6 +12,11 @@ cbuffer MatrixBuffer
     matrix viewMatrix;
     matrix projectionMatrix;
 }
+cbuffer CameraBuffer 
+{
+    float3 cameraPosition;
+    float padding;
+}
 
 struct VertexInputType
 {
@@ -29,13 +34,13 @@ struct PixelInputType
     float3 normal: NORMAL;
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
+    float3 viewDirection : TEXCOORD1;
 };
 
 
 PixelInputType TextureVertexShader(VertexInputType a_input)
 {
     PixelInputType output;
-    
 
     // Change the position vector to be 4 units for proper matrix calculations.
     a_input.position.w = 1.0f;
@@ -60,6 +65,8 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     // Calculate the binormal vector against the world matrix only and then normalize the final value.
     output.binormal = mul(a_input.binormal, (float3x3)worldMatrix);
     output.binormal = normalize(output.binormal);
+
+    output.viewDirection = normalize(cameraPosition.xyz - output.position.xyz);
     
     return output;
 }

@@ -5,13 +5,14 @@
 
 Texture2D ShaderTexture1 : register(t0);
 Texture2D ShaderTexture2 : register(t1);
+Texture2D ShaderTexture3 : register(t2);
 SamplerState Sampler : register(s0);
 
 cbuffer LightInformationBuffer
 {
     float4 diffuseColor;
+    float specularPower;
     float3 lightDirection;
-    float padding;
 }
 
 struct PixelInputType
@@ -21,6 +22,7 @@ struct PixelInputType
     float3 normal: NORMAL;
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
+    float3 viewDirection : TEXCOORD1;
 };
 
 float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
@@ -32,7 +34,6 @@ float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
     float lightIntensity;
     float4 color;
 
-	
     // Sample the pixel color from the color texture at this location.
     textureColor = ShaderTexture1.Sample(Sampler, input.tex);
 
@@ -61,6 +62,38 @@ float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
 
     return color;
 }
+
+
+float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
+{
+    float4 textureColor = ShaderTexture1.Sample(Sampler, input.tex);
+    float4 normalMap = ShaderTexture2.Sample(Sampler, input.tex);
+
+    normalMap = (normalMap * 2.0f) - 1.0f;
+
+    // Calculate the normal from the data in the normal map.
+    float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
+
+    //how much light will be on this pixel (-light direction to be towards light instead of towards normal) 
+    float lightIntensity = saturate(dot(bumpNormal, -lightDirection));
+    
+    float4 color = saturate(diffuseColor * lightIntensity) * textureColor;
+
+    if (lightIntensity <= 0.0f)
+        return color;
+
+    float4 specularIntensity = ShaderTexture3.Sample(Sampler, input.tex);
+
+    //Make sure to use the normal maps so specular isnt just going off a flat surface.
+    //reflection is the direction.
+    float3 reflection = normalize(2 * lightIntensity * bumpNormal + lightDirection);
+    //limit the dot of the reflection direction and the view direction and then multiply by the preset specular power amount)
+    float4 specular = pow(saturate(dot(reflection, input.viewDirection)), specularPower) * specularIntensity;
+    color = saturate(color + specular);
+
+    return color;
+}
+ 
 
 //float4 TextureSingleSamplePixelShader(PixelInputType a_input) : SV_TARGET
 //{

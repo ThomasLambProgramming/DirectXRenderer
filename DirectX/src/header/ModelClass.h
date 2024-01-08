@@ -25,26 +25,20 @@ private:
         float x,y,z;
         float tu,tv;
         float nx,ny,nz;
-        float tx, ty, tz;
-        float bx, by, bz;
+        float tx,ty,tz;
+        float bx,by,bz;
     };
     struct TempVertexType
     {
         float x, y, z;
         float tu, tv;
-        float nx, ny, nz;
-    };
-
-    struct VectorType
-    {
-        float x, y, z;
     };
 public:
     ModelClass();
     ModelClass(const ModelClass&);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1);
+    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2);
     void Shutdown();
     void Render(ID3D11DeviceContext* a_DeviceContext);
 
@@ -53,6 +47,7 @@ public:
     ID3D11ShaderResourceView* GetTexture(int a_texture = 0);
     
 private:
+    
     bool LoadModel(char* a_ModelFileName);
     void ReleaseModel();
     bool InitializeBuffers(ID3D11Device* a_Device);
@@ -63,15 +58,18 @@ private:
     void ReleaseTexture();
     
     void CalculateModelVectors();
-    void CalculateTangentBinormal(TempVertexType, TempVertexType, TempVertexType, VectorType&, VectorType&);
+    void CalculateTangentBinormal(TempVertexType, TempVertexType, TempVertexType, XMFLOAT3&, XMFLOAT3&);
+    
 private:
     ID3D11Buffer* m_VertexBuffer;
     ID3D11Buffer* m_IndexBuffer;
+    
     int m_VertexCount;
     int m_IndexCount;
 
-    TextureClass* m_Texture;
+    TextureClass* m_texture;
     TextureClass* m_blendTexture1;
+    TextureClass* m_blendTexture2;
     ModelType* m_Model;
 };
 #endif

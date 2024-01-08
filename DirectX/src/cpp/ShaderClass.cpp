@@ -8,7 +8,7 @@ ShaderClass::ShaderClass()
     m_SampleState = 0;
     m_MatrixBuffer = 0;
     m_LightInformationBuffer = 0;
-    m_PixelBuffer = 0;
+    m_CameraBuffer = 0;
     m_Texture = 0;
     m_BlendTexture1 = 0;
     m_BlendTexture2 = 0;
@@ -23,7 +23,7 @@ ShaderClass::~ShaderClass()
 {
 }
 
-bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights)
+bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights, char* a_shaderEntryPoint)
 {
     bool result;
     wchar_t vsFileName[128];
@@ -42,7 +42,7 @@ bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_
     {
         return false;
     }
-    result = InitializeShader(a_Device, a_WindowHandle, vsFileName, psFileName, a_blendAmount);
+    result = InitializeShader(a_Device, a_WindowHandle, vsFileName, psFileName, a_shaderEntryPoint, a_blendAmount);
 
     if (!result)
     {
@@ -65,13 +65,14 @@ bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
                 XMMATRIX a_world,
                 XMMATRIX a_view,
                 XMMATRIX a_projection,
+                XMFLOAT3 a_cameraPosition,
                 XMFLOAT4 a_lightDiffuse,
                 XMFLOAT3 a_lightDirection)
 {
     bool result;
 
     //set shader params that will be used for rendering
-    result = SetShaderParams(a_deviceContext, a_texture1, a_texture2, a_texture3, a_world, a_view, a_projection, a_lightDiffuse, a_lightDirection);
+    result = SetShaderParams(a_deviceContext, a_texture1, a_texture2, a_texture3, a_world, a_view, a_projection, a_cameraPosition, a_lightDiffuse, a_lightDirection);
     if (!result)
         return false;
 
@@ -105,7 +106,7 @@ bool ShaderClass::HasBlendingEnabled()
     return m_BlendTexture1 || m_BlendTexture2;
 }
 
-bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, int a_amountOfBlendTextures)
+bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, char* a_shaderEntryPoint, int a_amountOfBlendTextures)
 {
     HRESULT result;
     ID3D10Blob* errorMessage;
@@ -134,15 +135,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
     
-    if (a_amountOfBlendTextures == 1)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureMultiSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
-    else if (a_amountOfBlendTextures == 2)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureAlphaMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
-    else if (a_amountOfBlendTextures == 3)
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "NormalMapPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
-    //Im an idiot and will probably accidentally add 3 blend textures and it will fail so default to no blending in that case.
-    else
-        result = D3DCompileFromFile(a_psFileName, NULL, NULL, "TextureSingleSamplePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
+    result = D3DCompileFromFile(a_psFileName, NULL, NULL, a_shaderEntryPoint, "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
         
         
     if (FAILED(result))
@@ -270,7 +263,19 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     {
         return false;
     }
-
+    
+    D3D11_BUFFER_DESC cameraBufferDesc;
+    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    cameraBufferDesc.MiscFlags = 0;
+    cameraBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&cameraBufferDesc, NULL, &m_CameraBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
     return true;
 }
 
@@ -290,10 +295,10 @@ void ShaderClass::ShutdownShader()
         m_MatrixBuffer->Release();
         m_MatrixBuffer = 0;
     }
-    if (m_PixelBuffer)
+    if (m_CameraBuffer)
     {
-        m_PixelBuffer->Release();
-        m_PixelBuffer = 0;
+        m_CameraBuffer->Release();
+        m_CameraBuffer = 0;
     }
     if (m_LightInformationBuffer)
     {
@@ -339,25 +344,19 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                         XMMATRIX a_world,
                         XMMATRIX a_view,
                         XMMATRIX a_projection,
+                        XMFLOAT3 a_cameraPosition,
                         XMFLOAT4 a_lightDiffuse,
                         XMFLOAT3 a_lightDirection)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-    MatrixBufferType* matrixDataPtr;
-    LightInformationBufferType* lightInformationDataPtr;
     
     //I believe this has something to do with the register(t0) and etc. look this up later.
     a_DeviceContext->PSSetShaderResources(0,1, &a_Texture1);
     a_DeviceContext->PSSetShaderResources(1,1, &a_Texture2);
     a_DeviceContext->PSSetShaderResources(2,1, &a_Texture3);
     
-    //transpose the matrices to prepare them for the shader.
-    a_world = XMMatrixTranspose(a_world);
-    a_view = XMMatrixTranspose(a_view);
-    a_projection = XMMatrixTranspose(a_projection);
-
-
+    
     //Buffer 1 / MATRIX BUFFER-----------------------------------------
     //lock the constant buffer so we can write to it.
     result = a_DeviceContext->Map(m_MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
@@ -365,12 +364,19 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     {
         return false;
     }
+    
+    //transpose the matrices to prepare them for the shader.
+    a_world = XMMatrixTranspose(a_world);
+    a_view = XMMatrixTranspose(a_view);
+    a_projection = XMMatrixTranspose(a_projection);
+    
     //get a pointer to the data in the constant buffer
+    MatrixBufferType* matrixDataPtr;
     matrixDataPtr = (MatrixBufferType*)mappedSubresource.pData;
-    //copy the data into the buffer
     matrixDataPtr->world = a_world;
     matrixDataPtr->view = a_view;
     matrixDataPtr->projection = a_projection;
+    
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(0, 1, &m_MatrixBuffer);
     //End Buffer 1----------------------------------------------------
@@ -382,16 +388,33 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     {
         return false;
     }
+    LightInformationBufferType* lightInformationDataPtr;
     lightInformationDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
-
     lightInformationDataPtr->diffuseColor = a_lightDiffuse;
     lightInformationDataPtr->lightDirection = a_lightDirection;
     lightInformationDataPtr->padding = 0.0f;
     
     a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
-    //As the pixel shader has the exact same setup we can just give the information here.
     a_DeviceContext->PSSetConstantBuffers(0, 1, &m_LightInformationBuffer);
     //End Buffer 2----------------------------------------------------
+
+
+    //Buffer 3 / CAMERA INFO BUFFER-----------------------------------------
+    result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    CameraBufferType* cameraDataPtr;
+    cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
+    cameraDataPtr->cameraPosition = a_cameraPosition;
+    cameraDataPtr->padding = 0.0f;
+    
+    a_DeviceContext->Unmap(m_CameraBuffer, 0);
+    a_DeviceContext->VSSetConstantBuffers(1, 1, &m_CameraBuffer);
+    //End Buffer 3----------------------------------------------------
+    
 
     return true;
 }

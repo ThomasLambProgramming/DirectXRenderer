@@ -25,6 +25,11 @@ private:
         XMFLOAT3 lightDirection;
         float padding;
     };
+    struct CameraBufferType
+    {
+        XMFLOAT3 cameraPosition;
+        float padding;
+    };
     
 public:
 
@@ -32,7 +37,7 @@ public:
     ShaderClass(const ShaderClass& a_Copy);
     ~ShaderClass();
 
-    bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights);
+    bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights, char* a_shaderEntryPoint);
     void Shutdown();
     
     bool Render(ID3D11DeviceContext* a_deviceContext,
@@ -43,6 +48,7 @@ public:
                 XMMATRIX a_world,
                 XMMATRIX a_view,
                 XMMATRIX a_projection,
+                XMFLOAT3 a_cameraPosition,
                 XMFLOAT4 a_lightDiffuse,
                 XMFLOAT3 a_lightDirection);
     
@@ -53,7 +59,7 @@ public:
     
 private:
     
-    bool InitializeShader(ID3D11Device* a_Device, HWND a_WindowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, int a_amountOfBlendTextures);
+    bool InitializeShader(ID3D11Device* a_Device, HWND a_WindowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName,char* a_shaderEntryPoint, int a_amountOfBlendTextures);
     void ShutdownShader();
     void OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath);
 
@@ -64,6 +70,7 @@ private:
                          XMMATRIX a_world,
                          XMMATRIX a_view,
                          XMMATRIX a_projection,
+                         XMFLOAT3 a_cameraPosition,
                          XMFLOAT4 a_lightDiffuse,
                          XMFLOAT3 a_lightDirection);
     
@@ -79,7 +86,7 @@ private:
 
     ID3D11Buffer* m_MatrixBuffer;
     ID3D11Buffer* m_LightInformationBuffer;
-    ID3D11Buffer* m_PixelBuffer;
+    ID3D11Buffer* m_CameraBuffer;
 
     //Setup for multi texture blending. Limited to 2 blending textures at the moment.
     ID3D11ShaderResourceView* m_Texture;
