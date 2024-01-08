@@ -22,8 +22,8 @@ private:
     struct LightInformationBufferType 
     {
         XMFLOAT4 diffuseColor;
+        float specularPower;
         XMFLOAT3 lightDirection;
-        float padding;
     };
     struct CameraBufferType
     {

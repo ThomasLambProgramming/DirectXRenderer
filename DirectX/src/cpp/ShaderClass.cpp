@@ -392,7 +392,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     lightInformationDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
     lightInformationDataPtr->diffuseColor = a_lightDiffuse;
     lightInformationDataPtr->lightDirection = a_lightDirection;
-    lightInformationDataPtr->padding = 0.0f;
+    lightInformationDataPtr->specularPower= 16.0f;
     
     a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(0, 1, &m_LightInformationBuffer);
