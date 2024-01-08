@@ -6,13 +6,26 @@
 Texture2D ShaderTexture1 : register(t0);
 Texture2D ShaderTexture2 : register(t1);
 Texture2D ShaderTexture3 : register(t2);
+
+Texture2D ReflectionTexture : register(t3);
 SamplerState Sampler : register(s0);
 
 cbuffer LightInformationBuffer
 {
     float4 diffuseColor;
     float specularPower;
+    //float4 specularColor;
     float3 lightDirection;
+    //float4 ambientColor;
+}
+cbuffer TranslationBuffer
+{
+    //Rastertek only has float1 for .x on texture but might as well make it for both x and y.
+    float2 textureTranslation;
+}
+cbuffer TransparentBuffer
+{
+    float blendAmount;
 }
 
 struct PixelInputType
@@ -23,6 +36,9 @@ struct PixelInputType
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
     float3 viewDirection : TEXCOORD1;
+    //float fogFactor : FOG;
+    //float clip : SV_ClipDistance0;
+    //float4 reflectionPosition : TEXCOORD2;
 };
 
 float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET

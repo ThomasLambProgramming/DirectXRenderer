@@ -17,6 +17,19 @@ cbuffer CameraBuffer
     float3 cameraPosition;
     float padding;
 }
+cbuffer FogBuffer
+{
+    float fogStart;
+    float fogEnd;
+}
+cbuffer ClipPlaneBuffer
+{
+    float4 clipPlane;
+}
+cbuffer ReflectionBuffer
+{
+    matrix reflectionMatrix;
+}
 
 struct VertexInputType
 {
@@ -35,6 +48,9 @@ struct PixelInputType
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
     float3 viewDirection : TEXCOORD1;
+    //float fogFactor : FOG;
+    //float clip : SV_ClipDistance0;
+    //float4 reflectionPosition : TEXCOORD2;
 };
 
 
