@@ -13,7 +13,7 @@ cbuffer LightInformationBuffer
     float4 diffuseColor[NUM_LIGHTS];
     float4 specularColor;
     float specularPower;
-    float3 lightDirection;
+    float3 mainLightDirection;
     float4 ambientColor;
 }
 cbuffer TranslationBuffer
@@ -60,7 +60,7 @@ float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
     float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
 
     //how much light will be on this pixel (-light direction to be towards light instead of towards normal) 
-    float lightIntensity = saturate(dot(bumpNormal, -lightDirection));
+    float lightIntensity = saturate(dot(bumpNormal, -mainLightDirection));
     float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
     return color;
 }
@@ -73,7 +73,7 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
     float4 normalMap = ShaderTexture2.Sample(Sampler, input.tex);
     normalMap = (normalMap * 2.0f) - 1.0f;
     float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
-    float lightIntensity = saturate(dot(bumpNormal, -lightDirection));
+    float lightIntensity = saturate(dot(bumpNormal, -mainLightDirection));
     float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
 
     if (lightIntensity <= 0.0f)
@@ -83,7 +83,7 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
 
     //Make sure to use the normal maps so specular isnt just going off a flat surface.
     //reflection is the direction.
-    float3 reflection = normalize(2 * lightIntensity * bumpNormal + lightDirection);
+    float3 reflection = normalize(2 * lightIntensity * bumpNormal + mainLightDirection);
     //limit the dot of the reflection direction and the view direction and then multiply by the preset specular power amount)
     float4 specular = pow(saturate(dot(reflection, input.viewDirection)), specularPower) * specularIntensity;
     color = saturate(color + specular);
