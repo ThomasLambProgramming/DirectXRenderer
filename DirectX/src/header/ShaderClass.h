@@ -46,10 +46,10 @@ private:
     //Pixel shader buffers.
     struct LightInformationBufferType 
     {
-        XMFLOAT4 diffuseColor;
+        XMFLOAT4 diffuseColor[NUM_LIGHTS];
         XMFLOAT4 specularColor;
         float specularPower;
-        XMFLOAT3 lightDirection;
+        XMFLOAT3 mainLightDirection;
         XMFLOAT4 ambientColor;
     };
     struct TranslationBufferType
@@ -135,7 +135,7 @@ private:
                          XMFLOAT2 a_translationAmount,
                          float a_blendAmount,
                          float a_waterTranslation,
-                         float reflectRefractScale,
+                         float a_reflectRefractScale,
                          XMFLOAT4 a_PixelColor,
                          ID3D11ShaderResourceView* a_Texture1,
                          ID3D11ShaderResourceView* a_Texture2,

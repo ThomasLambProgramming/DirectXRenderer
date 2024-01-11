@@ -568,7 +568,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                          XMFLOAT2 a_translationAmount,
                          float a_blendAmount,
                          float a_waterTranslation,
-                         float reflectRefractScale,
+                         float a_reflectRefractScale,
                          XMFLOAT4 a_PixelColor,
                          ID3D11ShaderResourceView* a_Texture1,
                          ID3D11ShaderResourceView* a_Texture2,
@@ -612,6 +612,8 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     CameraBufferType* cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
+    cameraDataPtr->padding = 0.0f;
+    cameraDataPtr->cameraPosition = a_cameraPosition;
     a_DeviceContext->Unmap(m_CameraBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
     bufferNumber++;
@@ -620,6 +622,8 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     FogBufferType* fogDataPtr = (FogBufferType*)mappedSubresource.pData;
+    fogDataPtr->fogStart = a_fogStart;
+    fogDataPtr->fogEnd = a_fogEnd;
     a_DeviceContext->Unmap(m_FogBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_FogBuffer);
     bufferNumber++;
@@ -628,6 +632,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     ClipPlaneBufferType* clipPlaneDataPtr = (ClipPlaneBufferType*)mappedSubresource.pData;
+    clipPlaneDataPtr->clipPlane = a_clipPlane;
     a_DeviceContext->Unmap(m_ClipPlaneBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_ClipPlaneBuffer);
     bufferNumber++;
@@ -636,6 +641,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     ReflectionBufferType* reflectionDataPtr = (ReflectionBufferType*)mappedSubresource.pData;
+    reflectionDataPtr->reflectionMatrix = a_reflectionMatrix;
     a_DeviceContext->Unmap(m_ReflectionBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_ReflectionBuffer);
     bufferNumber++;
@@ -644,6 +650,8 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     LightPositionBufferType* lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+        lightPositionDataPtr->lightPosition[i] = a_lightPositions[i]; 
     a_DeviceContext->Unmap(m_LightPositionBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
     bufferNumber++;
@@ -657,6 +665,12 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     LightInformationBufferType* lightInfoDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+        lightInfoDataPtr->diffuseColor[i] = a_lightDiffuse[i];
+    lightInfoDataPtr->ambientColor = a_ambientColor;
+    lightInfoDataPtr->specularColor = a_specularColor;
+    lightInfoDataPtr->mainLightDirection = a_mainLightDirection;
+    lightInfoDataPtr->specularPower = a_SpecularPower;
     a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightInformationBuffer);
     bufferNumber++;
@@ -665,6 +679,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     TranslationBufferType* translationDataPtr = (TranslationBufferType*)mappedSubresource.pData;
+    translationDataPtr->textureTranslation = a_translationAmount;
     a_DeviceContext->Unmap(m_TranslationBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TranslationBuffer);
     bufferNumber++;
@@ -673,6 +688,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     TransparentBufferType* transparentDataPtr = (TransparentBufferType*)mappedSubresource.pData;
+    transparentDataPtr->blendAmount = a_blendAmount;
     a_DeviceContext->Unmap(m_TransparentBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TransparentBuffer);
     bufferNumber++;
@@ -681,6 +697,9 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     WaterBufferType* waterDataPtr = (WaterBufferType*)mappedSubresource.pData;
+    waterDataPtr->waterPadding = XMFLOAT2(0,0);
+    waterDataPtr->waterTranslation = a_waterTranslation;
+    waterDataPtr->reflectRefractScale = a_reflectRefractScale;
     a_DeviceContext->Unmap(m_WaterBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_WaterBuffer);
     bufferNumber++;
@@ -689,6 +708,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     if (FAILED(result))
         return false;
     PixelBufferType* pixelDataPtr = (PixelBufferType*)mappedSubresource.pData;
+    pixelDataPtr->pixelColor = a_PixelColor;
     a_DeviceContext->Unmap(m_PixelBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PixelBuffer);
     bufferNumber++;
