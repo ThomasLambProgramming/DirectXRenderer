@@ -57,6 +57,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(modelFileName, "./data/cube.txt");
 	strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
+	//strcpy_s(shaderPixelEntryPoint, "TextureSingleSamplePixelShader");
 	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
 	
 	m_TextureShader = new ShaderClass;
@@ -77,6 +78,8 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	m_MainLight = new LightClass;
 	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,0.0f,1.0f);
 	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_MainLight->m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_MainLight->m_SpecularPower = 16.0f;
 	
     return true;
 }

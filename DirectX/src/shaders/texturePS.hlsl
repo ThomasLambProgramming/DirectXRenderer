@@ -94,12 +94,12 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
 }
  
 
-//float4 TextureSingleSamplePixelShader(PixelInputType a_input) : SV_TARGET
-//{
-//    //sample the color from the texture using the sampler at this texture coordinate location.
-//    //float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex);
-//    //return textureColor;
-//}
+float4 TextureSingleSamplePixelShader(PixelInputType a_input) : SV_TARGET
+{
+    //sample the color from the texture using the sampler at this texture coordinate location.
+    float4 textureColor = ShaderTexture3.Sample(Sampler, a_input.tex);
+    return textureColor;
+}
 //
 //float4 TextureMultiLightPixelShader(PixelInputType a_input) : SV_TARGET
 //{
