@@ -19,10 +19,12 @@ cbuffer LightInformationBuffer
 cbuffer TranslationBuffer
 {
     float2 textureTranslation;
+    float2 translationpadding;
 }
 cbuffer TransparentBuffer
 {
     float blendAmount;
+    float3 blendPadding;
 }
 cbuffer WaterBuffer
 {

@@ -21,7 +21,7 @@ cbuffer FogBuffer
 {
     float fogStart;
     float fogEnd;
-    //float2 fogPadding;
+    float2 fogPadding;
 }
 cbuffer ClipPlaneBuffer
 {
@@ -82,6 +82,17 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.binormal = normalize(mul(a_input.binormal, (float3x3)worldMatrix));
 
     output.viewDirection = normalize(cameraPosition.xyz - output.position.xyz);
+
+    output.fogFactor = 1;
+    output.clip = 0;
+    output.reflectionPosition = 0;
+    output.refractionPosition = 0;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        output.lightPos[i].x = lightPosition[i].x;
+        output.lightPos[i].y = lightPosition[i].y;
+        output.lightPos[i].z = lightPosition[i].z;
+    }
     
     return output;
 }

@@ -38,7 +38,7 @@ public:
     ModelClass(const ModelClass&);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2);
+    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_TextureFileName2, char* a_TextureFileName3, char* a_TextureFileName4, char* a_TextureFileName5);
     void Shutdown();
     void Render(ID3D11DeviceContext* a_DeviceContext);
 
@@ -68,8 +68,11 @@ private:
     int m_IndexCount;
 
     TextureClass* m_texture;
-    TextureClass* m_blendTexture1;
-    TextureClass* m_blendTexture2;
+    TextureClass* m_SecondaryTexture1;
+    TextureClass* m_SecondaryTexture2;
+    TextureClass* m_SecondaryTexture3;
+    TextureClass* m_SecondaryTexture4;
+
     ModelType* m_Model;
 };
 #endif

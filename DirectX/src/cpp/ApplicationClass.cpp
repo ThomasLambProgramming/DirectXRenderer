@@ -27,7 +27,8 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	char blendTexture1FileName[128];
 	char blendTexture2FileName[128];
 	char modelFileName[128];
-	char shaderEntryPoint[128];
+	char shaderVertexEntryPoint[128];
+	char shaderPixelEntryPoint[128];
 
     bool result;
 
@@ -55,10 +56,11 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(modelFileName, "./data/cube.txt");
-	strcpy_s(shaderEntryPoint, "SpecularMapPixelShader");
+	strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
+	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, 3, true, shaderEntryPoint);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, shaderVertexEntryPoint ,shaderPixelEntryPoint);
 	
     if (!result)
     {
@@ -66,7 +68,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     	return false;
     }
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName);
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName, nullptr, nullptr);
     if (!result)
     {
         MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -150,6 +152,13 @@ bool ApplicationClass::Render(float a_Rotation)
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
+	XMFLOAT4 lightPositions[NUM_LIGHTS];
+	XMFLOAT4 lightDiffuse[NUM_LIGHTS];
+	XMFLOAT2 translationAmount = XMFLOAT2(0,0);
+	float blendAmount = 0;;
+	float waterTranslation = 0;
+	float reflectRefractScale = 0;
+	XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
     bool result;
 	
     //clear buffers to begin the scene
@@ -167,18 +176,39 @@ bool ApplicationClass::Render(float a_Rotation)
 	
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
+
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		lightDiffuse[i] = m_MainLight->m_DiffuseColor;
+		lightPositions[i] = m_MainLight->m_Position;
+	}
 	
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 									 m_Model->GetIndexCount(),
-									 m_Model->GetTexture(0),
-									 m_Model->GetTexture(1),
-									 m_Model->GetTexture(2),
 									 world,
 									 view,
 									 projection,
 									 m_Camera->GetPosition(),
-									 m_MainLight->m_DiffuseColor,
-									 m_MainLight->m_LightDirection);
+									 0,
+									 0,
+									 XMFLOAT4(0,0,0,0),
+									 world,
+									 lightPositions,
+									 lightDiffuse,
+									 m_MainLight->m_SpecularColor,
+									 m_MainLight->m_SpecularPower,
+									 m_MainLight->m_LightDirection,
+									 m_MainLight->m_AmbientColor,
+									 translationAmount,
+									 blendAmount,
+									 waterTranslation,
+									 reflectRefractScale,
+									 pixelColor,
+									 m_Model->GetTexture(0),
+									 m_Model->GetTexture(1),
+									 m_Model->GetTexture(2),
+									 m_Model->GetTexture(3),
+									 m_Model->GetTexture(4));
 	if (!result)
 	{
 		return false;

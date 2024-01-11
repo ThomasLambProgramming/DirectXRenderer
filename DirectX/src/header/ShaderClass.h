@@ -10,6 +10,8 @@ const int NUM_LIGHTS = 4;
 using namespace DirectX;
 using namespace std;
 
+//This is a general purpose shader class for testing and learning shaders buffers and everything inbetween without needing
+//to create a class and rewrite alot of code every time.
 class ShaderClass
 {
 private:
@@ -29,6 +31,7 @@ private:
     {
         float fogStart;
         float fogEnd;
+        XMFLOAT2 fogPadding;
     };
     struct ClipPlaneBufferType
     {
@@ -55,10 +58,12 @@ private:
     struct TranslationBufferType
     {
         XMFLOAT2 textureTranslation;
+        XMFLOAT2 textureTranslationPadding;
     };
     struct TransparentBufferType
     {
         float blendAmount;
+        XMFLOAT3 blendPadding;
     };
     struct WaterBufferType
     {
@@ -77,7 +82,7 @@ public:
     ShaderClass(const ShaderClass& a_Copy);
     ~ShaderClass();
 
-    bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint);
+    bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint);
     void Shutdown();
     
     bool Render(ID3D11DeviceContext* a_deviceContext,
@@ -178,6 +183,4 @@ private:
     ID3D11ShaderResourceView* m_SecondaryTexture2;
     ID3D11ShaderResourceView* m_SecondaryTexture3;
     ID3D11ShaderResourceView* m_SecondaryTexture4;
-
-    bool m_AllowLights;
 };

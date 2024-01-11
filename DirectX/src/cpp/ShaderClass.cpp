@@ -8,14 +8,40 @@ ShaderClass::ShaderClass()
     m_SampleState = 0;
     m_MatrixBuffer = 0;
     m_LightInformationBuffer = 0;
-    m_CameraBuffer = 0;
-    m_Texture = 0;
+    m_FogBuffer = 0;
+    m_ClipPlaneBuffer = 0;
+    m_ReflectionBuffer = 0;
+    m_LightPositionBuffer = 0;
+    m_TranslationBuffer = 0;
+    m_TransparentBuffer = 0;
+    m_WaterBuffer = 0;
+    m_PixelBuffer = 0;
     m_SecondaryTexture1 = 0;
     m_SecondaryTexture2 = 0;
-    m_AllowLights = true;
+    m_SecondaryTexture3 = 0;
+    m_SecondaryTexture4 = 0;
+    m_CameraBuffer = 0;
+    m_Texture = 0;
 }
 
-ShaderClass::ShaderClass(const ShaderClass& a_Copy)
+ShaderClass::ShaderClass(const ShaderClass& a_Copy): m_VertexShader(nullptr), m_PixelShader(nullptr),
+                                                     m_InputLayout(nullptr),
+                                                     m_SampleState(nullptr),
+                                                     m_MatrixBuffer(nullptr),
+                                                     m_CameraBuffer(nullptr),
+                                                     m_FogBuffer(nullptr),
+                                                     m_ClipPlaneBuffer(nullptr),
+                                                     m_ReflectionBuffer(nullptr),
+                                                     m_LightPositionBuffer(nullptr),
+                                                     m_LightInformationBuffer(nullptr),
+                                                     m_TranslationBuffer(nullptr),
+                                                     m_TransparentBuffer(nullptr),
+                                                     m_WaterBuffer(nullptr),
+                                                     m_PixelBuffer(nullptr), m_Texture(nullptr),
+                                                     m_SecondaryTexture1(nullptr),
+                                                     m_SecondaryTexture2(nullptr),
+                                                     m_SecondaryTexture3(nullptr),
+                                                     m_SecondaryTexture4(nullptr)
 {
 }
 
@@ -23,15 +49,13 @@ ShaderClass::~ShaderClass()
 {
 }
 
-bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, int a_blendAmount, bool a_allowLights, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
+bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
 {
     bool result;
     wchar_t vsFileName[128];
     wchar_t psFileName[128];
     int error;
 
-    m_AllowLights = a_allowLights;
-    
     error = wcscpy_s(vsFileName, 128, L"./src/shaders/textureVS.hlsl");
     if (error != 0)
     {
@@ -624,6 +648,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     FogBufferType* fogDataPtr = (FogBufferType*)mappedSubresource.pData;
     fogDataPtr->fogStart = a_fogStart;
     fogDataPtr->fogEnd = a_fogEnd;
+    fogDataPtr->fogPadding = XMFLOAT2(0.0f,0.0f);
     a_DeviceContext->Unmap(m_FogBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_FogBuffer);
     bufferNumber++;
@@ -654,7 +679,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
         lightPositionDataPtr->lightPosition[i] = a_lightPositions[i]; 
     a_DeviceContext->Unmap(m_LightPositionBuffer, 0);
     a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
-    bufferNumber++;
+    //bufferNumber++;
 
 
     //Vertex buffers above so now that we are setting pixel buffers we reset the buffer number
@@ -680,6 +705,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
         return false;
     TranslationBufferType* translationDataPtr = (TranslationBufferType*)mappedSubresource.pData;
     translationDataPtr->textureTranslation = a_translationAmount;
+    translationDataPtr->textureTranslationPadding = XMFLOAT2(0.0f,0.0f);
     a_DeviceContext->Unmap(m_TranslationBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TranslationBuffer);
     bufferNumber++;
@@ -689,6 +715,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
         return false;
     TransparentBufferType* transparentDataPtr = (TransparentBufferType*)mappedSubresource.pData;
     transparentDataPtr->blendAmount = a_blendAmount;
+    transparentDataPtr->blendPadding = XMFLOAT3(0.0f,0.0f,0.0f);
     a_DeviceContext->Unmap(m_TransparentBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TransparentBuffer);
     bufferNumber++;
@@ -711,7 +738,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     pixelDataPtr->pixelColor = a_PixelColor;
     a_DeviceContext->Unmap(m_PixelBuffer, 0);
     a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PixelBuffer);
-    bufferNumber++;
+    //bufferNumber++;
     
     return true;
 }

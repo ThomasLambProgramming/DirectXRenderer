@@ -16,7 +16,7 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_BlendTextureFileName1, char* a_BlendTextureFileName2)
+bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_TextureFileName2, char* a_TextureFileName3, char* a_TextureFileName4, char* a_TextureFileName5)
 {
     bool result;
 
@@ -42,17 +42,33 @@ bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devic
 	{
 		return false;
 	}
-	if (a_BlendTextureFileName1)
+	if (a_TextureFileName2)
 	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName1, 1);
+		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName2, 1);
 		if (!result)
 		{
 			return false;
 		}
 	}
-	if (a_BlendTextureFileName2)
+	if (a_TextureFileName3)
 	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_BlendTextureFileName2, 2);
+		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName3, 2);
+		if (!result)
+		{
+			return false;
+		}
+	}
+	if (a_TextureFileName4)
+	{
+		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName4, 3);
+		if (!result)
+		{
+			return false;
+		}
+	}
+	if (a_TextureFileName5)
+	{
+		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName5, 4);
 		if (!result)
 		{
 			return false;
@@ -83,11 +99,15 @@ ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture)
 {
 	if (a_texture == 0)
 		return m_texture->GetTexture();
-	if (a_texture == 1)
-		return m_blendTexture1->GetTexture();
-	if (a_texture == 2)
-		return m_blendTexture2->GetTexture();
-
+	if (a_texture == 1 && m_SecondaryTexture1)
+		return m_SecondaryTexture1->GetTexture();
+	if (a_texture == 2 && m_SecondaryTexture2)
+		return m_SecondaryTexture2->GetTexture();
+	if (a_texture == 3 && m_SecondaryTexture3)
+		return m_SecondaryTexture3->GetTexture();
+	if (a_texture == 4 && m_SecondaryTexture4)
+		return m_SecondaryTexture4->GetTexture();
+	
 	return m_texture->GetTexture();
 }
 
@@ -169,14 +189,26 @@ bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_Devi
 	if (a_texId == 1)
 	{
 		//create and initalize the texture object;
-		m_blendTexture1 = new TextureClass;
-		result = m_blendTexture1->Initialize(a_Device, a_DeviceContext, a_FileName);
+		m_SecondaryTexture1 = new TextureClass;
+		result = m_SecondaryTexture1->Initialize(a_Device, a_DeviceContext, a_FileName);
 	}
 	if (a_texId == 2)
 	{
 		//create and initalize the texture object;
-		m_blendTexture2 = new TextureClass;
-		result = m_blendTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
+		m_SecondaryTexture2 = new TextureClass;
+		result = m_SecondaryTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
+	if (a_texId == 3)
+	{
+		//create and initalize the texture object;
+		m_SecondaryTexture3 = new TextureClass;
+		result = m_SecondaryTexture3->Initialize(a_Device, a_DeviceContext, a_FileName);
+	}
+	if (a_texId == 4)
+	{
+		//create and initalize the texture object;
+		m_SecondaryTexture4 = new TextureClass;
+		result = m_SecondaryTexture4->Initialize(a_Device, a_DeviceContext, a_FileName);
 	}
 	if (!result)
 	{
@@ -193,7 +225,30 @@ void ModelClass::ReleaseTexture()
 		delete m_texture;
 		m_texture = 0;
 	}
-	return;
+	if (m_SecondaryTexture1)
+	{
+		m_SecondaryTexture1->Shutdown();
+		delete m_SecondaryTexture1;
+		m_SecondaryTexture1 = 0;
+	}
+	if (m_SecondaryTexture2)
+	{
+		m_SecondaryTexture2->Shutdown();
+		delete m_SecondaryTexture2;
+		m_SecondaryTexture2 = 0;
+	}
+	if (m_SecondaryTexture3)
+	{
+		m_SecondaryTexture3->Shutdown();
+		delete m_SecondaryTexture3;
+		m_SecondaryTexture3 = 0;
+	}
+	if (m_SecondaryTexture4)
+	{
+		m_SecondaryTexture4->Shutdown();
+		delete m_SecondaryTexture4;
+		m_SecondaryTexture4 = 0;
+	}
 }
 
 bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
