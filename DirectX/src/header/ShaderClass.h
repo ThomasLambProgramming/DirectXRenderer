@@ -56,7 +56,7 @@ private:
     {
         XMFLOAT2 textureTranslation;
     };
-    struct TranparentBufferType
+    struct TransparentBufferType
     {
         float blendAmount;
     };

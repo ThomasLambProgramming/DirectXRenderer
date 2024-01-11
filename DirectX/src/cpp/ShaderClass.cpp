@@ -146,11 +146,8 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     ID3D10Blob* vertexShaderBuffer;
     ID3D10Blob* pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[5];
-    unsigned int numElements;
-    D3D11_BUFFER_DESC matrixBufferDesc;
-    D3D11_BUFFER_DESC lightInfoBufferDesc;
-    D3D11_SAMPLER_DESC samplerDesc;
-
+    
+    
     //init the pointers this func will use to null
     errorMessage = 0;
     vertexShaderBuffer = 0;
@@ -236,7 +233,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 
     
     //size of array / individual element size
-    numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
+    int numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
     result = a_device->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &m_InputLayout);
     if (FAILED(result))
@@ -250,6 +247,8 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     pixelShaderBuffer = 0;
 
     
+    
+    D3D11_SAMPLER_DESC samplerDesc;
     //Filter is the most important element of the sampler. it tells the sampler how to pick what pixels to be used or combine to create the final look of the texture on the polygon face.
     //the filter below is more expensive but gives a good(it says best but hmmm) visual result. it tells the sampler to use lin-interp for minification, magnifiction and mip-level sampling.
     //the wrapping for uv set so its never greater than 0-1 anything outside of that wraps around and the rest of these settings are defaults for the sampler.
@@ -272,14 +271,88 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
 
+    //Vertex Shader Buffers
+    D3D11_BUFFER_DESC matrixBufferDesc;
+    D3D11_BUFFER_DESC cameraBufferDesc;
+    D3D11_BUFFER_DESC fogBufferDesc;
+    D3D11_BUFFER_DESC clipPlaneBufferDesc;
+    D3D11_BUFFER_DESC reflectionBufferDesc;
+    D3D11_BUFFER_DESC lightPositionBufferDesc;
+
+    //Pixel Shader Buffers
+    D3D11_BUFFER_DESC lightInfoBufferDesc;
+    D3D11_BUFFER_DESC translationBufferDesc;
+    D3D11_BUFFER_DESC transparentBufferDesc;
+    D3D11_BUFFER_DESC waterBufferDesc;
+    D3D11_BUFFER_DESC pixelBufferDesc;
+    
     matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
     matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     matrixBufferDesc.MiscFlags = 0;
     matrixBufferDesc.StructureByteStride = 0;
-    //create the constant buffer pointer so we can access the vertex shader constant buffer from within the class
     result = a_device->CreateBuffer(&matrixBufferDesc, NULL, &m_MatrixBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    cameraBufferDesc.MiscFlags = 0;
+    cameraBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&cameraBufferDesc, NULL, &m_CameraBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    fogBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    fogBufferDesc.ByteWidth = sizeof(FogBufferType);
+    fogBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    fogBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    fogBufferDesc.MiscFlags = 0;
+    fogBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&fogBufferDesc, NULL, &m_FogBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    clipPlaneBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    clipPlaneBufferDesc.ByteWidth = sizeof(ClipPlaneBufferType);
+    clipPlaneBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    clipPlaneBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    clipPlaneBufferDesc.MiscFlags = 0;
+    clipPlaneBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&clipPlaneBufferDesc, NULL, &m_ClipPlaneBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    reflectionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    reflectionBufferDesc.ByteWidth = sizeof(ReflectionBufferType);
+    reflectionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    reflectionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    reflectionBufferDesc.MiscFlags = 0;
+    reflectionBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&reflectionBufferDesc, NULL, &m_ReflectionBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    lightPositionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightPositionBufferDesc.ByteWidth = sizeof(LightPositionBufferType);
+    lightPositionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightPositionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightPositionBufferDesc.MiscFlags = 0;
+    lightPositionBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&lightPositionBufferDesc, NULL, &m_LightPositionBuffer);
     if (FAILED(result))
     {
         return false;
@@ -297,18 +370,54 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
     
-    D3D11_BUFFER_DESC cameraBufferDesc;
-    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
-    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    cameraBufferDesc.MiscFlags = 0;
-    cameraBufferDesc.StructureByteStride = 0;
-    result = a_device->CreateBuffer(&cameraBufferDesc, NULL, &m_CameraBuffer);
+    translationBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    translationBufferDesc.ByteWidth = sizeof(TranslationBufferType);
+    translationBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    translationBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    translationBufferDesc.MiscFlags = 0;
+    translationBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&translationBufferDesc, NULL, &m_TranslationBuffer);
     if (FAILED(result))
     {
         return false;
     }
+    
+    transparentBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    transparentBufferDesc.ByteWidth = sizeof(TransparentBufferType);
+    transparentBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    transparentBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    transparentBufferDesc.MiscFlags = 0;
+    transparentBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&transparentBufferDesc, NULL, &m_TransparentBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    waterBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    waterBufferDesc.ByteWidth = sizeof(WaterBufferType);
+    waterBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    waterBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    waterBufferDesc.MiscFlags = 0;
+    waterBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&waterBufferDesc, NULL, &m_WaterBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    pixelBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    pixelBufferDesc.ByteWidth = sizeof(PixelBufferType);
+    pixelBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    pixelBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    pixelBufferDesc.MiscFlags = 0;
+    pixelBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&pixelBufferDesc, NULL, &m_PixelBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
     return true;
 }
 
@@ -318,55 +427,124 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 void ShaderClass::ShutdownShader()
 {
     //release all pointers
-    if (m_SampleState)
-    {
-        m_SampleState->Release();
-        m_SampleState = 0;
-    }
-    if (m_MatrixBuffer)
-    {
-        m_MatrixBuffer->Release();
-        m_MatrixBuffer = 0;
-    }
-    if (m_CameraBuffer)
-    {
-        m_CameraBuffer->Release();
-        m_CameraBuffer = 0;
-    }
-    if (m_LightInformationBuffer)
-    {
-        m_LightInformationBuffer->Release();
-        m_LightInformationBuffer = 0;
-    }
-    if (m_SecondaryTexture1)
-    {
-        m_SecondaryTexture1->Release();
-        m_SecondaryTexture1 = 0;
-    }
-    if (m_SecondaryTexture2)
-    {
-        m_SecondaryTexture2->Release();
-        m_SecondaryTexture2 = 0;
-    }
-    if (m_Texture)
-    {
-        m_Texture->Release();
-        m_Texture = 0;
-    }
-    if (m_InputLayout)
-    {
-        m_InputLayout->Release();
-        m_InputLayout = 0;
-    }
     if (m_VertexShader)
     {
         m_VertexShader->Release();
         m_VertexShader = 0;
     }
+    
     if (m_PixelShader)
     {
         m_PixelShader->Release();
         m_PixelShader = 0;
+    }
+    
+    if (m_InputLayout)
+    {
+        m_InputLayout->Release();
+        m_InputLayout = 0;
+    }
+    
+    if (m_SampleState)
+    {
+        m_SampleState->Release();
+        m_SampleState = 0;
+    }
+    
+    if (m_MatrixBuffer)
+    {
+        m_MatrixBuffer->Release();
+        m_MatrixBuffer = 0;
+    }
+    
+    if (m_CameraBuffer)
+    {
+        m_CameraBuffer->Release();
+        m_CameraBuffer = 0;
+    }
+    
+    if (m_FogBuffer)
+    {
+        m_FogBuffer->Release();
+        m_FogBuffer = 0;
+    }
+    
+    if (m_ClipPlaneBuffer)
+    {
+        m_ClipPlaneBuffer->Release();
+        m_ClipPlaneBuffer = 0;
+    }
+    
+    if (m_ReflectionBuffer)
+    {
+        m_ReflectionBuffer->Release();
+        m_ReflectionBuffer = 0;
+    }
+    
+    if (m_LightPositionBuffer)
+    {
+        m_LightPositionBuffer->Release();
+        m_LightPositionBuffer = 0;
+    }
+    
+    if (m_LightInformationBuffer)
+    {
+        m_LightInformationBuffer->Release();
+        m_LightInformationBuffer = 0;
+    }
+    
+    if (m_TranslationBuffer)
+    {
+        m_TranslationBuffer->Release();
+        m_TranslationBuffer = 0;
+    }
+    
+    if (m_TransparentBuffer)
+    {
+        m_TransparentBuffer->Release();
+        m_TransparentBuffer = 0;
+    }
+    
+    if (m_WaterBuffer)
+    {
+        m_WaterBuffer->Release();
+        m_WaterBuffer = 0;
+    }
+    
+    if (m_PixelBuffer)
+    {
+        m_PixelBuffer->Release();
+        m_PixelBuffer = 0;
+    }
+    
+    if (m_Texture)
+    {
+        m_Texture->Release();
+        m_Texture = 0;
+    }
+    
+    if (m_SecondaryTexture1)
+    {
+        m_SecondaryTexture1->Release();
+        m_SecondaryTexture1 = 0;
+    }
+    
+    if (m_SecondaryTexture2)
+    {
+        m_SecondaryTexture2->Release();
+        m_SecondaryTexture2 = 0;
+    }
+    
+    if (m_SecondaryTexture3)
+    {
+        m_SecondaryTexture3->Release();
+        m_SecondaryTexture3 = 0;
+    }
+    
+    if (m_SecondaryTexture4)
+    {
+        m_SecondaryTexture4->Release();
+        m_SecondaryTexture4 = 0;
     }
 }
 
@@ -398,23 +576,22 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
                          ID3D11ShaderResourceView* a_Texture4,
                          ID3D11ShaderResourceView* a_Texture5)
 {
-    HRESULT result;
-    D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-    
     //I believe this has something to do with the register(t0) and etc. look this up later.
     a_DeviceContext->PSSetShaderResources(0,1, &a_Texture1);
     a_DeviceContext->PSSetShaderResources(1,1, &a_Texture2);
     a_DeviceContext->PSSetShaderResources(2,1, &a_Texture3);
+    a_DeviceContext->PSSetShaderResources(3,1, &a_Texture4);
+    a_DeviceContext->PSSetShaderResources(4,1, &a_Texture5);
     
+    HRESULT result;
+    D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+    int bufferNumber = 0;
     
-    //Buffer 1 / MATRIX BUFFER-----------------------------------------
-    //lock the constant buffer so we can write to it.
     result = a_DeviceContext->Map(m_MatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
     {
         return false;
     }
-    
     //transpose the matrices to prepare them for the shader.
     a_world = XMMatrixTranspose(a_world);
     a_view = XMMatrixTranspose(a_view);
@@ -428,44 +605,94 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_DeviceContext,
     matrixDataPtr->projection = a_projection;
     
     a_DeviceContext->Unmap(m_MatrixBuffer, 0);
-    a_DeviceContext->VSSetConstantBuffers(0, 1, &m_MatrixBuffer);
-    //End Buffer 1----------------------------------------------------
-
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_MatrixBuffer);
+    bufferNumber++;
     
-    //Buffer 2 / LIGHT INFO BUFFER-----------------------------------------
-    result = a_DeviceContext->Map(m_LightInformationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    if (FAILED(result))
-    {
-        return false;
-    }
-    LightInformationBufferType* lightInformationDataPtr;
-    lightInformationDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
-    lightInformationDataPtr->diffuseColor = a_lightDiffuse;
-    lightInformationDataPtr->lightDirection = a_lightDirection;
-    lightInformationDataPtr->specularPower= 16.0f;
-    
-    a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
-    a_DeviceContext->PSSetConstantBuffers(0, 1, &m_LightInformationBuffer);
-    //End Buffer 2----------------------------------------------------
-
-
-    //Buffer 3 / CAMERA INFO BUFFER-----------------------------------------
     result = a_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
-    {
         return false;
-    }
-    
-    CameraBufferType* cameraDataPtr;
-    cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
-    cameraDataPtr->cameraPosition = a_cameraPosition;
-    cameraDataPtr->padding = 0.0f;
-    
+    CameraBufferType* cameraDataPtr = (CameraBufferType*)mappedSubresource.pData;
     a_DeviceContext->Unmap(m_CameraBuffer, 0);
-    a_DeviceContext->VSSetConstantBuffers(1, 1, &m_CameraBuffer);
-    //End Buffer 3----------------------------------------------------
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
+    bufferNumber++;
     
+    result = a_DeviceContext->Map(m_FogBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    FogBufferType* fogDataPtr = (FogBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_FogBuffer, 0);
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_FogBuffer);
+    bufferNumber++;
 
+    result = a_DeviceContext->Map(m_ClipPlaneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    ClipPlaneBufferType* clipPlaneDataPtr = (ClipPlaneBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_ClipPlaneBuffer, 0);
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_ClipPlaneBuffer);
+    bufferNumber++;
+    
+    result = a_DeviceContext->Map(m_ReflectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    ReflectionBufferType* reflectionDataPtr = (ReflectionBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_ReflectionBuffer, 0);
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_ReflectionBuffer);
+    bufferNumber++;
+    
+    result = a_DeviceContext->Map(m_LightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    LightPositionBufferType* lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_LightPositionBuffer, 0);
+    a_DeviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
+    bufferNumber++;
+
+
+    //Vertex buffers above so now that we are setting pixel buffers we reset the buffer number
+    bufferNumber = 0;
+
+    
+    result = a_DeviceContext->Map(m_LightInformationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    LightInformationBufferType* lightInfoDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_LightInformationBuffer, 0);
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightInformationBuffer);
+    bufferNumber++;
+
+    result = a_DeviceContext->Map(m_TranslationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    TranslationBufferType* translationDataPtr = (TranslationBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_TranslationBuffer, 0);
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TranslationBuffer);
+    bufferNumber++;
+    
+    result = a_DeviceContext->Map(m_TransparentBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    TransparentBufferType* transparentDataPtr = (TransparentBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_TransparentBuffer, 0);
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_TransparentBuffer);
+    bufferNumber++;
+
+    result = a_DeviceContext->Map(m_WaterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    WaterBufferType* waterDataPtr = (WaterBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_WaterBuffer, 0);
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_WaterBuffer);
+    bufferNumber++;
+    
+    result = a_DeviceContext->Map(m_PixelBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    PixelBufferType* pixelDataPtr = (PixelBufferType*)mappedSubresource.pData;
+    a_DeviceContext->Unmap(m_PixelBuffer, 0);
+    a_DeviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PixelBuffer);
+    bufferNumber++;
+    
     return true;
 }
 
@@ -478,6 +705,7 @@ void ShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_Index
     a_DeviceContext->PSSetSamplers(0, 1, &m_SampleState);
     a_DeviceContext->DrawIndexed(a_IndexCount, 0, 0);
 }
+
 void ShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath)
 {
     char* compileErrors;
