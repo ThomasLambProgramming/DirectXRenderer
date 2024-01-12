@@ -4,9 +4,9 @@
 
 SpriteClass::SpriteClass()
 {
-    m_VertexBuffer = 0;
-    m_IndexBuffer = 0;
-    m_Textures = 0;
+    m_VertexBuffer = nullptr;
+    m_IndexBuffer = nullptr;
+    m_Textures = nullptr;
 }
 
 SpriteClass::SpriteClass(const SpriteClass&)
@@ -166,8 +166,8 @@ bool SpriteClass::InitializeBuffers(ID3D11Device* a_Device)
     }
     delete [] vertices;
     delete [] indices;
-    vertices = 0;
-    indices = 0;
+    vertices = nullptr;
+    indices = nullptr;
 
     return true;
 }
@@ -177,12 +177,12 @@ void SpriteClass::ShutdownBuffers()
     if (m_IndexBuffer)
     {
         m_IndexBuffer->Release();
-        m_IndexBuffer = 0;
+        m_IndexBuffer = nullptr;
     }
     if (m_VertexBuffer)
     {
         m_VertexBuffer->Release();
-        m_VertexBuffer = 0;
+        m_VertexBuffer = nullptr;
     }
 }
 
@@ -242,9 +242,9 @@ bool SpriteClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
     memcpy(dataPtr, (void*)vertices, (sizeof(VertexType) * m_vertexCount));
 
     a_DeviceContext->Unmap(m_VertexBuffer, 0);
-    dataPtr = 0;
+    dataPtr = nullptr;
     delete [] vertices;
-    vertices = 0;
+    vertices = nullptr;
     
     return true;
 }
@@ -340,5 +340,5 @@ void SpriteClass::ReleaseTextures()
         m_Textures[i].Shutdown();
     }
     delete [] m_Textures;
-    m_Textures = 0;
+    m_Textures = nullptr;
 }

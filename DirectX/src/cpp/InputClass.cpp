@@ -2,9 +2,9 @@
 
 InputClass::InputClass()
 {
-	m_directInput = 0;
-	m_keyboard = 0;
-	m_mouse = 0;
+	m_directInput = nullptr;
+	m_keyboard = nullptr;
+	m_mouse = nullptr;
 }
 
 InputClass::InputClass(const InputClass&)
@@ -24,11 +24,11 @@ bool InputClass::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWi
 	m_mouseX = 0;
 	m_mouseY = 0;
 
-	result = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&m_directInput, NULL);
+	result = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&m_directInput, nullptr);
 	if (FAILED(result))
 		return false;
 
-	result = m_directInput->CreateDevice(GUID_SysKeyboard, &m_keyboard, NULL);
+	result = m_directInput->CreateDevice(GUID_SysKeyboard, &m_keyboard, nullptr);
 	if (FAILED(result))
 		return false;
 
@@ -46,7 +46,7 @@ bool InputClass::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWi
 	if (FAILED(result))
 		return false;
 
-	result = m_directInput->CreateDevice(GUID_SysMouse, &m_mouse, NULL);
+	result = m_directInput->CreateDevice(GUID_SysMouse, &m_mouse, nullptr);
 	if (FAILED(result))
 		return false;
 
@@ -73,18 +73,18 @@ void InputClass::Shutdown()
 	{
 		m_mouse->Unacquire();
 		m_mouse->Release();
-		m_mouse = 0;
+		m_mouse = nullptr;
 	}
 	if (m_keyboard)
 	{
 		m_keyboard->Unacquire();
 		m_keyboard->Release();
-		m_keyboard = 0;
+		m_keyboard = nullptr;
 	}
 	if (m_directInput)
 	{
 		m_directInput->Release();
-		m_directInput = 0;
+		m_directInput = nullptr;
 	}
 }
 

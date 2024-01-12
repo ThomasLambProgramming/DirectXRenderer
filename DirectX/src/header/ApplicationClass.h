@@ -28,14 +28,14 @@ public:
 	ApplicationClass(const ApplicationClass&);
 	~ApplicationClass();
 
-	bool Initalize(int, int, HWND);
+	bool Initialize(int, int, HWND);
 	void Shutdown();
 	bool Frame(InputClass* a_InputClass);
 
 private:
-	bool Render(float a_Rotation);
+	bool Render(float a_Rotation) const;
 	bool UpdateFps();
-	bool UpdateMouseStrings(int posX, int posY, bool a_MouseDown);
+	static bool UpdateMouseStrings(int posX, int posY, bool a_MouseDown);
 
 private:
 	Direct3DClass* m_Direct3D;

@@ -72,6 +72,11 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
 
     //Place object in correct position for rendering using world, view and projection matrices.
     output.position = mul(a_input.position, worldMatrix);
+    //Avoiding making another variable when we can just do the calculations before moving to view space.
+    output.viewDirection = normalize(cameraPosition.xyz - output.position.xyz);
+    for (int i = 0; i < NUM_LIGHTS; i++)
+        output.lightPos[i].xyz = normalize(lightPosition[i].xyz - output.position);
+    
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
     
@@ -81,18 +86,11 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.tangent = normalize(mul(a_input.tangent, (float3x3)worldMatrix));
     output.binormal = normalize(mul(a_input.binormal, (float3x3)worldMatrix));
 
-    output.viewDirection = normalize(cameraPosition.xyz - output.position.xyz);
-
     output.fogFactor = 1;
     output.clip = 0;
     output.reflectionPosition = 0;
     output.refractionPosition = 0;
-    for (int i = 0; i < NUM_LIGHTS; i++)
-    {
-        output.lightPos[i].x = lightPosition[i].x;
-        output.lightPos[i].y = lightPosition[i].y;
-        output.lightPos[i].z = lightPosition[i].z;
-    }
+    
     
     return output;
 }

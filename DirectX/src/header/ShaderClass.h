@@ -49,7 +49,7 @@ private:
     //Pixel shader buffers.
     struct LightInformationBufferType 
     {
-        XMFLOAT4 diffuseColor[NUM_LIGHTS];
+        XMFLOAT4 diffuseColor;
         XMFLOAT4 specularColor;
         float specularPower;
         XMFLOAT3 mainLightDirection;
@@ -75,6 +75,10 @@ private:
     {
         XMFLOAT4 pixelColor;
     };
+    struct PointLightBufferType
+    {
+        XMFLOAT4 diffuseColor[NUM_LIGHTS];
+    };
     
 public:
 
@@ -88,33 +92,34 @@ public:
     bool Render(ID3D11DeviceContext* a_deviceContext,
                 int a_indexCount,
                 //VertexShaderVariables.
-                XMMATRIX a_world,
-                XMMATRIX a_view,
-                XMMATRIX a_projection,
+                const XMMATRIX& a_world,
+                const XMMATRIX& a_view,
+                const XMMATRIX& a_projection,
                 XMFLOAT3 a_cameraPosition,
                 float a_fogStart,
                 float a_fogEnd,
                 XMFLOAT4 a_clipPlane,
-                XMMATRIX a_reflectionMatrix,
+                const XMMATRIX& a_reflectionMatrix,
                 XMFLOAT4 a_lightPositions[NUM_LIGHTS],
                 //PixelShaderVariables
-                XMFLOAT4 a_lightDiffuse[NUM_LIGHTS],
+                XMFLOAT4 a_mainLightDiffuse,
                 XMFLOAT4 a_specularColor,
-                float a_SpecularPower,
+                float a_specularPower,
                 XMFLOAT3 a_mainLightDirection,
                 XMFLOAT4 a_ambientColor,
                 XMFLOAT2 a_translationAmount,
                 float a_blendAmount,
                 float a_waterTranslation,
                 float a_reflectRefractScale,
-                XMFLOAT4 a_PixelColor,
+                XMFLOAT4 a_pixelColor,
+                XMFLOAT4 a_pointLightDiffuse[NUM_LIGHTS],
                 ID3D11ShaderResourceView* a_Texture1,
                 ID3D11ShaderResourceView* a_Texture2,
                 ID3D11ShaderResourceView* a_Texture3,
                 ID3D11ShaderResourceView* a_Texture4,
-                ID3D11ShaderResourceView* a_Texture5);
+                ID3D11ShaderResourceView* a_Texture5) const;
     
-    ID3D11ShaderResourceView* GetTexture(int a_textureNumber);
+    ID3D11ShaderResourceView* GetTexture(int a_textureNumber) const;
 
 private:
     
@@ -129,29 +134,30 @@ private:
                          float a_fogStart,
                          float a_fogEnd,
                          XMFLOAT4 a_clipPlane,
-                         XMMATRIX a_reflectionMatrix,
+                         const XMMATRIX& a_reflectionMatrix,
                          XMFLOAT4 a_lightPositions[NUM_LIGHTS],
                          //PixelShaderVariables
-                         XMFLOAT4 a_lightDiffuse[NUM_LIGHTS],
+                         XMFLOAT4 a_mainLightDiffuse,
                          XMFLOAT4 a_specularColor,
-                         float a_SpecularPower,
+                         float a_specularPower,
                          XMFLOAT3 a_mainLightDirection,
                          XMFLOAT4 a_ambientColor,
                          XMFLOAT2 a_translationAmount,
                          float a_blendAmount,
                          float a_waterTranslation,
                          float a_reflectRefractScale,
-                         XMFLOAT4 a_PixelColor,
+                         XMFLOAT4 a_pixelColor,
+                         XMFLOAT4 a_pointLightDiffuse[NUM_LIGHTS],
                          ID3D11ShaderResourceView* a_Texture1,
                          ID3D11ShaderResourceView* a_Texture2,
                          ID3D11ShaderResourceView* a_Texture3,
                          ID3D11ShaderResourceView* a_Texture4,
-                         ID3D11ShaderResourceView* a_Texture5);
+                         ID3D11ShaderResourceView* a_Texture5) const;
     
-    void RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount);
+    void RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount) const;
     
     void ShutdownShader();
-    void OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, WCHAR* a_FilePath);
+    static void OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, const WCHAR* a_FilePath);
 
 private:
     ID3D11VertexShader* m_VertexShader;
@@ -176,6 +182,7 @@ private:
     ID3D11Buffer* m_TransparentBuffer;
     ID3D11Buffer* m_WaterBuffer;
     ID3D11Buffer* m_PixelBuffer;
+    ID3D11Buffer* m_PointLightBuffer;
     
     //UberShader allows for multitexture blending + refraction and reflection textures.
     ID3D11ShaderResourceView* m_Texture;

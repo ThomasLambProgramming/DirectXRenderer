@@ -6,17 +6,17 @@
 Direct3DClass::Direct3DClass()
 {
 	//Set all pointers to 0;
-    m_swapChain = 0;
-    m_device = 0;
-	m_deviceContext = 0;
-	m_renderTargetView = 0;
-	m_depthStencilBuffer = 0;
-	m_depthStencilState = 0;
-	m_depthStencilView = 0;
-	m_rasterState = 0;
-	m_depthDisabledStencilState = 0;
-	m_alphaEnableBlendState = 0;
-	m_alphaDisableBlendState = 0;
+    m_swapChain = nullptr;
+    m_device = nullptr;
+	m_deviceContext = nullptr;
+	m_renderTargetView = nullptr;
+	m_depthStencilBuffer = nullptr;
+	m_depthStencilState = nullptr;
+	m_depthStencilView = nullptr;
+	m_rasterState = nullptr;
+	m_depthDisabledStencilState = nullptr;
+	m_alphaEnableBlendState = nullptr;
+	m_alphaDisableBlendState = nullptr;
 }
 
 Direct3DClass::Direct3DClass(const Direct3DClass&)
@@ -95,7 +95,7 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	}
 	
 	//get number of modes that fit DXGI_FORMAT_R8G8B8A*_UNORM display format for the adapterOutput (monitor)
-	result = adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL);
+	result = adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, nullptr);
 	if (FAILED(result))
 	{
 		return false;
@@ -148,17 +148,17 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	
 	//release display mode list
 	delete [] displayModeList;
-	displayModeList = 0;
+	displayModeList = nullptr;
 
 	//release adapter output
 	adapterOutput->Release();
-	adapterOutput = 0;
+	adapterOutput = nullptr;
 
 	adapter->Release();
-	adapter = 0;
+	adapter = nullptr;
 	
 	factory->Release();
-	factory = 0;
+	factory = nullptr;
 
 	//Init the swap chain description
 	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
@@ -222,8 +222,8 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	//In Direct3D 11, a device is separated into a device object for creating resources and a device-context object, which performs rendering.
 	//Direct3D Object = creates and destroys resources(objects) and context which does rendering. (in other dx versions they were one object).
 	//Create the swap chain, Direct3D device and Direct3D device context.
-	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1, 
-										   D3D11_SDK_VERSION, &swapChainDesc, &m_swapChain, &m_device, NULL, &m_deviceContext);
+	result = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, &featureLevel, 1, 
+	                                       D3D11_SDK_VERSION, &swapChainDesc, &m_swapChain, &m_device, nullptr, &m_deviceContext);
 
 	if (FAILED(result))
 	{
@@ -243,7 +243,7 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	//This is a simple COM object that maintains a location in video memory for you to render into.
 	//In most cases (including our case) this is the back buffer.
 	//create the render target view with the back buffer pointer.
-	result = m_device->CreateRenderTargetView(backBufferPtr, NULL, &m_renderTargetView);
+	result = m_device->CreateRenderTargetView(backBufferPtr, nullptr, &m_renderTargetView);
 	//rendertarget view is a framebuffer, its a texture we can bind to read/write to.
 	if (FAILED(result))
 	{
@@ -255,7 +255,7 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	
 	//release pointer to the back buffer as we no longer need it. 
 	backBufferPtr->Release();
-	backBufferPtr = 0;
+	backBufferPtr = nullptr;
 
 	//init the description of the depth buffer
 	ZeroMemory(&depthBufferDesc, sizeof(depthBufferDesc));
@@ -274,7 +274,7 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	depthBufferDesc.MiscFlags = 0;
 
 	//Create texture for the depth buffer using the filled out description.
-	result = m_device->CreateTexture2D(&depthBufferDesc, NULL, &m_depthStencilBuffer);
+	result = m_device->CreateTexture2D(&depthBufferDesc, nullptr, &m_depthStencilBuffer);
 	if (FAILED(result))
 	{
 		return false;
@@ -435,67 +435,67 @@ void Direct3DClass::Shutdown()
 	//before shutting down set to windowed mode or when you relase the swap chain it will throw an exception
 	if (m_swapChain)
 	{
-		m_swapChain->SetFullscreenState(false, NULL);
+		m_swapChain->SetFullscreenState(false, nullptr);
 	}
 	if (m_rasterState)
 	{
 		m_rasterState->Release();
-		m_rasterState = 0;
+		m_rasterState = nullptr;
 	}
 	if(m_depthStencilView)
 	{
 		m_depthStencilView->Release();
-		m_depthStencilView = 0;
+		m_depthStencilView = nullptr;
 	}
 	if (m_alphaDisableBlendState)
 	{
 		m_alphaDisableBlendState->Release();
-		m_alphaDisableBlendState = 0;
+		m_alphaDisableBlendState = nullptr;
 	}
 	if (m_alphaEnableBlendState)
 	{
 		m_alphaEnableBlendState->Release();
-		m_alphaEnableBlendState = 0;
+		m_alphaEnableBlendState = nullptr;
 	}
 	if(m_depthStencilState)
 	{
 		m_depthStencilState->Release();
-		m_depthStencilState = 0;
+		m_depthStencilState = nullptr;
 	}
 	if (m_depthDisabledStencilState)
 	{
 		m_depthDisabledStencilState->Release();
-		m_depthDisabledStencilState = 0;
+		m_depthDisabledStencilState = nullptr;
 	}
 
 	if(m_depthStencilBuffer)
 	{
 		m_depthStencilBuffer->Release();
-		m_depthStencilBuffer = 0;
+		m_depthStencilBuffer = nullptr;
 	}
 
 	if(m_renderTargetView)
 	{
 		m_renderTargetView->Release();
-		m_renderTargetView = 0;
+		m_renderTargetView = nullptr;
 	}
 
 	if(m_deviceContext)
 	{
 		m_deviceContext->Release();
-		m_deviceContext = 0;
+		m_deviceContext = nullptr;
 	}
 
 	if(m_device)
 	{
 		m_device->Release();
-		m_device = 0;
+		m_device = nullptr;
 	}
 
 	if(m_swapChain)
 	{
 		m_swapChain->Release();
-		m_swapChain = 0;
+		m_swapChain = nullptr;
 	}
 	return;
 }

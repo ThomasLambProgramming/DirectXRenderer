@@ -2,8 +2,8 @@
 
 FontClass::FontClass()
 {
-    m_Font = 0;
-    m_Texture = 0;
+    m_Font = nullptr;
+    m_Texture = nullptr;
 }
 
 FontClass::FontClass(const FontClass& a_Copy)
@@ -186,7 +186,7 @@ void FontClass::ReleaseFontData()
     if (m_Font)
     {
         delete [] m_Font;
-        m_Font = 0;
+        m_Font = nullptr;
     }
 }
 
@@ -202,6 +202,6 @@ void FontClass::ReleaseTexture()
     {
         m_Texture->Shutdown();
         delete m_Texture;
-        m_Texture = 0;
+        m_Texture = nullptr;
     }
 }

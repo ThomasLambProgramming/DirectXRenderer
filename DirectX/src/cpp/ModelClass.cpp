@@ -2,10 +2,10 @@
 
 ModelClass::ModelClass()
 {
-    m_VertexBuffer = 0;
-    m_IndexBuffer = 0;
-	m_texture = 0;
-	m_Model = 0;
+    m_VertexBuffer = nullptr;
+    m_IndexBuffer = nullptr;
+	m_texture = nullptr;
+	m_Model = nullptr;
 }
 
 ModelClass::ModelClass(const ModelClass&)
@@ -171,7 +171,7 @@ void ModelClass::ReleaseModel()
 	if (m_Model)
 	{
 		delete [] m_Model;
-		m_Model = 0;
+		m_Model = nullptr;
 	}
 	return;
 }
@@ -223,31 +223,31 @@ void ModelClass::ReleaseTexture()
 	{
 		m_texture->Shutdown();
 		delete m_texture;
-		m_texture = 0;
+		m_texture = nullptr;
 	}
 	if (m_SecondaryTexture1)
 	{
 		m_SecondaryTexture1->Shutdown();
 		delete m_SecondaryTexture1;
-		m_SecondaryTexture1 = 0;
+		m_SecondaryTexture1 = nullptr;
 	}
 	if (m_SecondaryTexture2)
 	{
 		m_SecondaryTexture2->Shutdown();
 		delete m_SecondaryTexture2;
-		m_SecondaryTexture2 = 0;
+		m_SecondaryTexture2 = nullptr;
 	}
 	if (m_SecondaryTexture3)
 	{
 		m_SecondaryTexture3->Shutdown();
 		delete m_SecondaryTexture3;
-		m_SecondaryTexture3 = 0;
+		m_SecondaryTexture3 = nullptr;
 	}
 	if (m_SecondaryTexture4)
 	{
 		m_SecondaryTexture4->Shutdown();
 		delete m_SecondaryTexture4;
-		m_SecondaryTexture4 = 0;
+		m_SecondaryTexture4 = nullptr;
 	}
 }
 
@@ -329,9 +329,9 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
 	}
 
 	delete vertices;
-	vertices = 0;
+	vertices = nullptr;
 	delete indices;
-	indices = 0;
+	indices = nullptr;
 	
 	return true;
 }
@@ -341,12 +341,12 @@ void ModelClass::ShutdownBuffers()
 	if (m_IndexBuffer)
 	{
 		m_IndexBuffer->Release();
-		m_IndexBuffer = 0;
+		m_IndexBuffer = nullptr;
 	}
 	if (m_VertexBuffer)
 	{
 		m_VertexBuffer->Release();
-		m_VertexBuffer = 0;
+		m_VertexBuffer = nullptr;
 	}
 	return;
 }

@@ -2,9 +2,9 @@
 
 TextureClass::TextureClass()
 {
-    m_Texture = 0;
-    m_TargaData = 0;
-    m_TextureView = 0;
+    m_Texture = nullptr;
+    m_TargaData = nullptr;
+    m_TextureView = nullptr;
 }
 
 TextureClass::TextureClass(const TextureClass& a_Copy)
@@ -43,7 +43,7 @@ bool TextureClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Dev
     textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
     //Create empty texture
-    hResult = a_Device->CreateTexture2D(&textureDesc, NULL, &m_Texture);
+    hResult = a_Device->CreateTexture2D(&textureDesc, nullptr, &m_Texture);
     if (FAILED(hResult))
     {
         return false;
@@ -54,7 +54,7 @@ bool TextureClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Dev
     rowPitch = (m_Width * 4) * sizeof(unsigned char);
 
     //copy targa information into the texture.
-    a_DeviceContext->UpdateSubresource(m_Texture, 0, NULL, m_TargaData, rowPitch, 0);
+    a_DeviceContext->UpdateSubresource(m_Texture, 0, nullptr, m_TargaData, rowPitch, 0);
 
     //create a shader resource view which allows us to have a pointer to set the texture in shaders.
     //we set to important mipmap variables which will give us the full range of mipmap levels for high quality texture rendering
@@ -72,7 +72,7 @@ bool TextureClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Dev
     // Generate mipmaps for the texture
     a_DeviceContext->GenerateMips(m_TextureView);
     delete [] m_TargaData;
-    m_TargaData = 0;
+    m_TargaData = nullptr;
     return true;
 }
 
@@ -81,17 +81,17 @@ void TextureClass::Shutdown()
     if (m_TextureView)
     {
         m_TextureView->Release();
-        m_TextureView = 0;
+        m_TextureView = nullptr;
     }
     if (m_TargaData)
     {
         delete [] m_TargaData;
-        m_TargaData = 0;
+        m_TargaData = nullptr;
     }
     if (m_Texture)
     {
         m_Texture->Release();
-        m_Texture = 0;
+        m_Texture = nullptr;
     }
     return;
 }
@@ -186,7 +186,7 @@ bool TextureClass::LoadTarga32Bit(char* a_FileName)
 
     //release targa image data now that it has been copied.
     delete [] targaImage;
-    targaImage = 0;
+    targaImage = nullptr;
     return true;
     //I will need to look at reading that in + other format file reading + c style file io since i have never seen that before.
 }

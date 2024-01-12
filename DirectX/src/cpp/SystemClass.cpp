@@ -3,8 +3,8 @@
 SystemClass::SystemClass()
 {
 	//always init everything to null.
-	m_Input = 0;
-	m_Application = 0;
+	m_Input = nullptr;
+	m_Application = nullptr;
 }
 
 SystemClass::SystemClass(const SystemClass& other)
@@ -40,7 +40,7 @@ bool SystemClass::Initialize()
 	
 	//I assume the above is allowed without function () is because of not having any parameters in the constructor for both.
 
-	result = m_Application->Initalize(screenWidth, screenHeight, m_hwnd);
+	result = m_Application->Initialize(screenWidth, screenHeight, m_hwnd);
 	/*if (!result)
 		return false;
 	
@@ -55,14 +55,14 @@ void SystemClass::Shutdown()
 	{
 		m_Application->Shutdown();
 		delete m_Application;
-		m_Application = 0;
+		m_Application = nullptr;
 	}
 
 	//release input obj
 	if (m_Input)
 	{
 		delete m_Input;
-		m_Input = 0;
+		m_Input = nullptr;
 	}
 
 	ShutdownWindows();
@@ -82,7 +82,7 @@ void SystemClass::Run()
 	while (!done)
 	{
 		//handle the windows messages.
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -132,7 +132,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	ApplicationHandle = this;
 
 	//Get the instance of this application
-	m_hinstance = GetModuleHandle(NULL);
+	m_hinstance = GetModuleHandle(nullptr);
 
 	//set the application name the L is to set it to the wide string
 	m_applicationName = L"Direct X Testing";
@@ -142,11 +142,11 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = m_hinstance;
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	wc.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
 	wc.hIconSm = wc.hIcon;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = m_applicationName;
 	wc.cbSize = sizeof(WNDCLASSEX);
 
@@ -195,10 +195,10 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 		posY,
 		screenWidth,
 		screenHeight,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		m_hinstance,
-		NULL);
+	nullptr);
 
 	/*
 	* // create the window and use the result as the handle
@@ -234,18 +234,18 @@ void SystemClass::ShutdownWindows()
 
 	//if leaving full screen fix display settings
 	if (FULL_SCREEN)
-		ChangeDisplaySettings(NULL, 0);
+		ChangeDisplaySettings(nullptr, 0);
 
 	//remove window
 	DestroyWindow(m_hwnd);
-	m_hwnd = NULL;
+	m_hwnd = nullptr;
 
 	//remove the application instance
 	UnregisterClass(m_applicationName, m_hinstance);
-	m_hinstance = NULL;
+	m_hinstance = nullptr;
 
 	//release pointer to this class
-	ApplicationHandle = NULL;
+	ApplicationHandle = nullptr;
 	return;
 }
 

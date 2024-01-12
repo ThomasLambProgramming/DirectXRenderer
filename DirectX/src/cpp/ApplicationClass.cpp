@@ -5,15 +5,22 @@
 ApplicationClass::ApplicationClass()
 {
     //Safety setting to 0/nullptr;
-    m_Direct3D = 0;
-    m_Camera = 0;
-    m_Model = 0;
-	m_TextureShader = 0;
+    m_Direct3D = nullptr;
+    m_Camera = nullptr;
+    m_Model = nullptr;
+	m_TextureShader = nullptr;
+	m_MainLight = nullptr;
+	m_startTime = 0;
+	m_previousFps = 0;
 	m_fps = 0;
 	m_count = 0;
 }
 
-ApplicationClass::ApplicationClass(const ApplicationClass&)
+ApplicationClass::ApplicationClass(const ApplicationClass&): m_Direct3D(nullptr), m_Camera(nullptr), m_Model(nullptr),
+                                                             m_MainLight(nullptr),
+                                                             m_TextureShader(nullptr), m_fps(0),
+                                                             m_count(0),
+                                                             m_startTime(0), m_previousFps(0)
 {
 }
 
@@ -21,7 +28,7 @@ ApplicationClass::~ApplicationClass()
 {
 }
 
-bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_WindowHandle)
+bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHeight, const HWND a_windowHandle)
 {
 	char textureFileName[128];
 	char blendTexture1FileName[128];
@@ -30,17 +37,13 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
 
-    bool result;
-
-	
-	
 	m_startTime = timeGetTime();
     m_Direct3D = new Direct3DClass;
 
-    result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, a_WindowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
+    bool result = m_Direct3D->Initialize(a_screenWidth, a_screenHeight, VSYNC_ENABLED, a_windowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)
     {
-        MessageBox(a_WindowHandle, L"Could not initialize Direct3D", L"Error", MB_OK);
+        MessageBox(a_windowHandle, L"Could not initialize Direct3D", L"Error", MB_OK);
         return false;
     }
 
@@ -52,27 +55,27 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
     //create a new model
     m_Model = new ModelClass;
 
-	strcpy_s(textureFileName, "./data/stone02.tga");
+	strcpy_s(textureFileName, "./data/stone01.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(modelFileName, "./data/cube.txt");
-	strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
-	//strcpy_s(shaderPixelEntryPoint, "TextureSingleSamplePixelShader");
+	//strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
+	strcpy_s(shaderPixelEntryPoint, "SimpleLightingPixelShader");
 	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_WindowHandle, shaderVertexEntryPoint ,shaderPixelEntryPoint);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint ,shaderPixelEntryPoint);
 	
     if (!result)
     {
-	    MessageBox(a_WindowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
     	return false;
     }
 	
     result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName, nullptr, nullptr);
     if (!result)
     {
-        MessageBox(a_WindowHandle, L"Could not initialize model object", L"Error", MB_OK);
+        MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
         return false;
     }
 	m_MainLight = new LightClass;
@@ -80,6 +83,7 @@ bool ApplicationClass::Initalize(int screenWidth, int screenHeight, HWND a_Windo
 	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_MainLight->m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_MainLight->m_SpecularPower = 16.0f;
+	m_MainLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
 	
     return true;
 }
@@ -90,19 +94,19 @@ void ApplicationClass::Shutdown()
     {
         m_Direct3D->Shutdown();
         delete m_Direct3D;
-        m_Direct3D = 0;
+        m_Direct3D = nullptr;
     }
 	if (m_MainLight)
 	{
 		delete m_MainLight;
-		m_MainLight = 0;
+		m_MainLight = nullptr;
 	}
 	
 	if (m_TextureShader)
 	{
 		m_TextureShader->Shutdown();
 		delete m_TextureShader;
-		m_TextureShader = 0;
+		m_TextureShader = nullptr;
 	}
 	
 	// Release the model object.
@@ -110,14 +114,14 @@ void ApplicationClass::Shutdown()
 	{
 		m_Model->Shutdown();
 		delete m_Model;
-		m_Model = 0;
+		m_Model = nullptr;
 	}
 
 	// Release the camera object.
 	if (m_Camera)
 	{
 		delete m_Camera;
-		m_Camera = 0;
+		m_Camera = nullptr;
 	}
     return;
 }
@@ -125,7 +129,6 @@ void ApplicationClass::Shutdown()
 bool ApplicationClass::Frame(InputClass* a_InputClass)
 {
 	int mouseX, mouseY;
-	bool mouseDown;
 
 	if (a_InputClass->IsEscapePressed())
 		return false;
@@ -140,7 +143,7 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
     }
 
 	a_InputClass->GetMouseLocation(mouseX, mouseY);
-	mouseDown = a_InputClass->IsMousePressed(0);
+	const bool mouseDown = a_InputClass->IsMousePressed(0);
 
 	if (!UpdateMouseStrings(mouseX, mouseY, mouseDown))
 		return false;
@@ -150,19 +153,18 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
     return Render(rotation);
 }
 
-bool ApplicationClass::Render(float a_Rotation)
+bool ApplicationClass::Render(float a_Rotation) const
 {
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
 	XMFLOAT4 lightPositions[NUM_LIGHTS];
 	XMFLOAT4 lightDiffuse[NUM_LIGHTS];
-	XMFLOAT2 translationAmount = XMFLOAT2(0,0);
-	float blendAmount = 0;;
-	float waterTranslation = 0;
-	float reflectRefractScale = 0;
-	XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
-    bool result;
+	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0);
+	constexpr float blendAmount = 0;;
+	constexpr float waterTranslation = 0;
+	constexpr float reflectRefractScale = 0;
+	constexpr XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
 	
     //clear buffers to begin the scene
     m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
@@ -185,33 +187,34 @@ bool ApplicationClass::Render(float a_Rotation)
 		lightDiffuse[i] = m_MainLight->m_DiffuseColor;
 		lightPositions[i] = m_MainLight->m_Position;
 	}
-	
-	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
-									 m_Model->GetIndexCount(),
-									 world,
-									 view,
-									 projection,
-									 m_Camera->GetPosition(),
-									 0,
-									 0,
-									 XMFLOAT4(0,0,0,0),
-									 world,
-									 lightPositions,
-									 lightDiffuse,
-									 m_MainLight->m_SpecularColor,
-									 m_MainLight->m_SpecularPower,
-									 m_MainLight->m_LightDirection,
-									 m_MainLight->m_AmbientColor,
-									 translationAmount,
-									 blendAmount,
-									 waterTranslation,
-									 reflectRefractScale,
-									 pixelColor,
-									 m_Model->GetTexture(0),
-									 m_Model->GetTexture(1),
-									 m_Model->GetTexture(2),
-									 m_Model->GetTexture(3),
-									 m_Model->GetTexture(4));
+
+	const bool result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
+	                                            m_Model->GetIndexCount(),
+	                                            world,
+	                                            view,
+	                                            projection,
+	                                            m_Camera->GetPosition(),
+	                                            0,
+	                                            0,
+	                                            XMFLOAT4(0,0,0,0),
+	                                            world,
+	                                            lightPositions,
+	                                            m_MainLight->m_DiffuseColor,
+	                                            m_MainLight->m_SpecularColor,
+	                                            m_MainLight->m_SpecularPower,
+	                                            m_MainLight->m_LightDirection,
+	                                            m_MainLight->m_AmbientColor,
+	                                            translationAmount,
+	                                            blendAmount,
+	                                            waterTranslation,
+	                                            reflectRefractScale,
+	                                            pixelColor,
+	                                            lightDiffuse,
+	                                            m_Model->GetTexture(0),
+	                                            m_Model->GetTexture(1),
+	                                            m_Model->GetTexture(2),
+	                                            m_Model->GetTexture(3),
+	                                            m_Model->GetTexture(4));
 	if (!result)
 	{
 		return false;
@@ -229,7 +232,6 @@ bool ApplicationClass::Render(float a_Rotation)
 
 bool ApplicationClass::UpdateFps()
 {
-	int fps;
 	//char tempString[16], finalString[16];
 	//float red, green, blue;
 	//bool result;
@@ -242,18 +244,18 @@ bool ApplicationClass::UpdateFps()
 		m_count = 0;
 		m_startTime = timeGetTime();
 	}
-	fps = m_fps;
-
-	if (m_previousFps == fps)
-	{
-		return true;
-	}
-	m_previousFps = fps;
+	//int fps = m_fps;
+	return true;
+	//if (m_previousFps == fps)
+	//{
+	//	return true;
+	//}
+	//m_previousFps = fps;
 	
-	if (fps > 99999)
-	{
-		fps = 99999;
-	}
+	//if (fps > 99999)
+	//{
+	//	fps = 99999;
+	//}
 	//sprintf_s(tempString, "%d", fps);
 	//strcpy_s(finalString, "Fps: ");
 	//strcat_s(finalString, tempString);
@@ -279,7 +281,7 @@ bool ApplicationClass::UpdateFps()
 	//if (!result)
 	//	return false;
 
-	return true;
+	//return true;
 }
 
 bool ApplicationClass::UpdateMouseStrings(int posX, int posY, bool a_MouseDown)

@@ -2,8 +2,8 @@
 
 TextClass::TextClass()
 {
-    m_vertexBuffer = 0;
-    m_indexBuffer = 0;
+    m_vertexBuffer = nullptr;
+    m_indexBuffer = nullptr;
 }
 
 TextClass::TextClass(const TextClass& a_Copy)
@@ -86,7 +86,7 @@ bool TextClass::UpdateText(ID3D11DeviceContext* a_deviceContext,
 
     a_deviceContext->Unmap(m_vertexBuffer, 0);
     delete [] vertices;
-    vertices = 0;
+    vertices = nullptr;
 
     return true;
 }
@@ -163,8 +163,8 @@ bool TextClass::InitializeBuffers(ID3D11Device* a_device,
 
     delete vertices;
     delete indicies;
-    vertices = 0;
-    indicies = 0;
+    vertices = nullptr;
+    indicies = nullptr;
 
     result = UpdateText(a_deviceContext, a_font, a_text, a_positionX, a_positionY, a_red, a_green, a_blue);
     if (FAILED(result))
@@ -180,13 +180,13 @@ void TextClass::ShutdownBuffers()
     if (m_indexBuffer)
     {
         m_indexBuffer->Release();
-        m_indexBuffer = 0;
+        m_indexBuffer = nullptr;
     }
     
     if (m_vertexBuffer)
     {
         m_vertexBuffer->Release();
-        m_vertexBuffer = 0;
+        m_vertexBuffer = nullptr;
     }
 }
 
