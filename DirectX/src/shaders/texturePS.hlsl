@@ -9,8 +9,8 @@ SamplerState Sampler : register(s0);
 
 cbuffer LightInformationBuffer
 {
-    float4 diffuseColor;
-    float4 specularColor;
+    float4 mainLightDiffuseColor;
+    float4 mainLightSpecularColor;
     float specularPower;
     float3 mainLightDirection;
     float4 ambientColor;
@@ -55,6 +55,13 @@ struct PixelInputType
     float3 lightPos[NUM_LIGHTS] : TEXCOORD4;
 };
 
+//To force dx11 to use all cbuffers without voiding them and causing issues we use this function to forcefully include all. (not performant but for
+//learning dx11 its fine).
+float UseEveryBuffer()
+{
+    return (mainLightDiffuseColor.x + pointLightDiffuseColor[0] + textureTranslation.x + blendAmount + waterPadding.x + pixelColor.x) * 0.00001f;
+}
+
 float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
 {
     float4 textureColor = ShaderTexture1.Sample(Sampler, input.tex);
@@ -66,7 +73,7 @@ float4 NormalMapPixelShader(PixelInputType input) : SV_TARGET
 
     //how much light will be on this pixel (-light direction to be towards light instead of towards normal) 
     float lightIntensity = saturate(dot(bumpNormal, -mainLightDirection));
-    float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
+    float4 color = saturate(mainLightDiffuseColor[0] * lightIntensity) * textureColor;
     return color;
 }
 
@@ -79,7 +86,7 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
     normalMap = (normalMap * 2.0f) - 1.0f;
     float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
     float lightIntensity = saturate(dot(bumpNormal, -mainLightDirection));
-    float4 color = saturate(diffuseColor[0] * lightIntensity) * textureColor;
+    float4 color = saturate(mainLightDiffuseColor[0] * lightIntensity) * textureColor;
 
     if (lightIntensity <= 0.0f)
         return color;
@@ -112,10 +119,17 @@ float4 SimpleLightingPixelShader(PixelInputType a_Input) : SV_TARGET
     const float lightIntensity = dot(a_Input.normal, lightDir);
     float4 color = ambientColor;
 
+    float4 specular = float4(0,0,0,0);
     if (lightIntensity > 0.0f)
-        color += diffuseColor[0] * lightIntensity;
+    {
+        color += mainLightDiffuseColor * lightIntensity;
+        color = saturate(color);
 
-    color = saturate(color) * textureColor;
+        float3 reflectionVector = normalize(2.0f * lightIntensity * a_Input.normal - lightDir);
+        specular = pow(saturate(dot(reflectionVector, a_Input.viewDirection)), specularPower) * mainLightSpecularColor;
+    }
+    
+    color = saturate(color * textureColor + specular);
     return color;
 }
 
@@ -130,7 +144,7 @@ float4 TextureMultiLightPixelShader(PixelInputType a_input) : SV_TARGET
 
 
     // Sample the texture pixel at this location.
-    textureColor = ShaderTexture1.Sample(Sampler, a_input.tex) + diffuseColor * 0.01f;
+    textureColor = ShaderTexture1.Sample(Sampler, a_input.tex) + mainLightDiffuseColor * 0.01f;
     textureColor = saturate(textureColor);
 
     for(i=0; i<NUM_LIGHTS; i++)
@@ -205,5 +219,7 @@ float4 RawColorPixelShader(PixelInputType a_input) : SV_TARGET
 {
     return pixelColor;
 }
+
+
 
 

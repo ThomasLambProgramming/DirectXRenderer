@@ -59,9 +59,9 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	strcpy_s(textureFileName, "./data/stone01.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
-	strcpy_s(modelFileName, "./data/plane.txt");
+	strcpy_s(modelFileName, "./data/sphere.txt");
 	//strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
-	strcpy_s(shaderPixelEntryPoint, "TextureMultiLightPixelShader");
+	strcpy_s(shaderPixelEntryPoint, "SimpleLightingPixelShader");
 	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
 	
 	m_TextureShader = new ShaderClass;
@@ -145,14 +145,14 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 	if (a_InputClass->IsEscapePressed())
 		return false;
 
-	static float rotation = 0.0f;
+	static float rotation = 360.0f;
 	
 	// Update the rotation variable each frame.
-    //rotation -= 0.0174532925f * 0.25f;
-    //if(rotation <= 0.0f)
-    //{
-    //    rotation += 360.0f;
-    //}
+    rotation -= 0.0174532925f * 0.25f;
+    if(rotation <= 0.0f)
+    {
+        rotation += 360.0f;
+    }
 
 	a_InputClass->GetMouseLocation(mouseX, mouseY);
 	const bool mouseDown = a_InputClass->IsMousePressed(0);

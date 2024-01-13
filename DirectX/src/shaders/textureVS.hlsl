@@ -81,9 +81,9 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.tangent = normalize(mul(a_input.tangent, (float3x3)worldMatrix));
     output.binormal = normalize(mul(a_input.binormal, (float3x3)worldMatrix));
 
-    output.fogFactor = 1;
-    output.clip = 0;
-    output.reflectionPosition = 0;
+    output.fogFactor = fogStart + fogEnd;
+    output.clip = clipPlane.x;
+    output.reflectionPosition = reflectionMatrix[0][0];
     output.refractionPosition = 0;
 
     float4 worldPosition = mul(a_input.position, worldMatrix);
@@ -91,7 +91,6 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.viewDirection = normalize(cameraPosition.xyz - worldPosition.xyz);
     for (int i = 0; i < NUM_LIGHTS; i++)
     {
-        //output.lightPos[i] = float3(0,1,0);
         output.lightPos[i] = normalize(lightPosition[i].xyz - worldPosition.xyz);
     }
     
