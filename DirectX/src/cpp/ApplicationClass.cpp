@@ -14,6 +14,7 @@ ApplicationClass::ApplicationClass()
 	m_previousFps = 0;
 	m_fps = 0;
 	m_count = 0;
+
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&): m_Direct3D(nullptr), m_Camera(nullptr), m_Model(nullptr),
@@ -50,7 +51,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     //create camera
     m_Camera = new CameraClass;
     //set initial position of camera
-    m_Camera->SetPosition(0.0f,0.0f,-5.0f);
+    m_Camera->SetPosition(0.0f,2.0f,-12.0f);
 
     //create a new model
     m_Model = new ModelClass;
@@ -58,9 +59,9 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	strcpy_s(textureFileName, "./data/stone01.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
-	strcpy_s(modelFileName, "./data/cube.txt");
+	strcpy_s(modelFileName, "./data/plane.txt");
 	//strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
-	strcpy_s(shaderPixelEntryPoint, "SimpleLightingPixelShader");
+	strcpy_s(shaderPixelEntryPoint, "TextureMultiLightPixelShader");
 	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
 	
 	m_TextureShader = new ShaderClass;
@@ -79,11 +80,22 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
         return false;
     }
 	m_MainLight = new LightClass;
-	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,0.0f,1.0f);
+	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
 	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_MainLight->m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_MainLight->m_SpecularPower = 16.0f;
 	m_MainLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
+
+	m_LightDiffuse = new XMFLOAT4[4];
+	m_LightPositions = new XMFLOAT4[4];
+	m_LightDiffuse[0] = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
+	m_LightPositions[0] = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
+	m_LightDiffuse[1] = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
+	m_LightPositions[1] = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
+	m_LightDiffuse[2] = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
+	m_LightPositions[2] = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
+	m_LightDiffuse[3] = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_LightPositions[3] = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
 	
     return true;
 }
@@ -133,14 +145,14 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 	if (a_InputClass->IsEscapePressed())
 		return false;
 
-	static float rotation = 360.0f;
+	static float rotation = 0.0f;
 	
-	 // Update the rotation variable each frame.
-    rotation -= 0.0174532925f * 0.25f;
-    if(rotation <= 0.0f)
-    {
-        rotation += 360.0f;
-    }
+	// Update the rotation variable each frame.
+    //rotation -= 0.0174532925f * 0.25f;
+    //if(rotation <= 0.0f)
+    //{
+    //    rotation += 360.0f;
+    //}
 
 	a_InputClass->GetMouseLocation(mouseX, mouseY);
 	const bool mouseDown = a_InputClass->IsMousePressed(0);
@@ -158,8 +170,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
-	XMFLOAT4 lightPositions[NUM_LIGHTS];
-	XMFLOAT4 lightDiffuse[NUM_LIGHTS];
+	
 	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0);
 	constexpr float blendAmount = 0;;
 	constexpr float waterTranslation = 0;
@@ -182,11 +193,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 
-	for (int i = 0; i < NUM_LIGHTS; i++)
-	{
-		lightDiffuse[i] = m_MainLight->m_DiffuseColor;
-		lightPositions[i] = m_MainLight->m_Position;
-	}
+	
 
 	const bool result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 	                                            m_Model->GetIndexCount(),
@@ -198,7 +205,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	                                            0,
 	                                            XMFLOAT4(0,0,0,0),
 	                                            world,
-	                                            lightPositions,
+	                                            m_LightPositions,
 	                                            m_MainLight->m_DiffuseColor,
 	                                            m_MainLight->m_SpecularColor,
 	                                            m_MainLight->m_SpecularPower,
@@ -209,7 +216,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	                                            waterTranslation,
 	                                            reflectRefractScale,
 	                                            pixelColor,
-	                                            lightDiffuse,
+	                                            m_LightDiffuse,
 	                                            m_Model->GetTexture(0),
 	                                            m_Model->GetTexture(1),
 	                                            m_Model->GetTexture(2),

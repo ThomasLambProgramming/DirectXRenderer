@@ -17,6 +17,10 @@ cbuffer CameraBuffer
     float3 cameraPosition;
     float cameraPadding;
 }
+cbuffer LightPositionBuffer
+{
+    float4 lightPosition[NUM_LIGHTS];
+}
 cbuffer FogBuffer
 {
     float fogStart;
@@ -30,10 +34,6 @@ cbuffer ClipPlaneBuffer
 cbuffer ReflectionBuffer
 {
     matrix reflectionMatrix;
-}
-cbuffer LightPositionBuffer
-{
-    float4 lightPosition[NUM_LIGHTS];
 }
 
 struct VertexInputType
@@ -53,8 +53,6 @@ struct PixelInputType
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
     float3 viewDirection : TEXCOORD1;
-
-    //To do in vert shader.
     float fogFactor : FOG;
     float clip : SV_ClipDistance0;
     float4 reflectionPosition : TEXCOORD2;
@@ -72,10 +70,7 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
 
     //Place object in correct position for rendering using world, view and projection matrices.
     output.position = mul(a_input.position, worldMatrix);
-    //Avoiding making another variable when we can just do the calculations before moving to view space.
-    output.viewDirection = normalize(cameraPosition.xyz - output.position.xyz);
-    for (int i = 0; i < NUM_LIGHTS; i++)
-        output.lightPos[i].xyz = normalize(lightPosition[i].xyz - output.position);
+    
     
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
@@ -90,7 +85,15 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.clip = 0;
     output.reflectionPosition = 0;
     output.refractionPosition = 0;
-    
+
+    float4 worldPosition = mul(a_input.position, worldMatrix);
+    //Avoiding making another variable when we can just do the calculations before moving to view space.
+    output.viewDirection = normalize(cameraPosition.xyz - worldPosition.xyz);
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        //output.lightPos[i] = float3(0,1,0);
+        output.lightPos[i] = normalize(lightPosition[i].xyz - worldPosition.xyz);
+    }
     
     return output;
 }

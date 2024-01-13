@@ -77,7 +77,7 @@ private:
     };
     struct PointLightBufferType
     {
-        XMFLOAT4 diffuseColor[NUM_LIGHTS];
+        XMFLOAT4 pointLightDiffuseColor[NUM_LIGHTS];
     };
     
 public:

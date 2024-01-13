@@ -44,6 +44,9 @@ private:
 	LightClass* m_MainLight;
 	
 	ShaderClass* m_TextureShader;
+
+	XMFLOAT4* m_LightPositions;
+	XMFLOAT4* m_LightDiffuse;
 	
 	int m_fps;
 	int m_count;

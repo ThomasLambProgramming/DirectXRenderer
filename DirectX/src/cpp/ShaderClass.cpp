@@ -158,6 +158,10 @@ ID3D11ShaderResourceView* ShaderClass::GetTexture(int a_textureNumber) const
             return m_SecondaryTexture1;
         case 2:
             return m_SecondaryTexture2;
+        case 3:
+            return m_SecondaryTexture3;
+        case 4:
+            return m_SecondaryTexture4;
         default:
             return m_Texture;
     }
@@ -335,6 +339,18 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
     
+    lightPositionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightPositionBufferDesc.ByteWidth = sizeof(LightPositionBufferType);
+    lightPositionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightPositionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightPositionBufferDesc.MiscFlags = 0;
+    lightPositionBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&lightPositionBufferDesc, nullptr, &m_LightPositionBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
     fogBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     fogBufferDesc.ByteWidth = sizeof(FogBufferType);
     fogBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -371,18 +387,6 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
     
-    lightPositionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    lightPositionBufferDesc.ByteWidth = sizeof(LightPositionBufferType);
-    lightPositionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    lightPositionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    lightPositionBufferDesc.MiscFlags = 0;
-    lightPositionBufferDesc.StructureByteStride = 0;
-    result = a_device->CreateBuffer(&lightPositionBufferDesc, nullptr, &m_LightPositionBuffer);
-    if (FAILED(result))
-    {
-        return false;
-    }
-    
     lightInfoBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     lightInfoBufferDesc.ByteWidth = sizeof(LightInformationBufferType);
     lightInfoBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -390,6 +394,18 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
     lightInfoBufferDesc.MiscFlags = 0;
     lightInfoBufferDesc.StructureByteStride = 0;
     result = a_device->CreateBuffer(&lightInfoBufferDesc, nullptr, &m_LightInformationBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+    
+    pointLightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    pointLightBufferDesc.ByteWidth = sizeof(PointLightBufferType);
+    pointLightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    pointLightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    pointLightBufferDesc.MiscFlags = 0;
+    pointLightBufferDesc.StructureByteStride = 0;
+    result = a_device->CreateBuffer(&pointLightBufferDesc, nullptr, &m_PointLightBuffer);
     if (FAILED(result))
     {
         return false;
@@ -443,17 +459,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
         return false;
     }
 
-    pointLightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    pointLightBufferDesc.ByteWidth = sizeof(PointLightBufferType);
-    pointLightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    pointLightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    pointLightBufferDesc.MiscFlags = 0;
-    pointLightBufferDesc.StructureByteStride = 0;
-    result = a_device->CreateBuffer(&pointLightBufferDesc, nullptr, &m_PointLightBuffer);
-    if (FAILED(result))
-    {
-        return false;
-    }
+    
     
     return true;
 }
@@ -522,6 +528,11 @@ void ShaderClass::ShutdownShader()
     {
         m_LightPositionBuffer->Release();
         m_LightPositionBuffer = nullptr;
+    }
+    if (m_PointLightBuffer)
+    {
+        m_PointLightBuffer->Release();
+        m_PointLightBuffer = nullptr;
     }
     
     if (m_LightInformationBuffer)
@@ -653,6 +664,19 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     a_deviceContext->Unmap(m_CameraBuffer, 0);
     a_deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_CameraBuffer);
     bufferNumber++;
+
+    result = a_deviceContext->Map(m_LightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    LightPositionBufferType* lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
+    lightPositionDataPtr->lightPosition[0] = a_lightPositions[0]; 
+    lightPositionDataPtr->lightPosition[1] = a_lightPositions[1]; 
+    lightPositionDataPtr->lightPosition[2] = a_lightPositions[2]; 
+    lightPositionDataPtr->lightPosition[3] = a_lightPositions[3]; 
+        
+    a_deviceContext->Unmap(m_LightPositionBuffer, 0);
+    a_deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
+    bufferNumber++;
     
     result = a_deviceContext->Map(m_FogBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
@@ -681,19 +705,9 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     reflectionDataPtr->reflectionMatrix = a_reflectionMatrix;
     a_deviceContext->Unmap(m_ReflectionBuffer, 0);
     a_deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_ReflectionBuffer);
-    bufferNumber++;
-    
-    result = a_deviceContext->Map(m_LightPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    if (FAILED(result))
-        return false;
-    LightPositionBufferType* lightPositionDataPtr = (LightPositionBufferType*)mappedSubresource.pData;
-    for (int i = 0; i < NUM_LIGHTS; i++)
-        lightPositionDataPtr->lightPosition[i] = a_lightPositions[i]; 
-    a_deviceContext->Unmap(m_LightPositionBuffer, 0);
-    a_deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_LightPositionBuffer);
     //bufferNumber++;
 
-
+    
     //Vertex buffers above so now that we are setting pixel buffers we reset the buffer number
     bufferNumber = 0;
 
@@ -702,8 +716,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     if (FAILED(result))
         return false;
     LightInformationBufferType* lightInfoDataPtr = (LightInformationBufferType*)mappedSubresource.pData;
-    for (int i = 0; i < NUM_LIGHTS; i++)
-        lightInfoDataPtr->diffuseColor = a_mainLightDiffuse;
+    lightInfoDataPtr->diffuseColor = a_mainLightDiffuse;
     lightInfoDataPtr->ambientColor = a_ambientColor;
     lightInfoDataPtr->specularColor = a_specularColor;
     lightInfoDataPtr->mainLightDirection = a_mainLightDirection;
@@ -712,6 +725,16 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     a_deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_LightInformationBuffer);
     bufferNumber++;
 
+    result = a_deviceContext->Map(m_PointLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    if (FAILED(result))
+        return false;
+    PointLightBufferType* pointLightDataPtr = (PointLightBufferType*)mappedSubresource.pData;
+    for (int i = 0; i < NUM_LIGHTS; i++)
+        pointLightDataPtr->pointLightDiffuseColor[i] = a_pointLightDiffuse[i];
+    a_deviceContext->Unmap(m_PointLightBuffer, 0);
+    a_deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PointLightBuffer);
+    bufferNumber++;
+    
     result = a_deviceContext->Map(m_TranslationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
     if (FAILED(result))
         return false;
@@ -750,16 +773,6 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     pixelDataPtr->pixelColor = a_pixelColor;
     a_deviceContext->Unmap(m_PixelBuffer, 0);
     a_deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PixelBuffer);
-    bufferNumber++;
-    
-    result = a_deviceContext->Map(m_PixelBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-    if (FAILED(result))
-        return false;
-    PointLightBufferType* pointLightDataPtr = (PointLightBufferType*)mappedSubresource.pData;
-    for (int i = 0; i < NUM_LIGHTS; i++)
-        pointLightDataPtr->diffuseColor[i] = a_pointLightDiffuse[i];
-    a_deviceContext->Unmap(m_PixelBuffer, 0);
-    a_deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_PointLightBuffer);
     //bufferNumber++;
     
     return true;

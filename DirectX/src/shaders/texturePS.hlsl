@@ -15,6 +15,10 @@ cbuffer LightInformationBuffer
     float3 mainLightDirection;
     float4 ambientColor;
 }
+cbuffer PointLightBuffer
+{
+    float4 pointLightDiffuseColor[NUM_LIGHTS];
+}
 cbuffer TranslationBuffer
 {
     float2 textureTranslation;
@@ -34,10 +38,6 @@ cbuffer WaterBuffer
 cbuffer PixelBuffer 
 {
     float4 pixelColor;
-}
-cbuffer PointLightBuffer
-{
-    float4 pointLightDiffuseColor[NUM_LIGHTS];
 }
 
 struct PixelInputType
@@ -121,24 +121,39 @@ float4 SimpleLightingPixelShader(PixelInputType a_Input) : SV_TARGET
 
 float4 TextureMultiLightPixelShader(PixelInputType a_input) : SV_TARGET
 {
-    const float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex);
-    float4 colorArray[NUM_LIGHTS];
+    float4 textureColor;
     float lightIntensity[NUM_LIGHTS];
-    
-    for (int i = 0; i < NUM_LIGHTS; i++)
+    float4 colorArray[NUM_LIGHTS];
+    float4 colorSum;
+    float4 color;
+    int i;
+
+
+    // Sample the texture pixel at this location.
+    textureColor = ShaderTexture1.Sample(Sampler, a_input.tex) + diffuseColor * 0.01f;
+    textureColor = saturate(textureColor);
+
+    for(i=0; i<NUM_LIGHTS; i++)
     {
+        // Calculate the different amounts of light on this pixel based on the positions of the lights.
         lightIntensity[i] = saturate(dot(a_input.normal, a_input.lightPos[i]));
+
+        // Determine the diffuse color amount of each of the four lights.
         colorArray[i] = pointLightDiffuseColor[i] * lightIntensity[i];
     }
-    
-    float4 colorSum = float4(0.0f,0.0f,0.0f,0.0f);
-    for (int j = 0; j < NUM_LIGHTS; j++)
+    // Initialize the sum of colors.
+    colorSum = float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Add all of the light colors up.
+    for(i=0; i<NUM_LIGHTS; i++)
     {
-        colorSum.r += colorArray[j].r;
-        colorSum.g += colorArray[j].g;
-        colorSum.b += colorArray[j].b;
+        colorSum.r += colorArray[i].r;
+        colorSum.g += colorArray[i].g;
+        colorSum.b += colorArray[i].b;
     }
-    float4 color = saturate(colorSum) * textureColor;
+    // Multiply the texture pixel by the combination of all four light colors to get the final result.
+    color = saturate(colorSum) * textureColor;
+
     return color;
 }
 
