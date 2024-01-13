@@ -34,6 +34,8 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	char textureFileName[128];
 	char blendTexture1FileName[128];
 	char blendTexture2FileName[128];
+	char blendTexture3FileName[128];
+	char blendTexture4FileName[128];
 	char modelFileName[128];
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
@@ -56,16 +58,30 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     //create a new model
     m_Model = new ModelClass;
 
+	PixelShaderEntryPoint pixelEntry = SimpleLightingPixelShader;
+	
 	strcpy_s(textureFileName, "./data/stone01.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
+	strcpy_s(blendTexture3FileName, "./data/font01.tga");
+	strcpy_s(blendTexture4FileName, "./data/font01.tga");
 	strcpy_s(modelFileName, "./data/sphere.txt");
-	//strcpy_s(shaderPixelEntryPoint, "SpecularMapPixelShader");
-	strcpy_s(shaderPixelEntryPoint, "SimpleLightingPixelShader");
-	strcpy_s(shaderVertexEntryPoint, "TextureVertexShader");
+	
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SimpleLightingPixelShader));
+	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint ,shaderPixelEntryPoint);
+	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+    if (!result)
+    {
+	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+    	return false;
+    }
+
+	
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(FontPixelShader));
+	m_FontShader = new ShaderClass;
+	result = m_FontShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	
     if (!result)
     {
@@ -73,12 +89,28 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     	return false;
     }
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName, nullptr, nullptr);
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName, blendTexture3FileName, blendTexture4FileName);
     if (!result)
     {
         MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
         return false;
     }
+
+	m_Font = new FontClass;
+	result = m_Font->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), 0);
+	if (!result)
+	{
+        MessageBox(a_windowHandle, L"Could not init font", L"Error", MB_OK);
+        return false;
+	}
+
+	m_previousFps = -1;
+	char fpsString[32];
+	strcpy_s(fpsString, "Fps: 0");
+	m_fpsText = new TextClass;
+	if (!m_fpsText->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 128, m_Font, fpsString, 10, 10, 1.0f,1.0f,1.0f))
+		return false;
+	
 	m_MainLight = new LightClass;
 	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
 	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
@@ -86,6 +118,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	m_MainLight->m_SpecularPower = 16.0f;
 	m_MainLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
 
+	//Pointlight variables for now to display multi lighting.
 	m_LightDiffuse = new XMFLOAT4[4];
 	m_LightPositions = new XMFLOAT4[4];
 	m_LightDiffuse[0] = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
@@ -108,6 +141,7 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = nullptr;
     }
+	
 	if (m_MainLight)
 	{
 		delete m_MainLight;
@@ -119,6 +153,13 @@ void ApplicationClass::Shutdown()
 		m_TextureShader->Shutdown();
 		delete m_TextureShader;
 		m_TextureShader = nullptr;
+	}
+	
+	if (m_FontShader)
+	{
+		m_FontShader->Shutdown();
+		delete m_TextureShader;
+		m_FontShader = nullptr;
 	}
 	
 	// Release the model object.
@@ -135,13 +176,24 @@ void ApplicationClass::Shutdown()
 		delete m_Camera;
 		m_Camera = nullptr;
 	}
-    return;
+	
+	if (m_Font)
+	{
+		m_Font->ShutDown();
+		delete m_Font;
+		m_Font = 0;
+	}
+	
+	if (m_fpsText)
+	{
+		m_fpsText->Shutdown();
+		delete m_fpsText;
+		m_fpsText = 0;
+	}
 }
 
 bool ApplicationClass::Frame(InputClass* a_InputClass)
 {
-	int mouseX, mouseY;
-
 	if (a_InputClass->IsEscapePressed())
 		return false;
 
@@ -154,13 +206,8 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
         rotation += 360.0f;
     }
 
-	a_InputClass->GetMouseLocation(mouseX, mouseY);
-	const bool mouseDown = a_InputClass->IsMousePressed(0);
-
-	if (!UpdateMouseStrings(mouseX, mouseY, mouseDown))
-		return false;
-	
 	UpdateFps();
+	
 	//Render Scene
     return Render(rotation);
 }
@@ -168,8 +215,10 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
 bool ApplicationClass::Render(float a_Rotation) const
 {
 	XMMATRIX world;
+	XMMATRIX worldRotation;
 	XMMATRIX view;
 	XMMATRIX projection;
+	XMMATRIX ortho;
 	
 	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0);
 	constexpr float blendAmount = 0;;
@@ -185,19 +234,21 @@ bool ApplicationClass::Render(float a_Rotation) const
 
     //get all the matrices
 	m_Direct3D->GetWorldMatrix(world);
+	m_Direct3D->GetWorldMatrix(worldRotation);
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
 
-	world = XMMatrixRotationY(a_Rotation);
-	
+	worldRotation = XMMatrixRotationY(a_Rotation);
+
+	m_Direct3D->GetOrthoMatrix(ortho);
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 
 	
 
-	const bool result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
+	bool result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
 	                                            m_Model->GetIndexCount(),
-	                                            world,
+	                                            worldRotation,
 	                                            view,
 	                                            projection,
 	                                            m_Camera->GetPosition(),
@@ -227,21 +278,59 @@ bool ApplicationClass::Render(float a_Rotation) const
 		return false;
 	}
 
-	//m_Direct3D->TurnZBufferOff();
-	//m_Direct3D->EnableAlphaBlending();
-	//----- Do any 2d / sprite things here, alpha blending is for text.
-	//m_Direct3D->DisableAlphaBlending();
+	m_Direct3D->GetWorldMatrix(world);
+	m_Camera->GetViewMatrix(view);
+	//2D SECTION-----------------------------------------------------------
+	m_Direct3D->TurnZBufferOff();
+
+
+	//UI SECTION
+	m_Direct3D->EnableAlphaBlending();
 	
-	//m_Direct3D->TurnZBufferOn();
+	m_fpsText->Render(m_Direct3D->GetDeviceContext());
+	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(),
+												m_Model->GetIndexCount(),
+												world,
+												view,
+												ortho,
+												m_Camera->GetPosition(),
+												0,
+												0,
+												XMFLOAT4(0,0,0,0),
+												world,
+												m_LightPositions,
+												m_MainLight->m_DiffuseColor,
+												m_MainLight->m_SpecularColor,
+												m_MainLight->m_SpecularPower,
+												m_MainLight->m_LightDirection,
+												m_MainLight->m_AmbientColor,
+												translationAmount,
+												blendAmount,
+												waterTranslation,
+												reflectRefractScale,
+												pixelColor,
+												m_LightDiffuse,
+												m_Model->GetTexture(0),
+												m_Model->GetTexture(1),
+												m_Model->GetTexture(2),
+												m_Model->GetTexture(3),
+												m_Model->GetTexture(4));
+
+	if (!result)
+	{
+		return false;
+	}
+	m_Direct3D->DisableAlphaBlending();
+	m_Direct3D->TurnZBufferOn();
+	//END 2D SECTION-------------------------------------------------------
     m_Direct3D->EndScene();
     return true;
 }
 
 bool ApplicationClass::UpdateFps()
 {
-	//char tempString[16], finalString[16];
-	//float red, green, blue;
-	//bool result;
+	char tempString[16], finalString[16];
+	float red, green, blue;
 	
 	m_count++;
     	
@@ -251,71 +340,87 @@ bool ApplicationClass::UpdateFps()
 		m_count = 0;
 		m_startTime = timeGetTime();
 	}
-	//int fps = m_fps;
-	return true;
-	//if (m_previousFps == fps)
-	//{
-	//	return true;
-	//}
-	//m_previousFps = fps;
-	
-	//if (fps > 99999)
-	//{
-	//	fps = 99999;
-	//}
-	//sprintf_s(tempString, "%d", fps);
-	//strcpy_s(finalString, "Fps: ");
-	//strcat_s(finalString, tempString);
-	//if (fps >= 60)
-	//{
-	//	red = 0.0f;
-	//	green = 1.0f;
-	//	blue = 0.0f;
-	//}
-	//if (fps < 60)
-	//{
-	//	red = 1.0f;
-	//	green = 1.0f;
-	//	blue = 0.0f;
-	//}
-	//if (fps < 30)
-	//{
-	//	red = 1.0f;
-	//	green = 0.0f;
-	//	blue = 0.0f;
-	//}
-	//result = m_fpstext->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
-	//if (!result)
-	//	return false;
 
-	//return true;
+	int fps = m_fps;
+	if (m_previousFps == fps)
+	{
+		return true;
+	}
+	m_previousFps = fps;
+	
+	if (fps > 99999)
+	{
+		fps = 99999;
+	}
+	sprintf_s(tempString, "%d", fps);
+	strcpy_s(finalString, "Fps: ");
+	strcat_s(finalString, tempString);
+	if (fps >= 60)
+	{
+		red = 0.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+	else if (fps < 60)
+	{
+		red = 1.0f;
+		green = 1.0f;
+		blue = 0.0f;
+	}
+	else if (fps < 30)
+	{
+		red = 1.0f;
+		green = 0.0f;
+		blue = 0.0f;
+	}
+	else
+	{
+		red = 1.0f;
+		green = 1.0f;
+		blue = 1.0f;
+	}
+	
+	const bool result = m_fpsText->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
+	if (!result)
+		return false;
+
+	return true;
 }
 
-bool ApplicationClass::UpdateMouseStrings(int posX, int posY, bool a_MouseDown)
+const char* ApplicationClass::PixelEntryPointToChar(PixelShaderEntryPoint a_entryPoint)
 {
-	//char tempString[16], finalString[32];
-	//
-	//sprintf_s(tempString, "%d", posX);
-	//strcpy_s(finalString, "Mouse X: ");
-	//strcat_s(finalString, tempString);
+	switch (a_entryPoint)
+	{
+		case SimpleLightingPixelShader:
+			return "SimpleLightingPixelShader";
+		case NormalMapPixelShader:
+			return "NormalMapPixelShader";
+		case SpecularMapPixelShader:
+			return "SpecularMapPixelShader";
+		case TextureSamplePixelShader:
+			return "TextureSamplePixelShader";
+		case TextureMultiLightPixelShader:
+			return "TextureMultiLightPixelShader";
+		case TextureMultiSamplePixelShader:
+			return "TextureMultiSamplePixelShader";
+		case TextureLightMapPixelShader:
+			return "TextureLightMapPixelShader";
+		case TextureAlphaMapPixelShader:
+			return "TextureAlphaMapPixelShader";
+		case FontPixelShader:
+			return "FontPixelShader";
+		default:
+			return "SimpleLightingPixelShader";
+	}
+}
 
-	//if (!m_MouseStrings[0].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 90, 1.0f,1.0f,1.0f))
-	//	return false;
-	//
-	//sprintf_s(tempString, "%d", posY);
-	//strcpy_s(finalString, "Mouse Y: ");
-	//strcat_s(finalString, tempString);
-	//
-	//if (!m_MouseStrings[1].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 115, 1.0f,1.0f,1.0f))
-	//	return false;
-	//
-	//if (a_MouseDown)
-	//	strcpy_s(finalString, "Mouse Button: Yes");
-	//else
-	//	strcpy_s(finalString, "Mouse Button: No");
-	//
-	//if (!m_MouseStrings[2].UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 10, 135, 1.0f,1.0f,1.0f))
-	//	return false;
-
-	return true;
+const char* ApplicationClass::VertexEntryPointToChar(VertexShaderEntryPoint a_entryPoint)
+{
+	switch (a_entryPoint)
+	{
+		case TextureVertexShader:
+			return "TextureVertexShader";
+		default:
+			return "SimpleLightingPixelShader";
+	}
 }

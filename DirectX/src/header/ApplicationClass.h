@@ -11,6 +11,8 @@
 
 #include <Windows.h>
 #include <mmsystem.h>
+
+#include "TextClass.h"
 #pragma comment(lib, "winmm.lib")
 
 class FontShaderClass;
@@ -23,6 +25,22 @@ const float SCREEN_NEAR = 0.3f;
 
 class ApplicationClass
 {
+	enum VertexShaderEntryPoint
+	{
+		TextureVertexShader = 0,
+	};
+	enum PixelShaderEntryPoint
+	{
+		SimpleLightingPixelShader = 0,
+		NormalMapPixelShader = 1,
+		SpecularMapPixelShader,
+		TextureSamplePixelShader,
+		TextureMultiLightPixelShader,
+		TextureMultiSamplePixelShader,
+		TextureLightMapPixelShader,
+		TextureAlphaMapPixelShader,
+		FontPixelShader
+	};
 public:
 	ApplicationClass();
 	ApplicationClass(const ApplicationClass&);
@@ -34,8 +52,10 @@ public:
 
 private:
 	bool Render(float a_Rotation) const;
+	
 	bool UpdateFps();
-	static bool UpdateMouseStrings(int posX, int posY, bool a_MouseDown);
+	static const char* PixelEntryPointToChar(PixelShaderEntryPoint a_entryPoint);
+	static const char* VertexEntryPointToChar(VertexShaderEntryPoint a_entryPoint);
 
 private:
 	Direct3DClass* m_Direct3D;
@@ -44,14 +64,18 @@ private:
 	LightClass* m_MainLight;
 	
 	ShaderClass* m_TextureShader;
+	ShaderClass* m_FontShader;
 
 	XMFLOAT4* m_LightPositions;
 	XMFLOAT4* m_LightDiffuse;
 	
+	unsigned long m_startTime;
 	int m_fps;
 	int m_count;
-	unsigned long m_startTime;
 	int m_previousFps;
+
+	FontClass* m_Font;
+	TextClass* m_fpsText;
 };
 
 #endif

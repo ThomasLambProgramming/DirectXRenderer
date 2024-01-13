@@ -2,6 +2,8 @@
 Texture2D ShaderTexture1 : register(t0);
 Texture2D ShaderTexture2 : register(t1);
 Texture2D ShaderTexture3 : register(t2);
+Texture2D ShaderTexture4 : register(t3);
+Texture2D ShaderTexture5 : register(t4);
 
 Texture2D ReflectionTexture : register(t3);
 Texture2D RefractionTexture : register(t4);
@@ -200,8 +202,8 @@ float4 TextureAlphaMapPixelShader(PixelInputType a_input) : SV_TARGET
 float4 FontPixelShader(PixelInputType a_input) : SV_TARGET
 {
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
-    float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex);
-    
+    float4 textureColor = ShaderTexture5.Sample(Sampler, a_input.tex);
+    textureColor = saturate(textureColor.x + UseEveryBuffer());
     if (textureColor.r == 0.0f)
     {
         textureColor.a = 0.0f;
@@ -217,7 +219,9 @@ float4 FontPixelShader(PixelInputType a_input) : SV_TARGET
 
 float4 RawColorPixelShader(PixelInputType a_input) : SV_TARGET
 {
-    return pixelColor;
+    float4 newColor = pixelColor;
+    newColor.x += UseEveryBuffer();
+    return saturate(newColor);
 }
 
 
