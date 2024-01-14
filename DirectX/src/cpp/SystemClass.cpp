@@ -41,10 +41,9 @@ bool SystemClass::Initialize()
 	//I assume the above is allowed without function () is because of not having any parameters in the constructor for both.
 
 	result = m_Application->Initialize(screenWidth, screenHeight, m_hwnd);
-	/*if (!result)
-		return false;
+
 	
-	return false;*/
+	
 	return result;
 }
 
@@ -106,6 +105,9 @@ void SystemClass::Run()
 
 LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
+    extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, umsg, wparam, lparam))
+        return true;
 	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 

@@ -50,6 +50,17 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
         return false;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	
+
+	// Setup Platform/Renderer backends
+    ImGui_ImplWin32_Init(a_windowHandle);
+    ImGui_ImplDX11_Init(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext());
+
     //create camera
     m_Camera = new CameraClass;
     //set initial position of camera
@@ -191,6 +202,10 @@ void ApplicationClass::Shutdown()
 		delete m_fpsText;
 		m_fpsText = 0;
 	}
+
+	ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
 }
 
 bool ApplicationClass::Frame(InputClass* a_InputClass)
@@ -230,6 +245,11 @@ bool ApplicationClass::Render(float a_Rotation) const
     //clear buffers to begin the scene
     m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
 
+	ImGui_ImplDX11_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow();
+	
     //update cameras view matrix
     m_Camera->Render();
 
@@ -324,7 +344,10 @@ bool ApplicationClass::Render(float a_Rotation) const
 	m_Direct3D->DisableAlphaBlending();
 	m_Direct3D->TurnZBufferOn();
 	//END 2D SECTION-------------------------------------------------------
+	ImGui::Render();
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     m_Direct3D->EndScene();
+
     return true;
 }
 

@@ -12,6 +12,8 @@
 #include <Windows.h>
 #include <mmsystem.h>
 
+#include "thirdparty/imgui/imgui.h"
+
 #include "TextClass.h"
 #pragma comment(lib, "winmm.lib")
 

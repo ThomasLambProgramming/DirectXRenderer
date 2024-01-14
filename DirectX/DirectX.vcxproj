@@ -770,6 +770,13 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_widgets.cpp" />
     <None Include="src\shaders\texturePS.hlsl">
       <ObjectFileOutput>D:\PersonalProjects\DirectXRenderer\x64\Debug\textureVS.cso</ObjectFileOutput>
       <TrackerLogDirectory>x64\Debug\DirectX.tlog\</TrackerLogDirectory>
@@ -811,9 +818,21 @@
     <ClInclude Include="src\header\TextureClass.h" />
     <ClInclude Include="src\header\ShaderClass.h" />
     <ClInclude Include="src\header\TimerClass.h" />
+    <ClInclude Include="src\thirdparty\imgui\backends\imgui_impl_dx11.h" />
+    <ClInclude Include="src\thirdparty\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="src\thirdparty\imgui\imconfig.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="data\stone01.tga" />
+    <Content Include="src\thirdparty\imgui\.editorconfig" />
+    <Content Include="src\thirdparty\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="data\" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -908,7 +927,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header/;$(ProjectDir)/src/cpp/;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src;$(ProjectDir)/src/header/;$(ProjectDir)/src/cpp/;$(ProjectDir)/src/shaders;$(ProjectDir)/src/shaders/pixelshaders;$(ProjectDir)/src/shaders/vertexshaders;$(ProjectDir)/src/thirdparty/imgui;$(ProjectDir)/src/thirdparty/imgui/backends</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <Link>
