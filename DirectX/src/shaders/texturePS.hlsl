@@ -193,7 +193,7 @@ float4 TextureAlphaMapPixelShader(PixelInputType a_input) : SV_TARGET
 {
     float4 color1 = ShaderTexture1.Sample(Sampler, a_input.tex);
     float4 color2 = ShaderTexture2.Sample(Sampler, a_input.tex);
-    float4 alphaValue = ShaderTexture3.Sample(Sampler, a_input.tex);
+    float4 alphaValue = ShaderTexture4.Sample(Sampler, a_input.tex);
     ////By doing 1-alpha its a flip on the values eg alpha 0.1 will remove 90% of color while giving 1-0.1(0.9) to color2 eg 90% of its color.
     float4 blendColor = saturate((alphaValue * color1) + ((1.0 - alphaValue) * color2));
     return blendColor;

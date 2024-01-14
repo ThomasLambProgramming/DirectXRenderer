@@ -53,21 +53,22 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     //create camera
     m_Camera = new CameraClass;
     //set initial position of camera
-    m_Camera->SetPosition(0.0f,2.0f,-12.0f);
+    m_Camera->SetPosition(0.0f,1.0f,-6.0f);
+    m_Camera->SetRotation(20.0f,0.0f,0.0f);
 
     //create a new model
     m_Model = new ModelClass;
 
 	PixelShaderEntryPoint pixelEntry = SimpleLightingPixelShader;
 	
-	strcpy_s(textureFileName, "./data/stone01.tga");
+	strcpy_s(textureFileName, "./data/stone02.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
-	strcpy_s(blendTexture3FileName, "./data/font01.tga");
+	strcpy_s(blendTexture3FileName, "./data/alpha01.tga");
 	strcpy_s(blendTexture4FileName, "./data/font01.tga");
-	strcpy_s(modelFileName, "./data/sphere.txt");
+	strcpy_s(modelFileName, "./data/cube.txt");
 	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SimpleLightingPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_TextureShader = new ShaderClass;

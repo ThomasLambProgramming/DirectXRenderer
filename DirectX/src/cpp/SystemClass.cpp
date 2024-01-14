@@ -190,7 +190,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 		WS_EX_APPWINDOW,
 		m_applicationName,
 		m_applicationName,
-		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
+		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_CAPTION | WS_TABSTOP | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
 		posX,
 		posY,
 		screenWidth,
