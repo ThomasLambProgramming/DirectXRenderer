@@ -12,6 +12,16 @@ constexpr int MAX_TEXTURES = 6;
 
 class ModelClass  // NOLINT(cppcoreguidelines-special-member-functions)
 {
+public:
+    enum PrimitiveType
+    {
+        Cube = 0,
+        Sphere,
+        Plane,
+        Quad,
+        Capsule,
+        Cylinder
+    };
 private:
     struct VertexType
     {
@@ -40,26 +50,28 @@ public:
     ~ModelClass();
 
     bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
-    void Shutdown();
-    void Render(ID3D11DeviceContext* a_deviceContext) const;
+    bool InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount);
+    void SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const;
 
     int GetIndexCount() const;
-
     ID3D11ShaderResourceView* GetTexture(int a_texture = 0) const;
+
+    void Shutdown();
     
 private:
     
     bool LoadModel(const char* a_modelFileName);
-    void ReleaseModel();
     bool InitializeBuffers(ID3D11Device* a_device);
-    void ShutdownBuffers();
     void SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const;
 
     bool LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId);
-    void ReleaseTexture();
-    
     void CalculateModelVectors();
     static void CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal);
+    
+    
+    void ShutdownBuffers();
+    void ReleaseTexture();
+    void ReleaseModel();
     
 private:
     ID3D11Buffer* m_VertexBuffer;

@@ -38,7 +38,6 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	char blendTexture2FileName[128];
 	char blendTexture3FileName[128];
 	char blendTexture4FileName[128];
-	char modelFileName[128];
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
 
@@ -78,7 +77,6 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(blendTexture3FileName, "./data/alpha01.tga");
 	strcpy_s(blendTexture4FileName, "./data/font01.tga");
-	strcpy_s(modelFileName, "./data/cube.txt");
 	
 	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
@@ -120,7 +118,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	 blendTexture4FileName,
 	 blendTexture2FileName
 	};
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileNames, 6);
+	result = m_Model->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ModelClass::Cube, textureFileNames, 6);
     if (!result)
     {
         MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -291,7 +289,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	m_Direct3D->GetOrthoMatrix(ortho);
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
-	m_Model->Render(m_Direct3D->GetDeviceContext());
+	m_Model->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 
 	
 
