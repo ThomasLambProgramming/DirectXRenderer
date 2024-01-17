@@ -117,7 +117,8 @@ public:
                 ID3D11ShaderResourceView* a_Texture2,
                 ID3D11ShaderResourceView* a_Texture3,
                 ID3D11ShaderResourceView* a_Texture4,
-                ID3D11ShaderResourceView* a_Texture5) const;
+                ID3D11ShaderResourceView* a_Texture5,
+                int a_textureCount = 5) const;
     
     ID3D11ShaderResourceView* GetTexture(int a_textureNumber) const;
 
@@ -152,7 +153,8 @@ private:
                          ID3D11ShaderResourceView* a_Texture2,
                          ID3D11ShaderResourceView* a_Texture3,
                          ID3D11ShaderResourceView* a_Texture4,
-                         ID3D11ShaderResourceView* a_Texture5) const;
+                         ID3D11ShaderResourceView* a_Texture5,
+                         int a_textureCount = 5) const;
     
     void RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount) const;
     

@@ -12,7 +12,12 @@
 #include <Windows.h>
 #include <mmsystem.h>
 
+
+#include "SpriteClass.h"
+#include "thirdparty/imgui/imgui_impl_dx11.h"
+#include "thirdparty/imgui/imgui_impl_win32.h"
 #include "thirdparty/imgui/imgui.h"
+
 
 #include "TextClass.h"
 #pragma comment(lib, "winmm.lib")
@@ -65,8 +70,9 @@ private:
 	ModelClass* m_Model;
 	LightClass* m_MainLight;
 	
-	ShaderClass* m_TextureShader;
+	ShaderClass* m_ModelShader;
 	ShaderClass* m_FontShader;
+	ShaderClass* m_SpriteShader;
 
 	XMFLOAT4* m_LightPositions;
 	XMFLOAT4* m_LightDiffuse;
@@ -76,8 +82,12 @@ private:
 	int m_count;
 	int m_previousFps;
 
+	SpriteClass* m_Sprite;
+
 	FontClass* m_Font;
 	TextClass* m_fpsText;
+
+	float* m_ImguiScaling;
 };
 
 #endif

@@ -56,7 +56,7 @@ bool InputClass::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWi
 
 	//Cooperative level is important. DISCL_EXCLUSIVE = no other program gets the input.
 	//foreground = the device is unacquired automatically when the associated window moves to the background.
-	result = m_mouse->SetCooperativeLevel(windowHandle, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+	result = m_mouse->SetCooperativeLevel(windowHandle, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	if (FAILED(result))
 		return false;
 

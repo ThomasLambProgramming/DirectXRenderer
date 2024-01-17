@@ -230,6 +230,13 @@ bool SpriteClass::UpdateBuffers(ID3D11DeviceContext* a_DeviceContext)
     vertices[5].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right.
     vertices[5].texture = XMFLOAT2(1.0f, 1.0f);
 
+    for (int i = 0; i < m_vertexCount; i++)
+    {
+        vertices[i].normal = XMFLOAT3(0.0f, 0.0f, 0.0f);
+        vertices[i].binormal = XMFLOAT3(0.0f, 0.0f, 0.0f);
+        vertices[i].tangent = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    }
+
     result = a_DeviceContext->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (FAILED(result))
     {

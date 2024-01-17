@@ -330,14 +330,14 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	//Bind the render target view and depth stencil buffer to the output render pipeline
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 
-	rasterDesc.AntialiasedLineEnable = false;
+	rasterDesc.AntialiasedLineEnable = true;
 	rasterDesc.CullMode = D3D11_CULL_BACK;
 	rasterDesc.DepthBias = 0;
 	rasterDesc.DepthBiasClamp = 0.0f;
 	rasterDesc.DepthClipEnable = true;
 	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.FrontCounterClockwise = false;
-	rasterDesc.MultisampleEnable = false;
+	rasterDesc.MultisampleEnable = true;
 	rasterDesc.ScissorEnable = false;
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
@@ -425,9 +425,8 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	{
 		return false;
 	}
-	
+
 	return true;
-	
 }
 
 void Direct3DClass::Shutdown()

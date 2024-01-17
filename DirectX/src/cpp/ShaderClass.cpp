@@ -109,7 +109,8 @@ bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
                 ID3D11ShaderResourceView* a_Texture2,
                 ID3D11ShaderResourceView* a_Texture3,
                 ID3D11ShaderResourceView* a_Texture4,
-                ID3D11ShaderResourceView* a_Texture5) const
+                ID3D11ShaderResourceView* a_Texture5,
+                int a_textureCount) const
 {
     //set shader params that will be used for rendering
     const bool result = SetShaderParams(a_deviceContext,
@@ -623,14 +624,19 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
                          ID3D11ShaderResourceView* a_Texture2,
                          ID3D11ShaderResourceView* a_Texture3,
                          ID3D11ShaderResourceView* a_Texture4,
-                         ID3D11ShaderResourceView* a_Texture5) const
+                         ID3D11ShaderResourceView* a_Texture5,
+                         int a_textureCount) const
 {
     //I believe this has something to do with the register(t0) and etc. look this up later.
     a_deviceContext->PSSetShaderResources(0,1, &a_Texture1);
-    a_deviceContext->PSSetShaderResources(1,1, &a_Texture2);
-    a_deviceContext->PSSetShaderResources(2,1, &a_Texture3);
-    a_deviceContext->PSSetShaderResources(3,1, &a_Texture4);
-    a_deviceContext->PSSetShaderResources(4,1, &a_Texture5);
+    if (a_textureCount > 1)
+        a_deviceContext->PSSetShaderResources(1,1, &a_Texture2);
+    if (a_textureCount > 2)
+        a_deviceContext->PSSetShaderResources(2,1, &a_Texture3);
+    if (a_textureCount > 3)
+        a_deviceContext->PSSetShaderResources(3,1, &a_Texture4);
+    if (a_textureCount > 4)
+        a_deviceContext->PSSetShaderResources(4,1, &a_Texture5);
     
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
     int bufferNumber = 0;

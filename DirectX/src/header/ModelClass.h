@@ -1,5 +1,4 @@
-﻿#ifndef _MODELCLASS_H_
-#define _MODELCLASS_H_
+﻿#pragma once
 
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -9,7 +8,9 @@
 using namespace std;
 using namespace DirectX;
 
-class ModelClass
+constexpr int MAX_TEXTURES = 6;
+
+class ModelClass  // NOLINT(cppcoreguidelines-special-member-functions)
 {
 private:
     struct VertexType
@@ -35,30 +36,30 @@ private:
     };
 public:
     ModelClass();
-    ModelClass(const ModelClass&);
+    ModelClass(const ModelClass& a_copy);
     ~ModelClass();
 
-    bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_TextureFileName2, char* a_TextureFileName3, char* a_TextureFileName4, char* a_TextureFileName5);
+    bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
     void Shutdown();
-    void Render(ID3D11DeviceContext* a_DeviceContext);
+    void Render(ID3D11DeviceContext* a_deviceContext) const;
 
-    int GetIndexCount();
+    int GetIndexCount() const;
 
-    ID3D11ShaderResourceView* GetTexture(int a_texture = 0);
+    ID3D11ShaderResourceView* GetTexture(int a_texture = 0) const;
     
 private:
     
-    bool LoadModel(char* a_ModelFileName);
+    bool LoadModel(const char* a_modelFileName);
     void ReleaseModel();
-    bool InitializeBuffers(ID3D11Device* a_Device);
+    bool InitializeBuffers(ID3D11Device* a_device);
     void ShutdownBuffers();
-    void RenderBuffers(ID3D11DeviceContext* a_DeviceContext);
+    void SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const;
 
-    bool LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName, int a_texId);
+    bool LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId);
     void ReleaseTexture();
     
     void CalculateModelVectors();
-    void CalculateTangentBinormal(TempVertexType, TempVertexType, TempVertexType, XMFLOAT3&, XMFLOAT3&);
+    static void CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal);
     
 private:
     ID3D11Buffer* m_VertexBuffer;
@@ -67,12 +68,10 @@ private:
     int m_VertexCount;
     int m_IndexCount;
 
+    //Decayed pointer to array.
     TextureClass* m_texture;
-    TextureClass* m_SecondaryTexture1;
-    TextureClass* m_SecondaryTexture2;
-    TextureClass* m_SecondaryTexture3;
-    TextureClass* m_SecondaryTexture4;
+    //m_texture can return nullptr so we track the amount of textures this model has.
+    int m_textureCount;
 
     ModelType* m_Model;
 };
-#endif

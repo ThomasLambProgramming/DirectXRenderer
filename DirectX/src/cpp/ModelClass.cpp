@@ -1,14 +1,16 @@
 ﻿#include "ModelClass.h"
 
-ModelClass::ModelClass()
+ModelClass::ModelClass(): m_VertexCount(0), m_IndexCount(0), m_textureCount(0)
 {
-    m_VertexBuffer = nullptr;
-    m_IndexBuffer = nullptr;
+	m_VertexBuffer = nullptr;
+	m_IndexBuffer = nullptr;
 	m_texture = nullptr;
 	m_Model = nullptr;
 }
 
-ModelClass::ModelClass(const ModelClass&)
+ModelClass::ModelClass(const ModelClass& a_copy): m_VertexBuffer(nullptr), m_IndexBuffer(nullptr), m_VertexCount(0),
+                                                  m_IndexCount(0),
+                                                  m_texture(nullptr), m_textureCount(0), m_Model(nullptr)
 {
 }
 
@@ -16,63 +18,29 @@ ModelClass::~ModelClass()
 {
 }
 
-bool ModelClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_TextureFileName, char* a_ModelFileName, char* a_TextureFileName2, char* a_TextureFileName3, char* a_TextureFileName4, char* a_TextureFileName5)
+bool ModelClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount)
 {
-    bool result;
-
 	//load the model data
-	result = LoadModel(a_ModelFileName);
+	bool result = LoadModel(a_modelFileName);
 	if (!result)
-	{
 		return false;
-	}
 
 	//calculate the tangent and binormals of the model
 	CalculateModelVectors();
 	
     //init the vert/index buffers
-    result = InitializeBuffers(a_Device);
+    result = InitializeBuffers(a_device);
     if (!result)
-    {
         return false;
-    }
 
-	result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName, 0);
-	if (!result)
+	m_texture = new TextureClass[MAX_TEXTURES];
+
+	for (int i = 0; i < a_textureCount; i++)
 	{
-		return false;
-	}
-	if (a_TextureFileName2)
-	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName2, 1);
+		result = LoadTexture(a_device, a_deviceContext, a_textureFileNames[i], i);
 		if (!result)
-		{
 			return false;
-		}
-	}
-	if (a_TextureFileName3)
-	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName3, 2);
-		if (!result)
-		{
-			return false;
-		}
-	}
-	if (a_TextureFileName4)
-	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName4, 3);
-		if (!result)
-		{
-			return false;
-		}
-	}
-	if (a_TextureFileName5)
-	{
-		result = LoadTexture(a_Device, a_DeviceContext, a_TextureFileName5, 4);
-		if (!result)
-		{
-			return false;
-		}
+		m_textureCount++;
 	}
 	
     return true;
@@ -85,33 +53,25 @@ void ModelClass::Shutdown()
     ShutdownBuffers();
 }
 
-void ModelClass::Render(ID3D11DeviceContext* a_DeviceContext)
+void ModelClass::Render(ID3D11DeviceContext* a_deviceContext) const
 {
-    RenderBuffers(a_DeviceContext);
+    SetVertexIndexBuffers(a_deviceContext);
 }
 
-int ModelClass::GetIndexCount()
+int ModelClass::GetIndexCount() const
 {
     return m_IndexCount;
 }
 
-ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture)
+ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture) const
 {
-	if (a_texture == 0)
-		return m_texture->GetTexture();
-	if (a_texture == 1 && m_SecondaryTexture1)
-		return m_SecondaryTexture1->GetTexture();
-	if (a_texture == 2 && m_SecondaryTexture2)
-		return m_SecondaryTexture2->GetTexture();
-	if (a_texture == 3 && m_SecondaryTexture3)
-		return m_SecondaryTexture3->GetTexture();
-	if (a_texture == 4 && m_SecondaryTexture4)
-		return m_SecondaryTexture4->GetTexture();
+	if (a_texture + 1 > m_textureCount || a_texture < 0)
+		return nullptr;
 	
-	return m_texture->GetTexture();
+	return m_texture[a_texture].GetTexture();
 }
 
-bool ModelClass::LoadModel(char* a_ModelFileName)
+bool ModelClass::LoadModel(const char* a_modelFileName)
 {
 	ifstream fin;
     char input;
@@ -119,7 +79,7 @@ bool ModelClass::LoadModel(char* a_ModelFileName)
 
 
     // Open the model file.
-    fin.open(a_ModelFileName);
+    fin.open(a_modelFileName);
 
     // If it could not open the file then exit.
     if(fin.fail())
@@ -176,106 +136,55 @@ void ModelClass::ReleaseModel()
 	return;
 }
 
-bool ModelClass::LoadTexture(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName, int a_texId)
+//Rider suggests it to be const but it modifies m_texture so its not correct I believe
+// ReSharper disable once CppMemberFunctionMayBeConst
+bool ModelClass::LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId)
 {
-	bool result;
-
-	if (a_texId == 0)
-	{
-		//create and initalize the texture object;
-		m_texture = new TextureClass;
-		result = m_texture->Initialize(a_Device, a_DeviceContext, a_FileName);
-	}
-	if (a_texId == 1)
-	{
-		//create and initalize the texture object;
-		m_SecondaryTexture1 = new TextureClass;
-		result = m_SecondaryTexture1->Initialize(a_Device, a_DeviceContext, a_FileName);
-	}
-	if (a_texId == 2)
-	{
-		//create and initalize the texture object;
-		m_SecondaryTexture2 = new TextureClass;
-		result = m_SecondaryTexture2->Initialize(a_Device, a_DeviceContext, a_FileName);
-	}
-	if (a_texId == 3)
-	{
-		//create and initalize the texture object;
-		m_SecondaryTexture3 = new TextureClass;
-		result = m_SecondaryTexture3->Initialize(a_Device, a_DeviceContext, a_FileName);
-	}
-	if (a_texId == 4)
-	{
-		//create and initalize the texture object;
-		m_SecondaryTexture4 = new TextureClass;
-		result = m_SecondaryTexture4->Initialize(a_Device, a_DeviceContext, a_FileName);
-	}
-	if (!result)
-	{
+	//We never want to go over max textures for one object as it will break when making buffers.
+	if (a_texId > MAX_TEXTURES-1)
 		return false;
-	}
-	return true;
+	
+	//create and initialize the texture object;
+	m_texture[a_texId] = TextureClass();
+	return m_texture[a_texId].Initialize(a_device, a_deviceContext, a_textureName);
 }
 
 void ModelClass::ReleaseTexture()
 {
-	if (m_texture)
+	if (!m_texture)
 	{
-		m_texture->Shutdown();
-		delete m_texture;
-		m_texture = nullptr;
-	}
-	if (m_SecondaryTexture1)
+		return;
+	}	
+	for (int i = 0; i < MAX_TEXTURES; i++)
 	{
-		m_SecondaryTexture1->Shutdown();
-		delete m_SecondaryTexture1;
-		m_SecondaryTexture1 = nullptr;
+		if (i + 1 <= m_textureCount)
+			m_texture[i].Shutdown();
 	}
-	if (m_SecondaryTexture2)
-	{
-		m_SecondaryTexture2->Shutdown();
-		delete m_SecondaryTexture2;
-		m_SecondaryTexture2 = nullptr;
-	}
-	if (m_SecondaryTexture3)
-	{
-		m_SecondaryTexture3->Shutdown();
-		delete m_SecondaryTexture3;
-		m_SecondaryTexture3 = nullptr;
-	}
-	if (m_SecondaryTexture4)
-	{
-		m_SecondaryTexture4->Shutdown();
-		delete m_SecondaryTexture4;
-		m_SecondaryTexture4 = nullptr;
-	}
+	delete [] m_texture;
+	m_texture = nullptr;
 }
 
-bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
+bool ModelClass::InitializeBuffers(ID3D11Device* a_device)
 {
-    VertexType* vertices;
-    unsigned long* indices;
-    D3D11_BUFFER_DESC vertexBufferDesc;
+	D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
     D3D11_SUBRESOURCE_DATA vertexData;
     D3D11_SUBRESOURCE_DATA indexData;
-    HRESULT result;
-	int i;
 
     //create vertex array
-    vertices = new VertexType[m_VertexCount];
+    VertexType* vertices = new VertexType[m_VertexCount];
     if (!vertices)
     {
         return false;
     }
-    indices = new unsigned long[m_IndexCount];
+    unsigned long* indices = new unsigned long[m_IndexCount];
     if (!indices)
     {
         return false;
     }
 
 	// Load the vertex array and index array with data.
-	for(i = 0; i < m_VertexCount; i++)
+	for(int i = 0; i < m_VertexCount; i++)
 	{
 		vertices[i].position = XMFLOAT3(m_Model[i].x, m_Model[i].y, m_Model[i].z);
 		vertices[i].texture = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
@@ -299,8 +208,8 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
     vertexData.SysMemPitch = 0;
     vertexData.SysMemSlicePitch = 0;
 
-    //now that we have the subresource(init data), buffer description and the buffer avaliable we create it.
-    result = a_Device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_VertexBuffer);
+    //now that we have the subresource(init data), buffer description and the buffer available we create it.
+    HRESULT result = a_device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_VertexBuffer);
     if (FAILED(result))
     {
         return false;
@@ -322,7 +231,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_Device)
 	indexData.SysMemSlicePitch = 0;
 
 	// Create the index buffer.
-	result = a_Device->CreateBuffer(&indexBufferDesc, &indexData, &m_IndexBuffer);
+	result = a_device->CreateBuffer(&indexBufferDesc, &indexData, &m_IndexBuffer);
 	if(FAILED(result))
 	{
 		return false;
@@ -348,10 +257,9 @@ void ModelClass::ShutdownBuffers()
 		m_VertexBuffer->Release();
 		m_VertexBuffer = nullptr;
 	}
-	return;
 }
 
-void ModelClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
+void ModelClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const
 {
 	unsigned int stride;
 	unsigned int offset;
@@ -360,29 +268,29 @@ void ModelClass::RenderBuffers(ID3D11DeviceContext* a_DeviceContext)
 	offset = 0;
 
 	//set vert buffer to active in the input assembler so it can be rendered.
-	a_DeviceContext->IASetVertexBuffers(0,1,&m_VertexBuffer, &stride, &offset);
+	a_deviceContext->IASetVertexBuffers(0,1,&m_VertexBuffer, &stride, &offset);
 	//set the index buffer to active in the input assembler so it can be rendered.
-	a_DeviceContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	a_deviceContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	//set the type of primitive that should be rendered from this vert buffer, in this case it be a triangle
-	a_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	return;
+	a_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
+//Rider keeps giving me this warning about the function being const is good but it modifies m_Model so that's wrong no?
+// ReSharper disable once CppMemberFunctionMayBeConst
 void ModelClass::CalculateModelVectors()
 {
-    int faceCount, i, index;
-    TempVertexType vertex1, vertex2, vertex3;
+	TempVertexType vertex1, vertex2, vertex3;
     XMFLOAT3 tangent, binormal;
 
 
     // Calculate the number of faces in the model.
-    faceCount = m_VertexCount / 3;
+	const int faceCount = m_VertexCount / 3;
 
     // Initialize the index to the model data.
-    index = 0;
+    int index = 0;
 
     // Go through all the faces and calculate the the tangent and binormal vectors.
-    for(i=0; i<faceCount; i++)
+    for (int i = 0; i < faceCount; i++)
     {
         // Get the three vertices for this face from the model.
         vertex1.x = m_Model[index].x;
@@ -431,61 +339,56 @@ void ModelClass::CalculateModelVectors()
         m_Model[index-3].by = binormal.y;
         m_Model[index-3].bz = binormal.z;
     }
-
-    return;
 }
 
-void ModelClass::CalculateTangentBinormal(TempVertexType vertex1, TempVertexType vertex2, TempVertexType vertex3, XMFLOAT3& tangent, XMFLOAT3& binormal)
+void ModelClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal)
 {
     float vector1[3], vector2[3];
     float tuVector[2], tvVector[2];
-    float den;
-    float length;
-
 
     // Calculate the two vectors for this face.
-    vector1[0] = vertex2.x - vertex1.x;
-    vector1[1] = vertex2.y - vertex1.y;
-    vector1[2] = vertex2.z - vertex1.z;
+    vector1[0] = a_vertex2.x - a_vertex1.x;
+    vector1[1] = a_vertex2.y - a_vertex1.y;
+    vector1[2] = a_vertex2.z - a_vertex1.z;
 
-    vector2[0] = vertex3.x - vertex1.x;
-    vector2[1] = vertex3.y - vertex1.y;
-    vector2[2] = vertex3.z - vertex1.z;
+    vector2[0] = a_vertex3.x - a_vertex1.x;
+    vector2[1] = a_vertex3.y - a_vertex1.y;
+    vector2[2] = a_vertex3.z - a_vertex1.z;
 
     // Calculate the tu and tv texture space vectors.
-    tuVector[0] = vertex2.tu - vertex1.tu;
-    tvVector[0] = vertex2.tv - vertex1.tv;
+    tuVector[0] = a_vertex2.tu - a_vertex1.tu;
+    tvVector[0] = a_vertex2.tv - a_vertex1.tv;
 
-    tuVector[1] = vertex3.tu - vertex1.tu;
-    tvVector[1] = vertex3.tv - vertex1.tv;
+    tuVector[1] = a_vertex3.tu - a_vertex1.tu;
+    tvVector[1] = a_vertex3.tv - a_vertex1.tv;
 
     // Calculate the denominator of the tangent/binormal equation.
-    den = 1.0f / (tuVector[0] * tvVector[1] - tuVector[1] * tvVector[0]);
+    const float den = 1.0f / (tuVector[0] * tvVector[1] - tuVector[1] * tvVector[0]);
 
     // Calculate the cross products and multiply by the coefficient to get the tangent and binormal.
-    tangent.x = (tvVector[1] * vector1[0] - tvVector[0] * vector2[0]) * den;
-    tangent.y = (tvVector[1] * vector1[1] - tvVector[0] * vector2[1]) * den;
-    tangent.z = (tvVector[1] * vector1[2] - tvVector[0] * vector2[2]) * den;
+    a_tangent.x = (tvVector[1] * vector1[0] - tvVector[0] * vector2[0]) * den;
+    a_tangent.y = (tvVector[1] * vector1[1] - tvVector[0] * vector2[1]) * den;
+    a_tangent.z = (tvVector[1] * vector1[2] - tvVector[0] * vector2[2]) * den;
 
-    binormal.x = (tuVector[0] * vector2[0] - tuVector[1] * vector1[0]) * den;
-    binormal.y = (tuVector[0] * vector2[1] - tuVector[1] * vector1[1]) * den;
-    binormal.z = (tuVector[0] * vector2[2] - tuVector[1] * vector1[2]) * den;
-
-    // Calculate the length of this normal.
-    length = sqrt((tangent.x * tangent.x) + (tangent.y * tangent.y) + (tangent.z * tangent.z));
-
-    // Normalize the normal and then store it
-    tangent.x = tangent.x / length;
-    tangent.y = tangent.y / length;
-    tangent.z = tangent.z / length;
+    a_binormal.x = (tuVector[0] * vector2[0] - tuVector[1] * vector1[0]) * den;
+    a_binormal.y = (tuVector[0] * vector2[1] - tuVector[1] * vector1[1]) * den;
+    a_binormal.z = (tuVector[0] * vector2[2] - tuVector[1] * vector1[2]) * den;
 
     // Calculate the length of this normal.
-    length = sqrt((binormal.x * binormal.x) + (binormal.y * binormal.y) + (binormal.z * binormal.z));
+    float length = sqrt((a_tangent.x * a_tangent.x) + (a_tangent.y * a_tangent.y) + (a_tangent.z * a_tangent.z));
 
     // Normalize the normal and then store it
-    binormal.x = binormal.x / length;
-    binormal.y = binormal.y / length;
-    binormal.z = binormal.z / length;
+    a_tangent.x = a_tangent.x / length;
+    a_tangent.y = a_tangent.y / length;
+    a_tangent.z = a_tangent.z / length;
+
+    // Calculate the length of this normal.
+    length = sqrt((a_binormal.x * a_binormal.x) + (a_binormal.y * a_binormal.y) + (a_binormal.z * a_binormal.z));
+
+    // Normalize the normal and then store it
+    a_binormal.x = a_binormal.x / length;
+    a_binormal.y = a_binormal.y / length;
+    a_binormal.z = a_binormal.z / length;
 
     return;
 }

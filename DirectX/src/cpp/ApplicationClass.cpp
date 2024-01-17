@@ -8,18 +8,20 @@ ApplicationClass::ApplicationClass()
     m_Direct3D = nullptr;
     m_Camera = nullptr;
     m_Model = nullptr;
-	m_TextureShader = nullptr;
+	m_ModelShader = nullptr;
 	m_MainLight = nullptr;
 	m_startTime = 0;
 	m_previousFps = 0;
 	m_fps = 0;
+	m_Sprite = 0;
 	m_count = 0;
-
+	m_ImguiScaling = new float;
+	*m_ImguiScaling = 1.0f;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&): m_Direct3D(nullptr), m_Camera(nullptr), m_Model(nullptr),
                                                              m_MainLight(nullptr),
-                                                             m_TextureShader(nullptr), m_fps(0),
+                                                             m_ModelShader(nullptr), m_fps(0),
                                                              m_count(0),
                                                              m_startTime(0), m_previousFps(0)
 {
@@ -55,7 +57,6 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	
 
 	// Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(a_windowHandle);
@@ -82,8 +83,8 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
-	m_TextureShader = new ShaderClass;
-	result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+	m_ModelShader = new ShaderClass;
+	result = m_ModelShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
     if (!result)
     {
 	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
@@ -101,7 +102,25 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     	return false;
     }
 	
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), textureFileName, modelFileName, blendTexture1FileName, blendTexture2FileName, blendTexture3FileName, blendTexture4FileName);
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
+	m_SpriteShader = new ShaderClass;
+	result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+	
+    if (!result)
+    {
+	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+    	return false;
+    }
+
+	char* textureFileNames[] = {
+	 textureFileName,
+	 blendTexture1FileName,
+	 blendTexture2FileName,
+	 blendTexture3FileName,
+	 blendTexture4FileName,
+	 blendTexture2FileName
+	};
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), modelFileName, textureFileNames, 6);
     if (!result)
     {
         MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -141,7 +160,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	m_LightPositions[2] = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
 	m_LightDiffuse[3] = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_LightPositions[3] = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
-	
+
     return true;
 }
 
@@ -160,17 +179,17 @@ void ApplicationClass::Shutdown()
 		m_MainLight = nullptr;
 	}
 	
-	if (m_TextureShader)
+	if (m_ModelShader)
 	{
-		m_TextureShader->Shutdown();
-		delete m_TextureShader;
-		m_TextureShader = nullptr;
+		m_ModelShader->Shutdown();
+		delete m_ModelShader;
+		m_ModelShader = nullptr;
 	}
 	
 	if (m_FontShader)
 	{
 		m_FontShader->Shutdown();
-		delete m_TextureShader;
+		delete m_ModelShader;
 		m_FontShader = nullptr;
 	}
 	
@@ -201,6 +220,18 @@ void ApplicationClass::Shutdown()
 		m_fpsText->Shutdown();
 		delete m_fpsText;
 		m_fpsText = 0;
+	}
+	if (m_Sprite)
+	{
+		m_Sprite->Shutdown();
+		delete m_Sprite;
+		m_Sprite = nullptr;
+	}
+	if (m_SpriteShader)
+	{
+		m_SpriteShader->Shutdown();
+		delete m_SpriteShader;
+		m_SpriteShader = nullptr;
 	}
 
 	ImGui_ImplDX11_Shutdown();
@@ -245,10 +276,7 @@ bool ApplicationClass::Render(float a_Rotation) const
     //clear buffers to begin the scene
     m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
 
-	ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
+	
 	
     //update cameras view matrix
     m_Camera->Render();
@@ -267,7 +295,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	
 
-	bool result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(),
+	bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
 	                                            m_Model->GetIndexCount(),
 	                                            worldRotation,
 	                                            view,
@@ -302,50 +330,33 @@ bool ApplicationClass::Render(float a_Rotation) const
 	m_Direct3D->GetWorldMatrix(world);
 	m_Camera->GetViewMatrix(view);
 	//2D SECTION-----------------------------------------------------------
-	m_Direct3D->TurnZBufferOff();
-
-
-	//UI SECTION
-	m_Direct3D->EnableAlphaBlending();
-	
-	m_fpsText->Render(m_Direct3D->GetDeviceContext());
-	result = m_FontShader->Render(m_Direct3D->GetDeviceContext(),
-												m_Model->GetIndexCount(),
-												world,
-												view,
-												ortho,
-												m_Camera->GetPosition(),
-												0,
-												0,
-												XMFLOAT4(0,0,0,0),
-												world,
-												m_LightPositions,
-												m_MainLight->m_DiffuseColor,
-												m_MainLight->m_SpecularColor,
-												m_MainLight->m_SpecularPower,
-												m_MainLight->m_LightDirection,
-												m_MainLight->m_AmbientColor,
-												translationAmount,
-												blendAmount,
-												waterTranslation,
-												reflectRefractScale,
-												pixelColor,
-												m_LightDiffuse,
-												m_Model->GetTexture(0),
-												m_Model->GetTexture(1),
-												m_Model->GetTexture(2),
-												m_Model->GetTexture(3),
-												m_Model->GetTexture(4));
-
-	if (!result)
-	{
-		return false;
-	}
-	m_Direct3D->DisableAlphaBlending();
-	m_Direct3D->TurnZBufferOn();
+	//	m_Direct3D->TurnZBufferOff();
+	//	
+	//	//UI SECTION
+	//	m_Direct3D->EnableAlphaBlending();
+	//	
+	//	m_Direct3D->DisableAlphaBlending();
+	//	m_Direct3D->TurnZBufferOn();
 	//END 2D SECTION-------------------------------------------------------
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+	//ImGui::Begin("Debug Window");
+
+	//ImGui::ShowDemoWindow();
+
+	ImGui::Begin("Window");
+	if (ImGui::SliderFloat("Scaling Factor", m_ImguiScaling, 1.0f, 5.0f))
+	{
+		ImGui::GetStyle().ScaleAllSizes(*m_ImguiScaling);
+	}
+	//Do Imgui here.
+	ImGui::End();
+	
 	ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	
     m_Direct3D->EndScene();
 
     return true;
