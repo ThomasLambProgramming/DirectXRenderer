@@ -1,24 +1,63 @@
-﻿#include "ModelClass.h"
+﻿#include "ObjectClass.h"
 
-ModelClass::ModelClass()
+ObjectClass::ObjectClass()
 {
 	m_VertexBuffer = nullptr;
 	m_IndexBuffer = nullptr;
 	m_texture = nullptr;
-	m_Model = nullptr;
+	m_model = nullptr;
 	m_VertexCount = 0;
 	m_IndexCount = 0;
 	m_textureCount = 0;
+	m_position = XMFLOAT3(0.0f,0.0f,0.0f);
+	m_rotation = XMFLOAT3(0.0f,0.0f,0.0f);
+	m_scale = XMFLOAT3(0.0f,0.0f,0.0f);
+	m_prevPosX = 0;
+	m_prevPosY = 0;
+	m_2DHeight = 0;
+	m_2DWidth = 0;
+	m_screenHeight = 0;
+	m_screenWidth = 0;
+	m_objectType = ThreeDimensional;
 }
 //Copy constructor and destructor definitions to avoid auto generated versions.
-ModelClass::ModelClass(const ModelClass& a_copy): m_VertexBuffer(nullptr), m_IndexBuffer(nullptr), m_VertexCount(0), m_IndexCount(0), m_texture(nullptr), m_textureCount(0), m_Model(nullptr) {}
-ModelClass::~ModelClass() {}
-
-bool ModelClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount)
+ObjectClass::ObjectClass(const ObjectClass& a_copy): m_position(), m_rotation(), m_scale(), m_VertexBuffer(nullptr),
+                                                     m_IndexBuffer(nullptr),
+                                                     m_VertexCount(0), m_IndexCount(0), m_screenWidth(0),
+                                                     m_screenHeight(0), m_2DWidth(0),
+                                                     m_2DHeight(0),
+                                                     m_prevPosX(0),
+                                                     m_prevPosY(0),
+                                                     m_texture(nullptr),
+                                                     m_textureCount(0), m_model(nullptr), m_objectType()
 {
-	bool result = LoadModel(a_modelFileName);
-	if (!result)
-		return false;
+}
+
+ObjectClass::~ObjectClass() {}
+
+bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount)
+{
+	const string testString = string(a_modelFileName);
+	bool result;
+	
+	if (testString.find(".txt") != string::npos)
+	{
+		result = LoadModelTxt(a_modelFileName);
+		if (!result)
+			return false;
+	}
+	else if (testString.find(".obj") != string::npos)
+	{
+		result = LoadModelObj(a_modelFileName);
+		if (!result)
+			return false;
+	}
+	else if (testString.find(".fbx") != string::npos)
+	{
+		result = LoadModelFbx(a_modelFileName);
+		if (!result)
+			return false;
+	}
 
 	//calculate the tangent and binormal of the model
 	CalculateModelVectors();
@@ -41,10 +80,11 @@ bool ModelClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devic
     return true;
 }
 
-bool ModelClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount)
+bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount)
 {
 	char modelFileName[128];
 	strcpy_s(modelFileName, "./data/");
+	m_objectType = ThreeDimensional;
 	switch (a_primitive)
 	{
 		case Cube:
@@ -58,6 +98,7 @@ bool ModelClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext
 			break;
 		case Quad:
 			strcat_s(modelFileName, "square.txt");
+			m_objectType = TwoDimensional;
 			break;
 		case Capsule:
 			strcat_s(modelFileName, "cube.txt");
@@ -72,17 +113,27 @@ bool ModelClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext
 	return Initialize(a_device, a_deviceContext, modelFileName, a_textureFileNames, a_textureCount);
 }
 
-void ModelClass::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const
+void ObjectClass::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const
 {
     SetVertexIndexBuffers(a_deviceContext);
 }
 
-int ModelClass::GetIndexCount() const
+int ObjectClass::GetIndexCount() const
 {
     return m_IndexCount;
 }
 
-ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture) const
+int ObjectClass::GetVertexCount() const
+{
+	return m_VertexCount;
+}
+
+ObjectClass::ModelInformation* ObjectClass::GetModelData() const
+{
+	return m_model;
+}
+
+ID3D11ShaderResourceView* ObjectClass::GetTexture(int a_texture) const
 {
 	if (a_texture + 1 > m_textureCount || a_texture < 0)
 		return nullptr;
@@ -90,14 +141,86 @@ ID3D11ShaderResourceView* ModelClass::GetTexture(int a_texture) const
 	return m_texture[a_texture].GetTexture();
 }
 
-void ModelClass::Shutdown()
+// ReSharper disable once CppMemberFunctionMayBeConst again, its modifying member variables why are you trying to set it to const rider!
+bool ObjectClass::SetNewTextureAtId(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_texId, char* a_textureFileName)
+{
+	//We never want to go over max textures for one object as it will break when making buffers.
+	if (a_texId> MAX_TEXTURES-1 || a_texId < 0)
+		return false;
+	m_texture[a_texId] = TextureClass();
+	return m_texture[a_texId].Initialize(a_device, a_deviceContext, a_textureFileName);
+}
+
+//remove from font and back arent used at the moment and will only implement if needed by certain shaders or effects as needed.
+void ObjectClass::RemoveTextureFromFront()
+{
+	if (m_textureCount == 0)
+		return;
+
+	m_texture[0].Shutdown();
+	m_textureCount--;
+	
+	if (m_textureCount == 0)
+		return;
+	//If there is still textures we want to shift the array down one so the 0 element is not null.
+	for (int i = 0; i < m_textureCount; i++)
+	{
+		m_texture[i] = m_texture[i+1];
+	}
+}
+
+void ObjectClass::RemoveTextureFromBack()
+{
+	if (m_textureCount == 0)
+		return;
+
+	m_texture[m_textureCount-1].Shutdown();
+	m_textureCount--;
+	//No need for sorting as we have removed from the back.
+}
+
+XMFLOAT3 ObjectClass::GetPosition() const
+{
+	return m_position;
+}
+
+XMFLOAT3 ObjectClass::GetRotation() const
+{
+	return m_rotation;
+}
+
+XMFLOAT3 ObjectClass::GetScale() const
+{
+	return m_scale;
+}
+
+void ObjectClass::SetPosition(XMFLOAT3 a_value)
+{
+	m_position = a_value;
+}
+
+void ObjectClass::SetRotation(XMFLOAT3 a_value)
+{
+	m_rotation = a_value;
+}
+
+void ObjectClass::SetScale(XMFLOAT3 a_value)
+{
+	m_scale = a_value;
+}
+
+void ObjectClass::Shutdown()
 {
 	ReleaseModel();
 	ReleaseTexture();
     ShutdownBuffers();
+
+	m_position = XMFLOAT3(0.0f,0.0f,0.0f);
+	m_rotation = XMFLOAT3(0.0f,0.0f,0.0f);
+	m_scale = XMFLOAT3(0.0f,0.0f,0.0f);
 }
 
-bool ModelClass::LoadModel(const char* a_modelFileName)
+bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
 {
 	ifstream fin;
     char input;
@@ -117,7 +240,7 @@ bool ModelClass::LoadModel(const char* a_modelFileName)
     // Read in the vertex count.
     fin >> m_VertexCount;
     m_IndexCount = m_VertexCount;
-    m_Model = new ModelType[m_VertexCount];
+    m_model = new ModelInformation[m_VertexCount];
 
     // Read up to the beginning of the data.
     fin.get(input);
@@ -131,16 +254,26 @@ bool ModelClass::LoadModel(const char* a_modelFileName)
     //Load in all vertex data 
     for(int i = 0; i < m_VertexCount; i++)
     {
-        fin >> m_Model[i].x >> m_Model[i].y >> m_Model[i].z;
-        fin >> m_Model[i].tu >> m_Model[i].tv;
-        fin >> m_Model[i].nx >> m_Model[i].ny >> m_Model[i].nz;
+        fin >> m_model[i].x >> m_model[i].y >> m_model[i].z;
+        fin >> m_model[i].tu >> m_model[i].tv;
+        fin >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
     }
 
     fin.close();
     return true;
 }
 
-bool ModelClass::InitializeBuffers(ID3D11Device* a_device)
+bool ObjectClass::LoadModelObj(const char* a_modelFileName)
+{
+	return false;
+}
+
+bool ObjectClass::LoadModelFbx(const char* a_modelFileName)
+{
+	return false;
+}
+
+bool ObjectClass::InitializeBuffers(ID3D11Device* a_device)
 {
 	D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -162,11 +295,11 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_device)
 	// Load the vertex array and index array with data.
 	for(int i = 0; i < m_VertexCount; i++)
 	{
-		vertices[i].position = XMFLOAT3(m_Model[i].x, m_Model[i].y, m_Model[i].z);
-		vertices[i].texture = XMFLOAT2(m_Model[i].tu, m_Model[i].tv);
-		vertices[i].normal = XMFLOAT3(m_Model[i].nx, m_Model[i].ny, m_Model[i].nz);
-		vertices[i].tangent = XMFLOAT3(m_Model[i].tx, m_Model[i].ty, m_Model[i].tz);
-        vertices[i].binormal = XMFLOAT3(m_Model[i].bx, m_Model[i].by, m_Model[i].bz);
+		vertices[i].position = XMFLOAT3(m_model[i].x, m_model[i].y, m_model[i].z);
+		vertices[i].texture = XMFLOAT2(m_model[i].tu, m_model[i].tv);
+		vertices[i].normal = XMFLOAT3(m_model[i].nx, m_model[i].ny, m_model[i].nz);
+		vertices[i].tangent = XMFLOAT3(m_model[i].tx, m_model[i].ty, m_model[i].tz);
+        vertices[i].binormal = XMFLOAT3(m_model[i].bx, m_model[i].by, m_model[i].bz);
 
 		indices[i] = i;
 	}
@@ -221,7 +354,7 @@ bool ModelClass::InitializeBuffers(ID3D11Device* a_device)
 	return true;
 }
 
-void ModelClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const
+void ObjectClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const
 {
 	unsigned int stride;
 	unsigned int offset;
@@ -239,10 +372,10 @@ void ModelClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) con
 
 //Rider suggests it to be const but it modifies m_texture so its not correct I believe
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool ModelClass::LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId)
+bool ObjectClass::LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId)
 {
 	//We never want to go over max textures for one object as it will break when making buffers.
-	if (a_texId > MAX_TEXTURES-1)
+	if (a_texId > MAX_TEXTURES-1 || a_texId < 0)
 		return false;
 	
 	//create and initialize the texture object;
@@ -252,7 +385,7 @@ bool ModelClass::LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
 
 //Rider keeps giving me this warning about the function being const is good but it modifies m_Model so that's wrong no?
 // ReSharper disable once CppMemberFunctionMayBeConst
-void ModelClass::CalculateModelVectors()
+void ObjectClass::CalculateModelVectors()
 {
 	TempVertexType vertex1, vertex2, vertex3;
     XMFLOAT3 tangent, binormal;
@@ -268,56 +401,56 @@ void ModelClass::CalculateModelVectors()
     for (int i = 0; i < faceCount; i++)
     {
         // Get the three vertices for this face from the model.
-        vertex1.x = m_Model[index].x;
-        vertex1.y = m_Model[index].y;
-        vertex1.z = m_Model[index].z;
-        vertex1.tu = m_Model[index].tu;
-        vertex1.tv = m_Model[index].tv;
+        vertex1.x = m_model[index].x;
+        vertex1.y = m_model[index].y;
+        vertex1.z = m_model[index].z;
+        vertex1.tu = m_model[index].tu;
+        vertex1.tv = m_model[index].tv;
         index++;
         
-        vertex2.x = m_Model[index].x;
-        vertex2.y = m_Model[index].y;
-        vertex2.z = m_Model[index].z;
-        vertex2.tu = m_Model[index].tu;
-        vertex2.tv = m_Model[index].tv;
+        vertex2.x = m_model[index].x;
+        vertex2.y = m_model[index].y;
+        vertex2.z = m_model[index].z;
+        vertex2.tu = m_model[index].tu;
+        vertex2.tv = m_model[index].tv;
         index++;
 
-        vertex3.x = m_Model[index].x;
-        vertex3.y = m_Model[index].y;
-        vertex3.z = m_Model[index].z;
-        vertex3.tu = m_Model[index].tu;
-        vertex3.tv = m_Model[index].tv;
+        vertex3.x = m_model[index].x;
+        vertex3.y = m_model[index].y;
+        vertex3.z = m_model[index].z;
+        vertex3.tu = m_model[index].tu;
+        vertex3.tv = m_model[index].tv;
         index++;
 
         // Calculate the tangent and binormal of that face.
         CalculateTangentBinormal(vertex1, vertex2, vertex3, tangent, binormal);
 
         // Store the tangent and binormal for this face back in the model structure.
-        m_Model[index-1].tx = tangent.x;
-        m_Model[index-1].ty = tangent.y;
-        m_Model[index-1].tz = tangent.z;
-        m_Model[index-1].bx = binormal.x;
-        m_Model[index-1].by = binormal.y;
-        m_Model[index-1].bz = binormal.z;
+        m_model[index-1].tx = tangent.x;
+        m_model[index-1].ty = tangent.y;
+        m_model[index-1].tz = tangent.z;
+        m_model[index-1].bx = binormal.x;
+        m_model[index-1].by = binormal.y;
+        m_model[index-1].bz = binormal.z;
 
-        m_Model[index-2].tx = tangent.x;
-        m_Model[index-2].ty = tangent.y;
-        m_Model[index-2].tz = tangent.z;
-        m_Model[index-2].bx = binormal.x;
-        m_Model[index-2].by = binormal.y;
-        m_Model[index-2].bz = binormal.z;
+        m_model[index-2].tx = tangent.x;
+        m_model[index-2].ty = tangent.y;
+        m_model[index-2].tz = tangent.z;
+        m_model[index-2].bx = binormal.x;
+        m_model[index-2].by = binormal.y;
+        m_model[index-2].bz = binormal.z;
 
-        m_Model[index-3].tx = tangent.x;
-        m_Model[index-3].ty = tangent.y;
-        m_Model[index-3].tz = tangent.z;
-        m_Model[index-3].bx = binormal.x;
-        m_Model[index-3].by = binormal.y;
-        m_Model[index-3].bz = binormal.z;
+        m_model[index-3].tx = tangent.x;
+        m_model[index-3].ty = tangent.y;
+        m_model[index-3].tz = tangent.z;
+        m_model[index-3].bx = binormal.x;
+        m_model[index-3].by = binormal.y;
+        m_model[index-3].bz = binormal.z;
     }
 }
 
 //Made 2 attempts at this function copying down and modifying from tutorials but errors kept coming up. 
-void ModelClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal)
+void ObjectClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal)
 {
     float vector1[3], vector2[3];
     float tuVector[2], tvVector[2];
@@ -367,7 +500,7 @@ void ModelClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, const
     a_binormal.z = a_binormal.z / length;
 }
 
-void ModelClass::ShutdownBuffers()
+void ObjectClass::ShutdownBuffers()
 {
 	if (m_IndexBuffer)
 	{
@@ -381,7 +514,7 @@ void ModelClass::ShutdownBuffers()
 	}
 }
 
-void ModelClass::ReleaseTexture()
+void ObjectClass::ReleaseTexture()
 {
 	if (!m_texture)
 	{
@@ -397,12 +530,12 @@ void ModelClass::ReleaseTexture()
 	m_textureCount = 0;
 }
 
-void ModelClass::ReleaseModel()
+void ObjectClass::ReleaseModel()
 {
-	if (m_Model)
+	if (m_model)
 	{
-		delete [] m_Model;
-		m_Model = nullptr;
+		delete [] m_model;
+		m_model = nullptr;
 	}
 }
 

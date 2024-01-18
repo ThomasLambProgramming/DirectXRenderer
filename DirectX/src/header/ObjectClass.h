@@ -10,7 +10,7 @@ using namespace DirectX;
 
 constexpr int MAX_TEXTURES = 6;
 
-class ModelClass  // NOLINT(cppcoreguidelines-special-member-functions)
+class ObjectClass  // NOLINT(cppcoreguidelines-special-member-functions)
 {
 public:
     enum PrimitiveType
@@ -20,7 +20,15 @@ public:
         Plane,
         Quad,
         Capsule,
-        Cylinder
+        Cylinder,
+        NonPrimitive,
+    };
+    //This is here so we can determine where to render (eg when the depth buffer is turned off and etc.)
+    enum ObjectType
+    {
+        ThreeDimensional,
+        TwoDimensional,
+        UserInterface,
     };
 private:
     struct VertexType
@@ -31,7 +39,7 @@ private:
         XMFLOAT3 tangent; 
         XMFLOAT3 binormal;
     };
-    struct ModelType
+    struct ModelInformation
     {
         float x,y,z;
         float tu,tv;
@@ -45,22 +53,39 @@ private:
         float tu, tv;
     };
 public:
-    ModelClass();
-    ModelClass(const ModelClass& a_copy);
-    ~ModelClass();
+    ObjectClass();
+    ObjectClass(const ObjectClass& a_copy);
+    ~ObjectClass();
 
     bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
     bool InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount);
     void SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const;
 
     int GetIndexCount() const;
+    int GetVertexCount() const;
+    ModelInformation* GetModelData() const;
+    
     ID3D11ShaderResourceView* GetTexture(int a_texture = 0) const;
+    bool SetNewTextureAtId(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_texId, char* a_textureFileName);
 
+    void RemoveTextureFromFront();
+    void RemoveTextureFromBack();
+
+    XMFLOAT3 GetPosition() const;
+    XMFLOAT3 GetRotation() const;
+    XMFLOAT3 GetScale() const;
+
+    void SetPosition(XMFLOAT3 a_value);
+    void SetRotation(XMFLOAT3 a_value);
+    void SetScale(XMFLOAT3 a_value);
+    
     void Shutdown();
     
 private:
     
-    bool LoadModel(const char* a_modelFileName);
+    bool LoadModelTxt(const char* a_modelFileName);
+    bool LoadModelObj(const char* a_modelFileName);
+    bool LoadModelFbx(const char* a_modelFileName);
     bool InitializeBuffers(ID3D11Device* a_device);
     void SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const;
 
@@ -72,18 +97,29 @@ private:
     void ShutdownBuffers();
     void ReleaseTexture();
     void ReleaseModel();
+
+public:
     
 private:
+    XMFLOAT3 m_position;
+    XMFLOAT3 m_rotation;
+    XMFLOAT3 m_scale;
+    
     ID3D11Buffer* m_VertexBuffer;
     ID3D11Buffer* m_IndexBuffer;
     
     int m_VertexCount;
     int m_IndexCount;
 
+    int m_screenWidth, m_screenHeight;
+    int m_2DWidth, m_2DHeight;
+    int m_prevPosX, m_prevPosY;
+
     //Decayed pointer to array.
     TextureClass* m_texture;
     //m_texture can return nullptr so we track the amount of textures this model has.
     int m_textureCount;
 
-    ModelType* m_Model;
+    ModelInformation* m_model;
+    ObjectType m_objectType;
 };

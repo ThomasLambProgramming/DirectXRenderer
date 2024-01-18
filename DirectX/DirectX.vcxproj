@@ -469,7 +469,7 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\ModelClass.cpp">
+    <ClCompile Include="src\cpp\ObjectClass.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -812,7 +812,7 @@
     <ClInclude Include="src\header\Direct3DClass.h" />
     <ClInclude Include="src\header\InputClass.h" />
     <ClInclude Include="src\header\LightClass.h" />
-    <ClInclude Include="src\header\ModelClass.h" />
+    <ClInclude Include="src\header\ObjectClass.h" />
     <ClInclude Include="src\header\SystemClass.h" />
     <ClInclude Include="src\header\TextClass.h" />
     <ClInclude Include="src\header\TextureClass.h" />

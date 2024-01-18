@@ -4,7 +4,7 @@
 
 #include "Direct3DClass.h"
 #include "CameraClass.h"
-#include "ModelClass.h"
+#include "ObjectClass.h"
 #include "ShaderClass.h"
 #include "InputClass.h"
 #include "LightClass.h"
@@ -67,7 +67,7 @@ private:
 private:
 	Direct3DClass* m_Direct3D;
 	CameraClass* m_Camera;
-	ModelClass* m_Model;
+	ObjectClass* m_Model;
 	LightClass* m_MainLight;
 	
 	ShaderClass* m_ModelShader;

@@ -68,7 +68,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     m_Camera->SetRotation(20.0f,0.0f,0.0f);
 
     //create a new model
-    m_Model = new ModelClass;
+    m_Model = new ObjectClass;
 
 	PixelShaderEntryPoint pixelEntry = SimpleLightingPixelShader;
 	
@@ -118,7 +118,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	 blendTexture4FileName,
 	 blendTexture2FileName
 	};
-	result = m_Model->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ModelClass::Cube, textureFileNames, 6);
+	result = m_Model->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ObjectClass::Cube, textureFileNames, 6);
     if (!result)
     {
         MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
