@@ -6,8 +6,8 @@ ObjectClass::ObjectClass()
 	m_IndexBuffer = nullptr;
 	m_texture = nullptr;
 	m_model = nullptr;
-	m_VertexCount = 0;
-	m_IndexCount = 0;
+	m_vertexCount = 0;
+	m_indexCount = 0;
 	m_textureCount = 0;
 	m_position = XMFLOAT3(0.0f,0.0f,0.0f);
 	m_rotation = XMFLOAT3(0.0f,0.0f,0.0f);
@@ -23,7 +23,7 @@ ObjectClass::ObjectClass()
 //Copy constructor and destructor definitions to avoid auto generated versions.
 ObjectClass::ObjectClass(const ObjectClass& a_copy): m_position(), m_rotation(), m_scale(), m_VertexBuffer(nullptr),
                                                      m_IndexBuffer(nullptr),
-                                                     m_VertexCount(0), m_IndexCount(0), m_screenWidth(0),
+                                                     m_vertexCount(0), m_indexCount(0), m_screenWidth(0),
                                                      m_screenHeight(0), m_2DWidth(0),
                                                      m_2DHeight(0),
                                                      m_prevPosX(0),
@@ -63,7 +63,7 @@ bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
 	CalculateModelVectors();
 	
     //init the vert/index buffers
-    result = InitializeBuffers(a_device);
+    result = Initialize3DBuffers(a_device);
     if (!result)
         return false;
 
@@ -80,6 +80,7 @@ bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
     return true;
 }
 
+//This function cannot take in Primitive::NonPrimitive. Use Initialize() instead.
 bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount)
 {
 	char modelFileName[128];
@@ -113,6 +114,87 @@ bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContex
 	return Initialize(a_device, a_deviceContext, modelFileName, a_textureFileNames, a_textureCount);
 }
 
+//Since a quad is simple the buffer and 2d information is done all in this function.
+bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth,
+	int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[],int a_textureCount)
+{
+    m_screenHeight = a_screenHeight;
+    m_screenWidth = a_screenWidth;
+
+    m_position.x = a_renderX;
+    m_position.y = a_renderY;
+
+	//Quad is a preset 2 triangles.
+	m_vertexCount = 6;
+	m_indexCount = m_vertexCount;
+
+	m_prevPosX = -1;
+	m_prevPosY = -1;
+
+    VertexType* vertices = new VertexType[m_vertexCount];
+	unsigned long* indices = new unsigned long[m_indexCount];
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	D3D11_BUFFER_DESC indexBufferDesc;
+	D3D11_SUBRESOURCE_DATA vertexData;
+	D3D11_SUBRESOURCE_DATA indexData;
+
+	memset(vertices, 0, (sizeof(VertexType) * m_vertexCount));
+
+	for (int i = 0; i < m_indexCount; i++)
+		indices[i] = i;
+
+	vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	vertexBufferDesc.MiscFlags = 0;
+	vertexBufferDesc.StructureByteStride = 0;
+
+	vertexData.pSysMem = vertices;
+	vertexData.SysMemPitch = 0;
+	vertexData.SysMemSlicePitch = 0;
+
+	bool result = a_device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_VertexBuffer);
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	//Buffer doesnt change basically at all since all 6 indices will be the same.
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_indexCount;
+	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags = 0;
+	indexBufferDesc.MiscFlags = 0;
+	indexBufferDesc.StructureByteStride = 0;
+
+	indexData.pSysMem = indices;
+	indexData.SysMemPitch = 0;
+	indexData.SysMemSlicePitch = 0;
+
+	result = a_device->CreateBuffer(&indexBufferDesc, &indexData, &m_IndexBuffer);
+	if (FAILED(result))
+	{
+		return false;
+	}
+	delete [] vertices;
+	delete [] indices;
+	vertices = nullptr;
+	indices = nullptr;
+	
+	m_texture = new TextureClass[MAX_TEXTURES];
+
+	for (int i = 0; i < a_textureCount; i++)
+	{
+		result = LoadTexture(a_device, a_deviceContext, a_textureFileNames[i], i);
+		if (!result)
+			return false;
+		m_textureCount++;
+	}
+	return true;
+}
+
 void ObjectClass::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const
 {
     SetVertexIndexBuffers(a_deviceContext);
@@ -120,12 +202,12 @@ void ObjectClass::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) cons
 
 int ObjectClass::GetIndexCount() const
 {
-    return m_IndexCount;
+    return m_indexCount;
 }
 
 int ObjectClass::GetVertexCount() const
 {
-	return m_VertexCount;
+	return m_vertexCount;
 }
 
 ObjectClass::ModelInformation* ObjectClass::GetModelData() const
@@ -209,6 +291,72 @@ void ObjectClass::SetScale(XMFLOAT3 a_value)
 	m_scale = a_value;
 }
 
+bool ObjectClass::Update2DBuffers(ID3D11DeviceContext* a_context)
+{
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+
+	//If the image has not moved then we dont want to update the buffer.
+	if ((m_prevPosX == m_position.x) && (m_prevPosY == m_position.y))
+		return true;
+
+	m_prevPosX = m_position.x;
+	m_prevPosY = m_position.y;
+
+	VertexType* vertices = new VertexType[m_vertexCount];
+	const float left = (float)m_screenWidth / 2 * -1 + m_position.x;
+	const float right = left + (float)m_2DWidth;
+
+	const float top = (float)m_screenHeight / 2 - m_position.y;
+	const float bottom = top - (float)m_2DHeight;
+
+	//copied the vertex data as its just a pain to write out for no reason.
+	// Load the vertex array with data.
+	// First triangle.
+	vertices[0].position = XMFLOAT3(left, top, 0.0f);  // Top left.
+	vertices[0].texture = XMFLOAT2(0.0f, 0.0f);
+
+	vertices[1].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right.
+	vertices[1].texture = XMFLOAT2(1.0f, 1.0f);
+
+	vertices[2].position = XMFLOAT3(left, bottom, 0.0f);  // Bottom left.
+	vertices[2].texture = XMFLOAT2(0.0f, 1.0f);
+
+	// Second triangle.
+	vertices[3].position = XMFLOAT3(left, top, 0.0f);  // Top left.
+	vertices[3].texture = XMFLOAT2(0.0f, 0.0f);
+
+	vertices[4].position = XMFLOAT3(right, top, 0.0f);  // Top right.
+	vertices[4].texture = XMFLOAT2(1.0f, 0.0f);
+
+	vertices[5].position = XMFLOAT3(right, bottom, 0.0f);  // Bottom right.
+	vertices[5].texture = XMFLOAT2(1.0f, 1.0f);
+
+	for (int i = 0; i < m_vertexCount; i++)
+	{
+		vertices[i].normal = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		vertices[i].binormal = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		vertices[i].tangent = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
+	const HRESULT result = a_context->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	//get a pointer to the data in the const buffer.
+	VertexType* dataPtr = (VertexType*)mappedResource.pData;
+	//dst, src, mem size
+	memcpy(dataPtr, (void*)vertices, (sizeof(VertexType) * m_vertexCount));
+
+	a_context->Unmap(m_VertexBuffer, 0);
+	dataPtr = nullptr;
+	delete [] vertices;
+	vertices = nullptr;
+	
+	return true;
+}
+
 void ObjectClass::Shutdown()
 {
 	ReleaseModel();
@@ -238,9 +386,9 @@ bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
         fin.get(input);
     }
     // Read in the vertex count.
-    fin >> m_VertexCount;
-    m_IndexCount = m_VertexCount;
-    m_model = new ModelInformation[m_VertexCount];
+    fin >> m_vertexCount;
+    m_indexCount = m_vertexCount;
+    m_model = new ModelInformation[m_vertexCount];
 
     // Read up to the beginning of the data.
     fin.get(input);
@@ -252,7 +400,7 @@ bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
     fin.get(input);
 
     //Load in all vertex data 
-    for(int i = 0; i < m_VertexCount; i++)
+    for(int i = 0; i < m_vertexCount; i++)
     {
         fin >> m_model[i].x >> m_model[i].y >> m_model[i].z;
         fin >> m_model[i].tu >> m_model[i].tv;
@@ -273,7 +421,7 @@ bool ObjectClass::LoadModelFbx(const char* a_modelFileName)
 	return false;
 }
 
-bool ObjectClass::InitializeBuffers(ID3D11Device* a_device)
+bool ObjectClass::Initialize3DBuffers(ID3D11Device* a_device)
 {
 	D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -281,19 +429,19 @@ bool ObjectClass::InitializeBuffers(ID3D11Device* a_device)
     D3D11_SUBRESOURCE_DATA indexData;
 
     //create vertex array
-    VertexType* vertices = new VertexType[m_VertexCount];
+    VertexType* vertices = new VertexType[m_vertexCount];
     if (!vertices)
     {
         return false;
     }
-    unsigned long* indices = new unsigned long[m_IndexCount];
+    unsigned long* indices = new unsigned long[m_indexCount];
     if (!indices)
     {
         return false;
     }
 
 	// Load the vertex array and index array with data.
-	for(int i = 0; i < m_VertexCount; i++)
+	for(int i = 0; i < m_vertexCount; i++)
 	{
 		vertices[i].position = XMFLOAT3(m_model[i].x, m_model[i].y, m_model[i].z);
 		vertices[i].texture = XMFLOAT2(m_model[i].tu, m_model[i].tv);
@@ -306,7 +454,7 @@ bool ObjectClass::InitializeBuffers(ID3D11Device* a_device)
 
     //setup description of the static vertex buffer.
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_VertexCount;
+    vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vertexBufferDesc.CPUAccessFlags = 0;
     vertexBufferDesc.MiscFlags = 0;
@@ -328,7 +476,7 @@ bool ObjectClass::InitializeBuffers(ID3D11Device* a_device)
 
     // Set up the description of the static index buffer.
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_IndexCount;
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_indexCount;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
@@ -392,7 +540,7 @@ void ObjectClass::CalculateModelVectors()
 
 
     // Calculate the number of faces in the model.
-	const int faceCount = m_VertexCount / 3;
+	const int faceCount = m_vertexCount / 3;
 
     // Initialize the index to the model data.
     int index = 0;
@@ -538,5 +686,3 @@ void ObjectClass::ReleaseModel()
 		m_model = nullptr;
 	}
 }
-
-

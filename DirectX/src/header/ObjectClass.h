@@ -59,6 +59,7 @@ public:
 
     bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
     bool InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount);
+    bool Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth, int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[],int a_textureCount);
     void SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const;
 
     int GetIndexCount() const;
@@ -78,6 +79,8 @@ public:
     void SetPosition(XMFLOAT3 a_value);
     void SetRotation(XMFLOAT3 a_value);
     void SetScale(XMFLOAT3 a_value);
+
+    bool Update2DBuffers(ID3D11DeviceContext* a_context);
     
     void Shutdown();
     
@@ -86,7 +89,7 @@ private:
     bool LoadModelTxt(const char* a_modelFileName);
     bool LoadModelObj(const char* a_modelFileName);
     bool LoadModelFbx(const char* a_modelFileName);
-    bool InitializeBuffers(ID3D11Device* a_device);
+    bool Initialize3DBuffers(ID3D11Device* a_device);
     void SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const;
 
     bool LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId);
@@ -108,8 +111,8 @@ private:
     ID3D11Buffer* m_VertexBuffer;
     ID3D11Buffer* m_IndexBuffer;
     
-    int m_VertexCount;
-    int m_IndexCount;
+    int m_vertexCount;
+    int m_indexCount;
 
     int m_screenWidth, m_screenHeight;
     int m_2DWidth, m_2DHeight;
