@@ -140,7 +140,8 @@ bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
                          a_Texture2,
                          a_Texture3,
                          a_Texture4,
-                         a_Texture5);
+                         a_Texture5,
+                         a_textureCount);
     if (!result)
         return false;
 

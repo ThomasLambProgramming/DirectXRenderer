@@ -15,8 +15,10 @@ ApplicationClass::ApplicationClass()
 	m_fps = 0;
 	m_Sprite = 0;
 	m_count = 0;
-	m_ImguiScaling = new float;
-	*m_ImguiScaling = 1.0f;
+	m_ObjectPosX = new float;
+	m_ObjectPosY = new float;
+	*m_ObjectPosY = 1.0f;
+	*m_ObjectPosX = 1.0f;
 }
 
 ApplicationClass::ApplicationClass(const ApplicationClass&): m_Direct3D(nullptr), m_Camera(nullptr), m_Model(nullptr),
@@ -61,24 +63,21 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
     ImGui_ImplWin32_Init(a_windowHandle);
     ImGui_ImplDX11_Init(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext());
 
-    //create camera
     m_Camera = new CameraClass;
-    //set initial position of camera
-    m_Camera->SetPosition(0.0f,1.0f,-6.0f);
-    m_Camera->SetRotation(20.0f,0.0f,0.0f);
+    m_Camera->SetPosition(0.0f,0.0f,-10.0f);
+    //m_Camera->SetRotation(20.0f,0.0f,0.0f);
 
-    //create a new model
     m_Model = new ObjectClass;
 
-	PixelShaderEntryPoint pixelEntry = SimpleLightingPixelShader;
 	
-	strcpy_s(textureFileName, "./data/stone02.tga");
+	PixelShaderEntryPoint pixelEntry = SimpleLightingPixelShader;
+	strcpy_s(textureFileName, "./data/stone01.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(blendTexture3FileName, "./data/alpha01.tga");
 	strcpy_s(blendTexture4FileName, "./data/font01.tga");
 	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_ModelShader = new ShaderClass;
@@ -88,27 +87,26 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
     	return false;
     }
-
 	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(FontPixelShader));
-	m_FontShader = new ShaderClass;
-	result = m_FontShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+	//strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(FontPixelShader));
+	//m_FontShader = new ShaderClass;
+	//result = m_FontShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+	//
+    //if (!result)
+    //{
+	//    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+    //	return false;
+    //}
 	
-    if (!result)
-    {
-	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
-    	return false;
-    }
-	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
-	m_SpriteShader = new ShaderClass;
-	result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
-	
-    if (!result)
-    {
-	    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
-    	return false;
-    }
+	//strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
+	//m_SpriteShader = new ShaderClass;
+	//result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
+	//
+    //if (!result)
+    //{
+	//    MessageBox(a_windowHandle, L"Could not initialize texture shader object", L"Error", MB_OK);
+    //	return false;
+    //}
 
 	char* textureFileNames[] = {
 	 textureFileName,
@@ -118,27 +116,30 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	 blendTexture4FileName,
 	 blendTexture2FileName
 	};
-	result = m_Model->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ObjectClass::Cube, textureFileNames, 6);
+
+	
+	//result = m_Model->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ObjectClass::Sphere, textureFileNames, 6);
+	result = m_Model->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 0, 0, textureFileNames, 6);
     if (!result)
     {
         MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
         return false;
     }
 
-	m_Font = new FontClass;
-	result = m_Font->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), 0);
-	if (!result)
-	{
-        MessageBox(a_windowHandle, L"Could not init font", L"Error", MB_OK);
-        return false;
-	}
-
-	m_previousFps = -1;
-	char fpsString[32];
-	strcpy_s(fpsString, "Fps: 0");
-	m_fpsText = new TextClass;
-	if (!m_fpsText->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 128, m_Font, fpsString, 10, 10, 1.0f,1.0f,1.0f))
-		return false;
+	//m_Font = new FontClass;
+	//result = m_Font->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), 0);
+	//if (!result)
+	//{
+    //    MessageBox(a_windowHandle, L"Could not init font", L"Error", MB_OK);
+    //    return false;
+	//}
+	//
+	//m_previousFps = -1;
+	//char fpsString[32];
+	//strcpy_s(fpsString, "Fps: 0");
+	//m_fpsText = new TextClass;
+	//if (!m_fpsText->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 128, m_Font, fpsString, 10, 10, 1.0f,1.0f,1.0f))
+	//	return false;
 	
 	m_MainLight = new LightClass;
 	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
@@ -251,7 +252,7 @@ bool ApplicationClass::Frame(InputClass* a_InputClass)
         rotation += 360.0f;
     }
 
-	UpdateFps();
+	//UpdateFps();
 	
 	//Render Scene
     return Render(rotation);
@@ -289,15 +290,17 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	m_Direct3D->GetOrthoMatrix(ortho);
 	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
+
+
+	m_Direct3D->TurnZBufferOff();
+	m_Model->Update2DBuffers(m_Direct3D->GetDeviceContext());
 	m_Model->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
-
 	
-
 	bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
 	                                            m_Model->GetIndexCount(),
-	                                            worldRotation,
+	                                            world,
 	                                            view,
-	                                            projection,
+	                                            ortho,
 	                                            m_Camera->GetPosition(),
 	                                            0,
 	                                            0,
@@ -319,22 +322,20 @@ bool ApplicationClass::Render(float a_Rotation) const
 	                                            m_Model->GetTexture(1),
 	                                            m_Model->GetTexture(2),
 	                                            m_Model->GetTexture(3),
-	                                            m_Model->GetTexture(4));
+	                                            m_Model->GetTexture(4),
+	                                            m_Model->GetTextureCount());
 	if (!result)
 	{
 		return false;
 	}
 
-	m_Direct3D->GetWorldMatrix(world);
-	m_Camera->GetViewMatrix(view);
 	//2D SECTION-----------------------------------------------------------
-	//	m_Direct3D->TurnZBufferOff();
 	//	
 	//	//UI SECTION
 	//	m_Direct3D->EnableAlphaBlending();
 	//	
 	//	m_Direct3D->DisableAlphaBlending();
-	//	m_Direct3D->TurnZBufferOn();
+	m_Direct3D->TurnZBufferOn();
 	//END 2D SECTION-------------------------------------------------------
 
 	ImGui_ImplDX11_NewFrame();
@@ -344,10 +345,19 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	//ImGui::ShowDemoWindow();
 
+	XMFLOAT3 position;
 	ImGui::Begin("Window");
-	if (ImGui::SliderFloat("Scaling Factor", m_ImguiScaling, 1.0f, 5.0f))
+	if (ImGui::SliderFloat("XPosition", m_ObjectPosX, 0.0f, 800.0f))
 	{
-		ImGui::GetStyle().ScaleAllSizes(*m_ImguiScaling);
+		position = m_Model->GetPosition();
+		position.x = *m_ObjectPosX;
+		m_Model->SetPosition(position);	
+	}
+	if (ImGui::SliderFloat("YPosition", m_ObjectPosY, 0.0f, 800.0f))
+	{
+		position = m_Model->GetPosition();
+		position.y = *m_ObjectPosY;
+		m_Model->SetPosition(position);	
 	}
 	//Do Imgui here.
 	ImGui::End();

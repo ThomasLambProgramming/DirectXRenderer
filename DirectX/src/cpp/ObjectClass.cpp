@@ -116,13 +116,17 @@ bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContex
 
 //Since a quad is simple the buffer and 2d information is done all in this function.
 bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth,
-	int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[],int a_textureCount)
+	int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[], int a_textureCount, int a_bitmapWidth, int a_bitmapHeight)
 {
+	m_objectType = TwoDimensional;
     m_screenHeight = a_screenHeight;
     m_screenWidth = a_screenWidth;
 
     m_position.x = a_renderX;
     m_position.y = a_renderY;
+
+	m_2DWidth = a_bitmapWidth;
+	m_2DHeight = a_bitmapHeight;
 
 	//Quad is a preset 2 triangles.
 	m_vertexCount = 6;
@@ -192,6 +196,12 @@ bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* 
 			return false;
 		m_textureCount++;
 	}
+
+	if (a_bitmapHeight == 0 && a_bitmapWidth == 0 && m_textureCount > 0)
+	{
+		m_2DWidth = m_texture[0].GetWidth();
+		m_2DHeight = m_texture[0].GetHeight();
+	}
 	return true;
 }
 
@@ -208,6 +218,11 @@ int ObjectClass::GetIndexCount() const
 int ObjectClass::GetVertexCount() const
 {
 	return m_vertexCount;
+}
+
+int ObjectClass::GetTextureCount() const
+{
+	return m_textureCount;
 }
 
 ObjectClass::ModelInformation* ObjectClass::GetModelData() const

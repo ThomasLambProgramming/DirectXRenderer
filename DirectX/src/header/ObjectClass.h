@@ -59,11 +59,12 @@ public:
 
     bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
     bool InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount);
-    bool Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth, int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[],int a_textureCount);
+    bool Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth, int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[], int a_textureCount, int a_bitmapWidth = 0, int a_bitmapHeight = 0);
     void SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const;
 
     int GetIndexCount() const;
     int GetVertexCount() const;
+    int GetTextureCount() const;
     ModelInformation* GetModelData() const;
     
     ID3D11ShaderResourceView* GetTexture(int a_texture = 0) const;

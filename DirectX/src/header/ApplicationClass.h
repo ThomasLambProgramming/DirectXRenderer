@@ -87,7 +87,8 @@ private:
 	FontClass* m_Font;
 	TextClass* m_fpsText;
 
-	float* m_ImguiScaling;
+	float* m_ObjectPosX;
+	float* m_ObjectPosY;
 };
 
 #endif
