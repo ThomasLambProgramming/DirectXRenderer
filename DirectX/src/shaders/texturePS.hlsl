@@ -108,10 +108,10 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
 
 float4 TextureSamplePixelShader(PixelInputType a_input) : SV_TARGET
 {
+    float2 translatedTextureCoord = a_input.tex + textureTranslation;
     //sample the color from the texture using the sampler at this texture coordinate location.
-    float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex);
-    textureColor.a = 0.5f;
-    return textureColor;
+    float4 textureColor = ShaderTexture1.Sample(Sampler, translatedTextureCoord) + UseEveryBuffer();
+    return saturate(textureColor);
 }
 
 //This shader has simple diffuse lighting, Ambient color and Specular lighting.

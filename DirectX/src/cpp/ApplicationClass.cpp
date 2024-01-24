@@ -113,7 +113,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 		return false;
 	}
 	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TransparentColorPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
 	m_SpriteShader = new ShaderClass;
 	result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	
@@ -124,7 +124,6 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 	}
 	return true;
 }
-
 
 void ApplicationClass::CameraInitialize()
 {
@@ -320,7 +319,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	XMMATRIX projection;
 	XMMATRIX ortho;
 	
-	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0);
+	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0.0f);
 	constexpr float blendAmount = 0.1f;
 	constexpr float waterTranslation = 0;
 	constexpr float reflectRefractScale = 0;
