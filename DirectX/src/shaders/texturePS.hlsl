@@ -110,7 +110,8 @@ float4 TextureSamplePixelShader(PixelInputType a_input) : SV_TARGET
 {
     //sample the color from the texture using the sampler at this texture coordinate location.
     float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex);
-    return saturate(textureColor);
+    textureColor.a = 0.5f;
+    return textureColor;
 }
 
 //This shader has simple diffuse lighting, Ambient color and Specular lighting.
@@ -204,7 +205,7 @@ float4 FontPixelShader(PixelInputType a_input) : SV_TARGET
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
     float4 textureColor = ShaderTexture5.Sample(Sampler, a_input.tex);
     textureColor = saturate(textureColor.x + UseEveryBuffer());
-    if (textureColor.r == 0.0f)
+    if (textureColor.r <= 0.05f)
     {
         textureColor.a = 0.0f;
     }
@@ -224,6 +225,13 @@ float4 RawColorPixelShader(PixelInputType a_input) : SV_TARGET
     return saturate(newColor);
 }
 
+float4 TransparentColorPixelShader(PixelInputType a_input) : SV_TARGET
+{
+    float4 textureColor = ShaderTexture1.Sample(Sampler, a_input.tex) + UseEveryBuffer();
+    textureColor = saturate(textureColor);
+    textureColor.a = blendAmount;
+    return textureColor;
+}
 
 
 

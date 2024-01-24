@@ -113,7 +113,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 		return false;
 	}
 	
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TransparentColorPixelShader));
 	m_SpriteShader = new ShaderClass;
 	result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	
@@ -167,7 +167,7 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 		return false;
 	}
 	
-	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 800, 0, textureFileNames, 6);
+	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 300, 0, textureFileNames, 6);
 	if (!result)
 	{
 		MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -207,12 +207,13 @@ bool ApplicationClass::InitializeFontAndText(const int a_screenWidth, const int 
 		MessageBox(a_windowHandle, L"Could not init font", L"Error", MB_OK);
 		return false;
 	}
-	
 	m_previousFps = -1;
+	
+	m_UIObjects = vector<TextClass*>();
+	m_UIObjects.push_back(new TextClass());
 	char fpsString[32];
 	strcpy_s(fpsString, "Fps: 0");
-	m_fpsText = new TextClass;
-	if (!m_fpsText->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 128, m_Font, fpsString, 10, 10, 1.0f,1.0f,1.0f))
+	if (!m_UIObjects[0]->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 128, m_Font, fpsString, 10, 10, 1.0f,1.0f,1.0f))
 		return false;
 	
 	return true;
@@ -279,12 +280,6 @@ void ApplicationClass::Shutdown()
 		m_Font = nullptr;
 	}
 	
-	if (m_fpsText)
-	{
-		m_fpsText->Shutdown();
-		delete m_fpsText;
-		m_fpsText = nullptr;
-	}
 	if (m_SpriteShader)
 	{
 		m_SpriteShader->Shutdown();
@@ -326,7 +321,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	XMMATRIX ortho;
 	
 	constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0);
-	constexpr float blendAmount = 0;;
+	constexpr float blendAmount = 0.1f;
 	constexpr float waterTranslation = 0;
 	constexpr float reflectRefractScale = 0;
 	constexpr XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
@@ -402,6 +397,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	//2D SECTION-----------------------------------------------------------
 	m_Direct3D->TurnZBufferOff();
+	m_Direct3D->EnableAlphaBlending();
 	for (int i = 0; i < m_2DObjects.size(); i++)
 	{
 		m_2DObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
@@ -442,15 +438,12 @@ bool ApplicationClass::Render(float a_Rotation) const
 	}
 
 	//UI SECTION
-	m_Direct3D->EnableAlphaBlending();
-	//for (int i = 0; i < m_UIObjects.size(); i++)
-	//{
-		//m_UIObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
-		//m_UIObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
-		m_fpsText->Render(m_Direct3D->GetDeviceContext());
+	for (int i = 0; i < m_UIObjects.size(); i++)
+	{
+		m_UIObjects[i]->Render(m_Direct3D->GetDeviceContext());
 
 		const bool result = m_FontShader->Render(m_Direct3D->GetDeviceContext(),
-		                                          m_fpsText->GetIndexCount(),
+		                                          m_UIObjects[i]->GetIndexCount(),
 		                                          world,
 		                                          view,
 		                                          ortho,
@@ -481,7 +474,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 		{
 			return false;
 		}
-	//}
+	}
 
 	
 	m_Direct3D->DisableAlphaBlending();
@@ -570,7 +563,7 @@ bool ApplicationClass::UpdateFps()
 		blue = 1.0f;
 	}
 	
-	const bool result = m_fpsText->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
+	const bool result = m_UIObjects[0]->UpdateText(m_Direct3D->GetDeviceContext(), m_Font, finalString, 50, 10, red, green, blue);
 	if (!result)
 		return false;
 
@@ -599,6 +592,8 @@ const char* ApplicationClass::PixelEntryPointToChar(PixelShaderEntryPoint a_entr
 			return "TextureAlphaMapPixelShader";
 		case FontPixelShader:
 			return "FontPixelShader";
+		case TransparentColorPixelShader:
+			return "TransparentColorPixelShader";
 		default:
 			return "SimpleLightingPixelShader";
 	}

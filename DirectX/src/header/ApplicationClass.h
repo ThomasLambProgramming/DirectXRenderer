@@ -43,7 +43,8 @@ class ApplicationClass
 		TextureMultiSamplePixelShader,
 		TextureLightMapPixelShader,
 		TextureAlphaMapPixelShader,
-		FontPixelShader
+		FontPixelShader,
+		TransparentColorPixelShader,
 	};
 public:
 	ApplicationClass();
@@ -75,7 +76,7 @@ private:
 
 	std::vector<ObjectClass*> m_3DObjects;
 	std::vector<ObjectClass*> m_2DObjects;
-	std::vector<ObjectClass*> m_UIObjects;
+	std::vector<TextClass*> m_UIObjects;
 	
 	LightClass* m_MainLight;
 
