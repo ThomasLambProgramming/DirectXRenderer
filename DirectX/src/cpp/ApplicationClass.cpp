@@ -52,6 +52,9 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	ImguiInitialize(a_windowHandle);
     CameraInitialize();
 	
+	if (!InitializeShaders(a_windowHandle))
+		return true;
+
 	result = SetupModels(a_screenWidth, a_screenHeight, a_windowHandle);
 	if (!result)
 	{
@@ -89,7 +92,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 {
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureLightMapPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_ModelShader = new ShaderClass;
@@ -139,15 +142,12 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 	char blendTexture4FileName[128];
 
 	m_3DObjects = vector<ObjectClass*>();
-	strcpy_s(textureFileName, "./data/stone01.tga");
+	strcpy_s(textureFileName, "./data/stone02.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
 	strcpy_s(blendTexture3FileName, "./data/alpha01.tga");
 	strcpy_s(blendTexture4FileName, "./data/font01.tga");
 	
-	if (!InitializeShaders(a_windowHandle))
-		return true;
-
 	char* textureFileNames[] = {
 		textureFileName,
 		blendTexture1FileName,
@@ -167,7 +167,7 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 		return false;
 	}
 	
-	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 0, 0, textureFileNames, 6);
+	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 800, 0, textureFileNames, 6);
 	if (!result)
 	{
 		MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -365,7 +365,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 		m_3DObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
 		                                          m_3DObjects[i]->GetIndexCount(),
-		                                          world,
+		                                          worldRotation,
 		                                          view,
 		                                          projection,
 		                                          m_Camera->GetPosition(),
@@ -407,7 +407,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 		m_2DObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
 		m_2DObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 
-		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
+		const bool result = m_SpriteShader->Render(m_Direct3D->GetDeviceContext(),
 		                                          m_2DObjects[i]->GetIndexCount(),
 		                                          world,
 		                                          view,
@@ -443,13 +443,14 @@ bool ApplicationClass::Render(float a_Rotation) const
 
 	//UI SECTION
 	m_Direct3D->EnableAlphaBlending();
-	for (int i = 0; i < m_UIObjects.size(); i++)
-	{
-		m_UIObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
-		m_UIObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+	//for (int i = 0; i < m_UIObjects.size(); i++)
+	//{
+		//m_UIObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
+		//m_UIObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+		m_fpsText->Render(m_Direct3D->GetDeviceContext());
 
-		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
-		                                          m_UIObjects[i]->GetIndexCount(),
+		const bool result = m_FontShader->Render(m_Direct3D->GetDeviceContext(),
+		                                          m_fpsText->GetIndexCount(),
 		                                          world,
 		                                          view,
 		                                          ortho,
@@ -470,17 +471,17 @@ bool ApplicationClass::Render(float a_Rotation) const
 		                                          reflectRefractScale,
 		                                          pixelColor,
 		                                          lightDiffuse,
-		                                          m_UIObjects[i]->GetTexture(0),
-		                                          m_UIObjects[i]->GetTexture(1),
-		                                          m_UIObjects[i]->GetTexture(2),
-		                                          m_UIObjects[i]->GetTexture(3),
-		                                          m_UIObjects[i]->GetTexture(4),
-		                                          m_UIObjects[i]->GetTextureCount());
+		                                          m_Font->GetTexture(),
+		                                          m_Font->GetTexture(),
+		                                          m_Font->GetTexture(),
+		                                          m_Font->GetTexture(),
+		                                          m_Font->GetTexture(),
+		                                          5);
 		if (!result)
 		{
 			return false;
 		}
-	}
+	//}
 
 	
 	m_Direct3D->DisableAlphaBlending();

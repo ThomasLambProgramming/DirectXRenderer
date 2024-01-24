@@ -45,7 +45,9 @@ private:
 
 private:
     FontType* m_Font;
+public:
     TextureClass* m_Texture;
+private:
     float m_fontHeight;
     int m_spaceSize;
 };
