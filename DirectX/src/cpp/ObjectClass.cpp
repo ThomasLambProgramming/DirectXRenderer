@@ -4,11 +4,9 @@ ObjectClass::ObjectClass()
 {
 	m_VertexBuffer = nullptr;
 	m_IndexBuffer = nullptr;
-	m_texture = nullptr;
 	m_model = nullptr;
 	m_vertexCount = 0;
 	m_indexCount = 0;
-	m_textureCount = 0;
 	m_position = XMFLOAT3(0.0f,0.0f,0.0f);
 	m_rotation = XMFLOAT3(0.0f,0.0f,0.0f);
 	m_scale = XMFLOAT3(0.0f,0.0f,0.0f);
@@ -28,8 +26,7 @@ ObjectClass::ObjectClass(const ObjectClass& a_copy): m_position(), m_rotation(),
                                                      m_2DHeight(0),
                                                      m_prevPosX(0),
                                                      m_prevPosY(0),
-                                                     m_texture(nullptr),
-                                                     m_textureCount(0), m_model(nullptr), m_objectType()
+                                                     m_model(nullptr), m_objectType()
 {
 }
 
@@ -67,14 +64,13 @@ bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
     if (!result)
         return false;
 
-	m_texture = new TextureClass[MAX_TEXTURES];
+	m_textures = vector<TextureClass*>();
 
 	for (int i = 0; i < a_textureCount; i++)
 	{
-		result = LoadTexture(a_device, a_deviceContext, a_textureFileNames[i], i);
+		result = AddTextureToModel(a_device, a_deviceContext, a_textureFileNames[i]);
 		if (!result)
 			return false;
-		m_textureCount++;
 	}
 	
     return true;
@@ -187,20 +183,19 @@ bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* 
 	vertices = nullptr;
 	indices = nullptr;
 	
-	m_texture = new TextureClass[MAX_TEXTURES];
+	m_textures = vector<TextureClass*>();
 
 	for (int i = 0; i < a_textureCount; i++)
 	{
-		result = LoadTexture(a_device, a_deviceContext, a_textureFileNames[i], i);
+		result = AddTextureToModel(a_device, a_deviceContext, a_textureFileNames[i]);
 		if (!result)
 			return false;
-		m_textureCount++;
 	}
 
-	if (a_bitmapHeight == 0 && a_bitmapWidth == 0 && m_textureCount > 0)
+	if (a_bitmapHeight == 0 && a_bitmapWidth == 0 && m_textures.size() > 0)
 	{
-		m_2DWidth = m_texture[0].GetWidth();
-		m_2DHeight = m_texture[0].GetHeight();
+		m_2DWidth = m_textures[0]->GetWidth();
+		m_2DHeight = m_textures[0]->GetHeight();
 	}
 	return true;
 }
@@ -222,7 +217,7 @@ int ObjectClass::GetVertexCount() const
 
 int ObjectClass::GetTextureCount() const
 {
-	return m_textureCount;
+	return m_textures.size();
 }
 
 ObjectClass::ModelInformation* ObjectClass::GetModelData() const
@@ -230,50 +225,52 @@ ObjectClass::ModelInformation* ObjectClass::GetModelData() const
 	return m_model;
 }
 
-ID3D11ShaderResourceView* ObjectClass::GetTexture(int a_texture) const
+ID3D11ShaderResourceView* ObjectClass::GetTexture(const int a_texture) const
 {
-	if (a_texture + 1 > m_textureCount || a_texture < 0)
+	if (a_texture > m_textures.size() - 1 || a_texture < 0)
 		return nullptr;
 	
-	return m_texture[a_texture].GetTexture();
+	return m_textures[a_texture]->GetTexture();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst again, its modifying member variables why are you trying to set it to const rider!
 bool ObjectClass::SetNewTextureAtId(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_texId, char* a_textureFileName)
 {
 	//We never want to go over max textures for one object as it will break when making buffers.
-	if (a_texId> MAX_TEXTURES-1 || a_texId < 0)
-		return false;
-	m_texture[a_texId] = TextureClass();
-	return m_texture[a_texId].Initialize(a_device, a_deviceContext, a_textureFileName);
+	if (a_texId + 1 > m_textures.size())
+	{
+		m_textures.push_back(new TextureClass());
+		a_texId = m_textures.size() - 1;
+	}
+	if (a_texId < 0)
+	{
+		m_textures.insert(m_textures.begin(), new TextureClass());
+		a_texId = 0;	
+	}
+	else
+	{
+		m_textures[a_texId]->Shutdown();
+		m_textures[a_texId] = new TextureClass();
+	}
+	
+	return m_textures[a_texId]->Initialize(a_device, a_deviceContext, a_textureFileName);
 }
 
 //remove from font and back arent used at the moment and will only implement if needed by certain shaders or effects as needed.
 void ObjectClass::RemoveTextureFromFront()
 {
-	if (m_textureCount == 0)
+	if (m_textures.size() == 0)
 		return;
 
-	m_texture[0].Shutdown();
-	m_textureCount--;
-	
-	if (m_textureCount == 0)
-		return;
-	//If there is still textures we want to shift the array down one so the 0 element is not null.
-	for (int i = 0; i < m_textureCount; i++)
-	{
-		m_texture[i] = m_texture[i+1];
-	}
+	m_textures.erase(m_textures.begin());
 }
 
 void ObjectClass::RemoveTextureFromBack()
 {
-	if (m_textureCount == 0)
+	if (m_textures.size() == 0)
 		return;
 
-	m_texture[m_textureCount-1].Shutdown();
-	m_textureCount--;
-	//No need for sorting as we have removed from the back.
+	m_textures.pop_back();
 }
 
 XMFLOAT3 ObjectClass::GetPosition() const
@@ -372,6 +369,11 @@ bool ObjectClass::Update2DBuffers(ID3D11DeviceContext* a_context)
 	return true;
 }
 
+ObjectClass::ObjectType ObjectClass::GetObjectType() const
+{
+	return m_objectType;
+}
+
 void ObjectClass::Shutdown()
 {
 	ReleaseModel();
@@ -428,11 +430,13 @@ bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
 
 bool ObjectClass::LoadModelObj(const char* a_modelFileName)
 {
+    m_model = new ModelInformation[0];
 	return false;
 }
 
 bool ObjectClass::LoadModelFbx(const char* a_modelFileName)
 {
+    m_model = new ModelInformation[0];
 	return false;
 }
 
@@ -535,15 +539,10 @@ void ObjectClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) co
 
 //Rider suggests it to be const but it modifies m_texture so its not correct I believe
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool ObjectClass::LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId)
+bool ObjectClass::AddTextureToModel(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName)
 {
-	//We never want to go over max textures for one object as it will break when making buffers.
-	if (a_texId > MAX_TEXTURES-1 || a_texId < 0)
-		return false;
-	
-	//create and initialize the texture object;
-	m_texture[a_texId] = TextureClass();
-	return m_texture[a_texId].Initialize(a_device, a_deviceContext, a_textureName);
+	m_textures.push_back(new TextureClass());
+	return m_textures[m_textures.size() - 1]->Initialize(a_device, a_deviceContext, a_textureName);
 }
 
 //Rider keeps giving me this warning about the function being const is good but it modifies m_Model so that's wrong no?
@@ -679,18 +678,15 @@ void ObjectClass::ShutdownBuffers()
 
 void ObjectClass::ReleaseTexture()
 {
-	if (!m_texture)
+	if (m_textures.empty())
 	{
 		return;
-	}	
-	for (int i = 0; i < MAX_TEXTURES; i++)
-	{
-		if (i + 1 <= m_textureCount)
-			m_texture[i].Shutdown();
 	}
-	delete [] m_texture;
-	m_texture = nullptr;
-	m_textureCount = 0;
+	for (int i = 0; i < m_textures.size(); i++)
+	{
+		m_textures[i]->Shutdown();
+	}
+	m_textures.clear();
 }
 
 void ObjectClass::ReleaseModel()

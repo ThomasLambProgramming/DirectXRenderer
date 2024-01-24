@@ -12,12 +12,9 @@
 #include <Windows.h>
 #include <mmsystem.h>
 
-
-#include "SpriteClass.h"
 #include "thirdparty/imgui/imgui_impl_dx11.h"
 #include "thirdparty/imgui/imgui_impl_win32.h"
 #include "thirdparty/imgui/imgui.h"
-
 
 #include "TextClass.h"
 #pragma comment(lib, "winmm.lib")
@@ -52,8 +49,16 @@ public:
 	ApplicationClass();
 	ApplicationClass(const ApplicationClass&);
 	~ApplicationClass();
-
+	
 	bool Initialize(int, int, HWND);
+
+	void CameraInitialize();
+	bool SetupModels(int a_screenWidth, int a_screenHeight, HWND a_windowHandle);
+	void InitializeLights();
+	bool InitializeFontAndText(int a_screenWidth, int a_screenHeight, HWND a_windowHandle);
+	void ImguiInitialize(HWND a_windowHandle) const;
+	bool InitializeShaders(HWND a_windowHandle);
+
 	void Shutdown();
 	bool Frame(InputClass* a_InputClass);
 
@@ -67,22 +72,24 @@ private:
 private:
 	Direct3DClass* m_Direct3D;
 	CameraClass* m_Camera;
-	ObjectClass* m_Model;
+
+	std::vector<ObjectClass*> m_3DObjects;
+	std::vector<ObjectClass*> m_2DObjects;
+	std::vector<ObjectClass*> m_UIObjects;
+	
 	LightClass* m_MainLight;
+
+	std::vector<LightClass*> m_PointLights;
 	
 	ShaderClass* m_ModelShader;
 	ShaderClass* m_FontShader;
 	ShaderClass* m_SpriteShader;
 
-	XMFLOAT4* m_LightPositions;
-	XMFLOAT4* m_LightDiffuse;
-	
+	//Fps related variables.
 	unsigned long m_startTime;
 	int m_fps;
 	int m_count;
 	int m_previousFps;
-
-	SpriteClass* m_Sprite;
 
 	FontClass* m_Font;
 	TextClass* m_fpsText;

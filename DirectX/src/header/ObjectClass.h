@@ -4,11 +4,10 @@
 #include <DirectXMath.h>
 #include "TextureClass.h"
 #include <fstream>
+#include <vector>
 
 using namespace std;
 using namespace DirectX;
-
-constexpr int MAX_TEXTURES = 6;
 
 class ObjectClass  // NOLINT(cppcoreguidelines-special-member-functions)
 {
@@ -82,6 +81,8 @@ public:
     void SetScale(XMFLOAT3 a_value);
 
     bool Update2DBuffers(ID3D11DeviceContext* a_context);
+
+    ObjectType GetObjectType() const;
     
     void Shutdown();
     
@@ -93,10 +94,9 @@ private:
     bool Initialize3DBuffers(ID3D11Device* a_device);
     void SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const;
 
-    bool LoadTexture(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName, int a_texId);
+    bool AddTextureToModel(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName);
     void CalculateModelVectors();
     static void CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal);
-    
     
     void ShutdownBuffers();
     void ReleaseTexture();
@@ -119,10 +119,8 @@ private:
     int m_2DWidth, m_2DHeight;
     int m_prevPosX, m_prevPosY;
 
-    //Decayed pointer to array.
-    TextureClass* m_texture;
-    //m_texture can return nullptr so we track the amount of textures this model has.
-    int m_textureCount;
+    //Keeping as a list since right now texture amounts are unknown
+    vector<TextureClass*> m_textures;
 
     ModelInformation* m_model;
     ObjectType m_objectType;
