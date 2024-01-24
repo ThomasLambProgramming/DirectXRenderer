@@ -186,15 +186,15 @@ void ApplicationClass::InitializeLights()
 	m_MainLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
 
 	//Pointlight variables for now to display multi lighting.
-	m_PointLights = std::vector<LightClass*>(NUM_LIGHTS, nullptr);
-	m_PointLights[0]->m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
-	m_PointLights[0]->m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
-	m_PointLights[1]->m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
-	m_PointLights[1]->m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
-	m_PointLights[2]->m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
-	m_PointLights[2]->m_Position = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
-	m_PointLights[3]->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-	m_PointLights[3]->m_Position = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
+	m_PointLights = new LightClass[NUM_LIGHTS];
+	m_PointLights[0].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
+	m_PointLights[0].m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
+	m_PointLights[1].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
+	m_PointLights[1].m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
+	m_PointLights[2].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
+	m_PointLights[2].m_Position = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
+	m_PointLights[3].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_PointLights[3].m_Position = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
 }
 
 bool ApplicationClass::InitializeFontAndText(const int a_screenWidth, const int a_screenHeight, const HWND a_windowHandle)
@@ -334,7 +334,20 @@ bool ApplicationClass::Render(float a_Rotation) const
 	//clear buffers to begin the scene
 	m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
 
-	
+	XMFLOAT4 lightPositions[] = {
+		m_PointLights[0].m_Position,
+		m_PointLights[1].m_Position,
+		m_PointLights[2].m_Position,
+		m_PointLights[3].m_Position
+	};
+
+	XMFLOAT4 lightDiffuse[] = {
+		m_PointLights[0].m_DiffuseColor,
+		m_PointLights[1].m_DiffuseColor,
+		m_PointLights[2].m_DiffuseColor,
+		m_PointLights[3].m_DiffuseColor
+	};
+ 
 	
 	//update cameras view matrix
 	m_Camera->Render();
@@ -344,116 +357,160 @@ bool ApplicationClass::Render(float a_Rotation) const
 	m_Direct3D->GetWorldMatrix(worldRotation);
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
-
 	worldRotation = XMMatrixRotationY(a_Rotation);
-
 	m_Direct3D->GetOrthoMatrix(ortho);
-	//put the model vertex and index buffers into the graphics pipeline to prepare them to be drawn
 
-	m_Direct3D->TurnZBufferOff();
-
-
-	for (int i = 0; i < m_2DObjects.size(); i++)
+	for (int i = 0; i < m_3DObjects.size(); i++)
 	{
-		m_2DObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
-		m_2DObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
-	
-		bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
-													m_2DObjects[i]->GetIndexCount(),
-													world,
-													view,
-													ortho,
-													m_Camera->GetPosition(),
-													0,
-													0,
-													XMFLOAT4(0,0,0,0),
-													world,
-													m_LightPositions,
-													m_MainLight->m_DiffuseColor,
-													m_MainLight->m_SpecularColor,
-													m_MainLight->m_SpecularPower,
-													m_MainLight->m_LightDirection,
-													m_MainLight->m_AmbientColor,
-													translationAmount,
-													blendAmount,
-													waterTranslation,
-													reflectRefractScale,
-													pixelColor,
-													m_LightDiffuse,
-													m_2DObjects[i]->GetTexture(0),
-													m_2DObjects[i]->GetTexture(1),
-													m_2DObjects[i]->GetTexture(2),
-													m_2DObjects[i]->GetTexture(3),
-													m_2DObjects[i]->GetTexture(4),
-													m_2DObjects[i]->GetTextureCount());
+		m_3DObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
+		                                          m_3DObjects[i]->GetIndexCount(),
+		                                          world,
+		                                          view,
+		                                          projection,
+		                                          m_Camera->GetPosition(),
+		                                          0,
+		                                          0,
+		                                          XMFLOAT4(0,0,0,0),
+		                                          world,
+		                                          lightPositions,
+		                                          m_MainLight->m_DiffuseColor,
+		                                          m_MainLight->m_SpecularColor,
+		                                          m_MainLight->m_SpecularPower,
+		                                          m_MainLight->m_LightDirection,
+		                                          m_MainLight->m_AmbientColor,
+		                                          translationAmount,
+		                                          blendAmount,
+		                                          waterTranslation,
+		                                          reflectRefractScale,
+		                                          pixelColor,
+		                                          lightDiffuse,
+		                                          m_3DObjects[i]->GetTexture(0),
+		                                          m_3DObjects[i]->GetTexture(1),
+		                                          m_3DObjects[i]->GetTexture(2),
+		                                          m_3DObjects[i]->GetTexture(3),
+		                                          m_3DObjects[i]->GetTexture(4),
+		                                          m_3DObjects[i]->GetTextureCount());
 		if (!result)
 		{
 			return false;
 		}
 	}
 
-	//2D SECTION-----------------------------------------------------------
-	//	
-	//	//UI SECTION
-	m_Direct3D->EnableAlphaBlending();
 	
-	result = m_SpriteShader->Render(m_Direct3D->GetDeviceContext(),
-	                                            m_Model->GetIndexCount(),
-	                                            world,
-	                                            view,
-	                                            ortho,
-	                                            m_Camera->GetPosition(),
-	                                            0,
-	                                            0,
-	                                            XMFLOAT4(0,0,0,0),
-	                                            world,
-	                                            m_LightPositions,
-	                                            m_MainLight->m_DiffuseColor,
-	                                            m_MainLight->m_SpecularColor,
-	                                            m_MainLight->m_SpecularPower,
-	                                            m_MainLight->m_LightDirection,
-	                                            m_MainLight->m_AmbientColor,
-	                                            translationAmount,
-	                                            blendAmount,
-	                                            waterTranslation,
-	                                            reflectRefractScale,
-	                                            pixelColor,
-	                                            m_LightDiffuse,
-	                                            m_Model->GetTexture(0),
-	                                            m_Model->GetTexture(1),
-	                                            m_Model->GetTexture(2),
-	                                            m_Model->GetTexture(3),
-	                                            m_Model->GetTexture(4),
-	                                            m_Model->GetTextureCount());
-	if (!result)
-		return false;
+
+
+	//2D SECTION-----------------------------------------------------------
+	m_Direct3D->TurnZBufferOff();
+	for (int i = 0; i < m_2DObjects.size(); i++)
+	{
+		m_2DObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
+		m_2DObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+
+		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
+		                                          m_2DObjects[i]->GetIndexCount(),
+		                                          world,
+		                                          view,
+		                                          ortho,
+		                                          m_Camera->GetPosition(),
+		                                          0,
+		                                          0,
+		                                          XMFLOAT4(0,0,0,0),
+		                                          world,
+		                                          lightPositions,
+		                                          m_MainLight->m_DiffuseColor,
+		                                          m_MainLight->m_SpecularColor,
+		                                          m_MainLight->m_SpecularPower,
+		                                          m_MainLight->m_LightDirection,
+		                                          m_MainLight->m_AmbientColor,
+		                                          translationAmount,
+		                                          blendAmount,
+		                                          waterTranslation,
+		                                          reflectRefractScale,
+		                                          pixelColor,
+		                                          lightDiffuse,
+		                                          m_2DObjects[i]->GetTexture(0),
+		                                          m_2DObjects[i]->GetTexture(1),
+		                                          m_2DObjects[i]->GetTexture(2),
+		                                          m_2DObjects[i]->GetTexture(3),
+		                                          m_2DObjects[i]->GetTexture(4),
+		                                          m_2DObjects[i]->GetTextureCount());
+		if (!result)
+		{
+			return false;
+		}
+	}
+
+	//UI SECTION
+	m_Direct3D->EnableAlphaBlending();
+	for (int i = 0; i < m_UIObjects.size(); i++)
+	{
+		m_UIObjects[i]->Update2DBuffers(m_Direct3D->GetDeviceContext());
+		m_UIObjects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+
+		const bool result = m_ModelShader->Render(m_Direct3D->GetDeviceContext(),
+		                                          m_UIObjects[i]->GetIndexCount(),
+		                                          world,
+		                                          view,
+		                                          ortho,
+		                                          m_Camera->GetPosition(),
+		                                          0,
+		                                          0,
+		                                          XMFLOAT4(0,0,0,0),
+		                                          world,
+		                                          lightPositions,
+		                                          m_MainLight->m_DiffuseColor,
+		                                          m_MainLight->m_SpecularColor,
+		                                          m_MainLight->m_SpecularPower,
+		                                          m_MainLight->m_LightDirection,
+		                                          m_MainLight->m_AmbientColor,
+		                                          translationAmount,
+		                                          blendAmount,
+		                                          waterTranslation,
+		                                          reflectRefractScale,
+		                                          pixelColor,
+		                                          lightDiffuse,
+		                                          m_UIObjects[i]->GetTexture(0),
+		                                          m_UIObjects[i]->GetTexture(1),
+		                                          m_UIObjects[i]->GetTexture(2),
+		                                          m_UIObjects[i]->GetTexture(3),
+		                                          m_UIObjects[i]->GetTexture(4),
+		                                          m_UIObjects[i]->GetTextureCount());
+		if (!result)
+		{
+			return false;
+		}
+	}
+
 	
 	m_Direct3D->DisableAlphaBlending();
 	m_Direct3D->TurnZBufferOn();
 	//END 2D SECTION-------------------------------------------------------
 
+
+	//Imgui Section-------------------------------------------------------
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 	XMFLOAT3 position;
 	ImGui::Begin("Window");
-	if (ImGui::SliderFloat("XPosition", m_ObjectPosX, 0.0f, 800.0f))
-	{
-		position = m_Model->GetPosition();
-		position.x = *m_ObjectPosX;
-		m_Model->SetPosition(position);	
-	}
-	if (ImGui::SliderFloat("YPosition", m_ObjectPosY, 0.0f, 800.0f))
-	{
-		position = m_Model->GetPosition();
-		position.y = *m_ObjectPosY;
-		m_Model->SetPosition(position);	
-	}
+	//if (ImGui::SliderFloat("XPosition", m_ObjectPosX, 0.0f, 800.0f))
+	//{
+	//	position = m_Model->GetPosition();
+	//	position.x = *m_ObjectPosX;
+	//	m_Model->SetPosition(position);	
+	//}
+	//if (ImGui::SliderFloat("YPosition", m_ObjectPosY, 0.0f, 800.0f))
+	//{
+	//	position = m_Model->GetPosition();
+	//	position.y = *m_ObjectPosY;
+	//	m_Model->SetPosition(position);	
+	//}
 	//Do Imgui here.
 	ImGui::End();
 	ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	
+	//END Imgui Section-------------------------------------------------------
 
     m_Direct3D->EndScene();
     return true;

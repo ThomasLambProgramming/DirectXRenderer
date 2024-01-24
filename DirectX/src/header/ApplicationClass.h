@@ -79,7 +79,8 @@ private:
 	
 	LightClass* m_MainLight;
 
-	std::vector<LightClass*> m_PointLights;
+	//This is an array that has 4 elements as per NUM_LIGHTS constant.
+	LightClass* m_PointLights;
 	
 	ShaderClass* m_ModelShader;
 	ShaderClass* m_FontShader;
