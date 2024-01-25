@@ -114,6 +114,16 @@ float4 TextureSamplePixelShader(PixelInputType a_input) : SV_TARGET
     return saturate(textureColor);
 }
 
+float4 TextureSampleFogPixelShader(PixelInputType a_input) : SV_TARGET
+{
+    float4 fogColor = float4(0.5f,0.5f,0.5f,1.0f);
+    float2 translatedTextureCoord = a_input.tex + textureTranslation;
+    //sample the color from the texture using the sampler at this texture coordinate location.
+    float4 textureColor = ShaderTexture1.Sample(Sampler, translatedTextureCoord) + UseEveryBuffer();
+    float4 finalColor = a_input.fogFactor * saturate(textureColor) + (1.0 - a_input.fogFactor) * fogColor;
+    return saturate(finalColor);
+}
+
 //This shader has simple diffuse lighting, Ambient color and Specular lighting.
 float4 SimpleLightingPixelShader(PixelInputType a_Input) : SV_TARGET
 {

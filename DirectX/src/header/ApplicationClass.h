@@ -45,6 +45,7 @@ class ApplicationClass
 		TextureAlphaMapPixelShader,
 		FontPixelShader,
 		TransparentColorPixelShader,
+		TextureSampleFogPixelShader,
 	};
 public:
 	ApplicationClass();

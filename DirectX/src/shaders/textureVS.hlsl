@@ -81,8 +81,11 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.tangent = normalize(mul(a_input.tangent, (float3x3)worldMatrix));
     output.binormal = normalize(mul(a_input.binormal, (float3x3)worldMatrix));
 
-    output.fogFactor = fogStart + fogEnd;
-    output.clip = clipPlane.x;
+    float4 camFogPosition = mul(a_input.position, worldMatrix);
+    camFogPosition = mul(camFogPosition, viewMatrix);
+
+    output.fogFactor = output.fogFactor = saturate((fogEnd - camFogPosition.z) / (fogEnd - fogStart));
+    output.clip = dot(mul(a_input.position, worldMatrix), clipPlane);
     output.reflectionPosition = reflectionMatrix[0][0];
     output.refractionPosition = 0;
 

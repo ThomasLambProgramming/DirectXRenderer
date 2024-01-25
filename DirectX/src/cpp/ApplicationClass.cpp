@@ -92,7 +92,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 {
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SpecularMapPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSampleFogPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_ModelShader = new ShaderClass;
@@ -166,7 +166,7 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 		return false;
 	}
 	
-	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 300, 0, textureFileNames, 6);
+	result = m_2DObjects[0]->Initialize2DQuad(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_screenWidth, a_screenHeight, 900, 0, textureFileNames, 6);
 	if (!result)
 	{
 		MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -324,8 +324,13 @@ bool ApplicationClass::Render(float a_Rotation) const
 	constexpr float waterTranslation = 0;
 	constexpr float reflectRefractScale = 0;
 	constexpr XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
+	constexpr float fogStart = 1000.0f;
+	constexpr float fogEnd = 10000.0f;
+	constexpr float fogColor = 0.5f;
 	
 	//clear buffers to begin the scene
+	//the above makes the fog work but as we dont need it right now it is not used.
+	//m_Direct3D->BeginScene(fogColor, fogColor, fogColor,1.0f);
 	m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
 
 	XMFLOAT4 lightPositions[] = {
@@ -341,6 +346,9 @@ bool ApplicationClass::Render(float a_Rotation) const
 		m_PointLights[2].m_DiffuseColor,
 		m_PointLights[3].m_DiffuseColor
 	};
+
+	//Clip plane works but just for now we dont have a use for it.
+	XMFLOAT4 clipPlane = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
  
 	
 	//update cameras view matrix
@@ -363,9 +371,9 @@ bool ApplicationClass::Render(float a_Rotation) const
 		                                          view,
 		                                          projection,
 		                                          m_Camera->GetPosition(),
-		                                          0,
-		                                          0,
-		                                          XMFLOAT4(0,0,0,0),
+		                                          fogStart,
+		                                          fogEnd,
+		                                          clipPlane,
 		                                          world,
 		                                          lightPositions,
 		                                          m_MainLight->m_DiffuseColor,
@@ -408,9 +416,9 @@ bool ApplicationClass::Render(float a_Rotation) const
 		                                          view,
 		                                          ortho,
 		                                          m_Camera->GetPosition(),
-		                                          0,
-		                                          0,
-		                                          XMFLOAT4(0,0,0,0),
+		                                          fogStart,
+		                                          fogEnd,
+		                                          clipPlane,
 		                                          world,
 		                                          lightPositions,
 		                                          m_MainLight->m_DiffuseColor,
@@ -447,9 +455,9 @@ bool ApplicationClass::Render(float a_Rotation) const
 		                                          view,
 		                                          ortho,
 		                                          m_Camera->GetPosition(),
-		                                          0,
-		                                          0,
-		                                          XMFLOAT4(0,0,0,0),
+		                                          fogStart,
+		                                          fogEnd,
+		                                          clipPlane,
 		                                          world,
 		                                          lightPositions,
 		                                          m_MainLight->m_DiffuseColor,
@@ -593,6 +601,8 @@ const char* ApplicationClass::PixelEntryPointToChar(PixelShaderEntryPoint a_entr
 			return "FontPixelShader";
 		case TransparentColorPixelShader:
 			return "TransparentColorPixelShader";
+		case TextureSampleFogPixelShader:
+			return "TextureSampleFogPixelShader";
 		default:
 			return "SimpleLightingPixelShader";
 	}
