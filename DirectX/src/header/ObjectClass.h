@@ -3,7 +3,6 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "TextureClass.h"
-#include <fstream>
 #include <vector>
 
 using namespace std;
@@ -12,6 +11,14 @@ using namespace DirectX;
 class ObjectClass  // NOLINT(cppcoreguidelines-special-member-functions)
 {
 public:
+    //This is just a quick temp struct thing to show off assets before archiving, otherwise transform would
+    //be its own class with helper functions and related math.
+    struct Transform
+    {
+        XMFLOAT3 position;
+        XMFLOAT3 rotation;
+        XMFLOAT3 scale;
+    };
     enum PrimitiveType
     {
         Cube = 0,
@@ -102,7 +109,9 @@ private:
     void ReleaseTexture();
     void ReleaseModel();
 
+    //variables.
 public:
+    Transform m_Transform;
     
 private:
     XMFLOAT3 m_position;

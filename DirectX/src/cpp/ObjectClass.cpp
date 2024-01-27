@@ -1,4 +1,5 @@
 ﻿#include "ObjectClass.h"
+#include <fstream>
 
 ObjectClass::ObjectClass()
 {

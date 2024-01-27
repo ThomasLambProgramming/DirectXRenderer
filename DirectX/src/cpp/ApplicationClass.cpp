@@ -92,7 +92,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 {
 	char shaderVertexEntryPoint[128];
 	char shaderPixelEntryPoint[128];
-	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSampleFogPixelShader));
+	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SimpleLightingPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
 	m_ModelShader = new ShaderClass;
@@ -331,7 +331,8 @@ bool ApplicationClass::Render(float a_Rotation) const
 	//clear buffers to begin the scene
 	//the above makes the fog work but as we dont need it right now it is not used.
 	//m_Direct3D->BeginScene(fogColor, fogColor, fogColor,1.0f);
-	m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
+	//This is a number that was taken from a rgba color picker.
+	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
 
 	XMFLOAT4 lightPositions[] = {
 		m_PointLights[0].m_Position,
@@ -348,7 +349,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	};
 
 	//Clip plane works but just for now we dont have a use for it.
-	XMFLOAT4 clipPlane = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
+	XMFLOAT4 clipPlane = XMFLOAT4(0.0f,1.0f,0.0f,0.0f);
  
 	
 	//update cameras view matrix
