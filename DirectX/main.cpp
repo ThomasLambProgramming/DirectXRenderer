@@ -1,12 +1,12 @@
-#include "SystemClass.h"
+#include "ApplicationDirector.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
-	SystemClass* System;
+	ApplicationDirector* System;
 	bool result;
 
 	// Create the system object.
-	System = new SystemClass;
+	System = new ApplicationDirector;
 
 	// Initialize and run the system object.
 	result = System->Initialize();

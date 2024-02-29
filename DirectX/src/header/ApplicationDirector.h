@@ -1,19 +1,17 @@
-#ifndef _SYSTEMCLASS_H_
-#define _SYSTEMCLASS_H_
-
+#pragma once
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 
-#include "InputClass.h"
+#include "InputManager.h"
 #include "ApplicationClass.h"
 
-class SystemClass
+class ApplicationDirector
 {
 public:
-	SystemClass();
-	SystemClass(const SystemClass&);
-	~SystemClass();
+	ApplicationDirector();
+	ApplicationDirector(const ApplicationDirector&);
+	~ApplicationDirector();
 
 	bool Initialize();
 	void Shutdown();
@@ -40,7 +38,7 @@ private:
 	//Technically its a intptr because of course it is.
 	HWND m_hwnd;
 
-	InputClass* m_Input;
+	InputManager* m_Input;
 	ApplicationClass* m_Application;
 };
 
@@ -49,5 +47,4 @@ private:
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 //Globals
-static SystemClass* ApplicationHandle = nullptr;
-#endif
+static ApplicationDirector* ApplicationHandle = nullptr;

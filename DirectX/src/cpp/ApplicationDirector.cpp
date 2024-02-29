@@ -1,24 +1,24 @@
-#include "SystemClass.h"
+#include "ApplicationDirector.h"
 
-SystemClass::SystemClass()
+ApplicationDirector::ApplicationDirector()
 {
 	//always init everything to null.
 	m_Input = nullptr;
 	m_Application = nullptr;
 }
 
-SystemClass::SystemClass(const SystemClass& other)
+ApplicationDirector::ApplicationDirector(const ApplicationDirector& other)
 {
 	//Some compilers can auto make copy constructors so we define one to avoid the possiblity.
 }
 
 //We dont do any clean up here, we do it in shutdown as singles exit thread functions and other things can actually not call destructors sometimes
 //causing memory leaks. thats some new info for me.
-SystemClass::~SystemClass()
+ApplicationDirector::~ApplicationDirector()
 {
 }
 
-bool SystemClass::Initialize()
+bool ApplicationDirector::Initialize()
 {
 	int screenWidth, screenHeight;
 	bool result;
@@ -30,7 +30,7 @@ bool SystemClass::Initialize()
 	InitializeWindows(screenWidth, screenHeight);
 	
 	//create and init the input object, this will take the keyboard input from the user.
-	m_Input = new InputClass;
+	m_Input = new InputManager;
 	result = m_Input->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
 	if (!result)
 		return false;
@@ -47,7 +47,7 @@ bool SystemClass::Initialize()
 	return result;
 }
 
-void SystemClass::Shutdown()
+void ApplicationDirector::Shutdown()
 {
 	//Release the application class obj
 	if (m_Application)
@@ -68,7 +68,7 @@ void SystemClass::Shutdown()
 	return;
 }
 
-void SystemClass::Run()
+void ApplicationDirector::Run()
 {
 	MSG msg;
 	bool done, result;
@@ -103,7 +103,7 @@ void SystemClass::Run()
 	return;
 }
 
-LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT ApplicationDirector::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
     extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     if (ImGui_ImplWin32_WndProcHandler(hwnd, umsg, wparam, lparam))
@@ -111,7 +111,7 @@ LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM 
 	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
-bool SystemClass::Frame()
+bool ApplicationDirector::Frame()
 {
 	//check if esc key pressed to exit application
 	if (!m_Input->Frame())
@@ -123,7 +123,7 @@ bool SystemClass::Frame()
 	return true;
 }
 
-void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
+void ApplicationDirector::InitializeWindows(int& screenWidth, int& screenHeight)
 {
 	//wndclassex is for the window class information
 	WNDCLASSEX wc;
@@ -229,7 +229,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	//What i get from this is that direct x has its own window manager/context unlike opengl where everyone uses glew and etc.
 }
 
-void SystemClass::ShutdownWindows()
+void ApplicationDirector::ShutdownWindows()
 {
 	//make sure the mouse cursor is shown
 	ShowCursor(true);

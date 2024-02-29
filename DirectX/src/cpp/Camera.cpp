@@ -1,6 +1,6 @@
-﻿#include "CameraClass.h"
+﻿#include "Camera.h"
 
-CameraClass::CameraClass()
+Camera::Camera()
 {
     m_PositionX = 0.0f;
 	m_PositionY = 0.0f;
@@ -11,15 +11,15 @@ CameraClass::CameraClass()
 	m_RotationZ = 0.0f;
 }
 
-CameraClass::CameraClass(const CameraClass& a_Copy)
+Camera::Camera(const Camera& a_Copy)
 {
 }
 
-CameraClass::~CameraClass()
+Camera::~Camera()
 {
 }
 
-void CameraClass::SetPosition(float x, float y, float z)
+void Camera::SetPosition(float x, float y, float z)
 {
 	m_PositionX = x;
 	m_PositionY = y;
@@ -27,7 +27,7 @@ void CameraClass::SetPosition(float x, float y, float z)
 	return;
 }
 
-void CameraClass::SetRotation(float x, float y, float z)
+void Camera::SetRotation(float x, float y, float z)
 {
 	m_RotationX = x;
 	m_RotationY = y;
@@ -35,17 +35,17 @@ void CameraClass::SetRotation(float x, float y, float z)
 	return;
 }
 
-XMFLOAT3 CameraClass::GetPosition()
+XMFLOAT3 Camera::GetPosition()
 {
 	return XMFLOAT3(m_PositionX, m_PositionY, m_PositionZ);
 }
 
-XMFLOAT3 CameraClass::GetRotation()
+XMFLOAT3 Camera::GetRotation()
 {
 	return XMFLOAT3(m_RotationX, m_RotationY, m_RotationZ);
 }
 
-void CameraClass::Render()
+void Camera::Render()
 {
 	XMFLOAT3 up, position, lookAt;
 	XMVECTOR upVector, positionVector, lookAtVector;
@@ -98,7 +98,7 @@ void CameraClass::Render()
 	return;
 }
 
-void CameraClass::GetViewMatrix(XMMATRIX& a_Matrix)
+void Camera::GetViewMatrix(XMMATRIX& a_Matrix)
 {
 	a_Matrix = m_ViewMatrix;
 	return;

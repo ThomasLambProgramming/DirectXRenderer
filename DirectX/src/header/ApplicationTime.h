@@ -2,12 +2,12 @@
 
 #include <Windows.h>
 
-class TimerClass
+class ApplicationTime
 {
 public:
-    TimerClass();
-    TimerClass(const TimerClass& a_Copy);
-    ~TimerClass();
+    ApplicationTime();
+    ApplicationTime(const ApplicationTime& a_Copy);
+    ~ApplicationTime();
 
     bool Initialize();
     void Frame();

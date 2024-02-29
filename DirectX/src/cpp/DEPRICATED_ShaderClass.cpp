@@ -1,6 +1,6 @@
-﻿#include "ShaderClass.h"
+﻿#include "DEPRICATED_ShaderClass.h"
 
-ShaderClass::ShaderClass()
+DEPRICATED_ShaderClass::DEPRICATED_ShaderClass()
 {
     m_VertexShader = nullptr;
     m_PixelShader = nullptr;
@@ -25,7 +25,7 @@ ShaderClass::ShaderClass()
     m_PointLightBuffer = nullptr;
 }
 
-ShaderClass::ShaderClass(const ShaderClass& a_Copy): m_VertexShader(nullptr), m_PixelShader(nullptr),
+DEPRICATED_ShaderClass::DEPRICATED_ShaderClass(const DEPRICATED_ShaderClass& a_Copy): m_VertexShader(nullptr), m_PixelShader(nullptr),
                                                      m_InputLayout(nullptr),
                                                      m_SampleState(nullptr),
                                                      m_MatrixBuffer(nullptr),
@@ -47,11 +47,11 @@ ShaderClass::ShaderClass(const ShaderClass& a_Copy): m_VertexShader(nullptr), m_
 {
 }
 
-ShaderClass::~ShaderClass()
+DEPRICATED_ShaderClass::~DEPRICATED_ShaderClass()
 {
 }
 
-bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
+bool DEPRICATED_ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
 {
     wchar_t vsFileName[128];
     wchar_t psFileName[128];
@@ -75,13 +75,13 @@ bool ShaderClass::Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* 
     return true;
 }
 
-void ShaderClass::Shutdown()
+void DEPRICATED_ShaderClass::Shutdown()
 {
     //shutdown vert and pixel shaders + any other related objects shutdown.
     ShutdownShader();
 }
 
-bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
+bool DEPRICATED_ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
                 int a_indexCount,
                 //VertexShaderVariables.
                 const XMMATRIX& a_world,
@@ -150,7 +150,7 @@ bool ShaderClass::Render(ID3D11DeviceContext* a_deviceContext,
     return true;
 }
 
-ID3D11ShaderResourceView* ShaderClass::GetTexture(int a_textureNumber) const
+ID3D11ShaderResourceView* DEPRICATED_ShaderClass::GetTexture(int a_textureNumber) const
 {
     switch(a_textureNumber)
     {
@@ -169,7 +169,7 @@ ID3D11ShaderResourceView* ShaderClass::GetTexture(int a_textureNumber) const
     }
 }
 
-bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
+bool DEPRICATED_ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, WCHAR* a_vsFileName, WCHAR* a_psFileName, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint)
 {
     HRESULT result;
     ID3D10Blob* errorMessage;
@@ -469,7 +469,7 @@ bool ShaderClass::InitializeShader(ID3D11Device* a_device, HWND a_windowHandle, 
 
 
 
-void ShaderClass::ShutdownShader()
+void DEPRICATED_ShaderClass::ShutdownShader()
 {
     //release all pointers
     if (m_VertexShader)
@@ -598,7 +598,7 @@ void ShaderClass::ShutdownShader()
     }
 }
 
-bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
+bool DEPRICATED_ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
                          //VertexShaderVariables.
                          XMMATRIX a_world,
                          XMMATRIX a_view,
@@ -785,7 +785,7 @@ bool ShaderClass::SetShaderParams(ID3D11DeviceContext* a_deviceContext,
     return true;
 }
 
-void ShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount) const
+void DEPRICATED_ShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_IndexCount) const
 {
     //set the vertex input layout
     a_DeviceContext->IASetInputLayout(m_InputLayout);
@@ -795,7 +795,7 @@ void ShaderClass::RenderShader(ID3D11DeviceContext* a_DeviceContext, int a_Index
     a_DeviceContext->DrawIndexed(a_IndexCount, 0, 0);
 }
 
-void ShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, const WCHAR* a_FilePath)
+void DEPRICATED_ShaderClass::OutputShaderErrorMessage(ID3D10Blob* a_ErrorMessage, HWND a_WindowHandle, const WCHAR* a_FilePath)
 {
     ofstream inOutStream;
 

@@ -1,13 +1,11 @@
-// ReSharper disable CppClangTidyClangDiagnosticReservedMacroIdentifier
-#ifndef _APPLICATIONCLASS_H_
-#define _APPLICATIONCLASS_H_
+#pragma once
 
-#include "Direct3DClass.h"
-#include "CameraClass.h"
-#include "ObjectClass.h"
-#include "ShaderClass.h"
-#include "InputClass.h"
-#include "LightClass.h"
+#include "DirectXApp.h"
+#include "Camera.h"
+#include "GameObject.h"
+#include "DEPRICATED_ShaderClass.h"
+#include "InputManager.h"
+#include "Light.h"
 
 #include <Windows.h>
 #include <mmsystem.h>
@@ -16,7 +14,6 @@
 #include "thirdparty/imgui/imgui_impl_win32.h"
 #include "thirdparty/imgui/imgui.h"
 
-#include "TextClass.h"
 #pragma comment(lib, "winmm.lib")
 
 class FontShaderClass;
@@ -62,7 +59,7 @@ public:
 	bool InitializeShaders(HWND a_windowHandle);
 
 	void Shutdown();
-	bool Frame(InputClass* a_InputClass);
+	bool Frame(InputManager* a_InputClass);
 
 	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
 	static ApplicationClass* Instance;
@@ -74,23 +71,22 @@ public:
 	static const char* PixelEntryPointToChar(PixelShaderEntryPoint a_entryPoint);
 	static const char* VertexEntryPointToChar(VertexShaderEntryPoint a_entryPoint);
 
-	Direct3DClass* m_Direct3D;
-	CameraClass* m_Camera;
+	DirectXApp* m_Direct3D;
+	Camera* m_Camera;
 
 	HWND m_windowHandle;
 
-	std::vector<ObjectClass*> m_3DObjects;
-	std::vector<ObjectClass*> m_2DObjects;
-	std::vector<TextClass*> m_UIObjects;
+	std::vector<GameObject*> m_3DObjects;
+	std::vector<GameObject*> m_2DObjects;
 	
-	LightClass* m_MainLight;
+	Light* m_MainLight;
 
 	//This is an array that has 4 elements as per NUM_LIGHTS constant.
-	LightClass* m_PointLights;
+	Light* m_PointLights;
 	
-	ShaderClass* m_ModelShader;
-	ShaderClass* m_FontShader;
-	ShaderClass* m_SpriteShader;
+	DEPRICATED_ShaderClass* m_ModelShader;
+	DEPRICATED_ShaderClass* m_FontShader;
+	DEPRICATED_ShaderClass* m_SpriteShader;
 
 	//Fps related variables.
 	unsigned long m_startTime;
@@ -98,11 +94,6 @@ public:
 	int m_count;
 	int m_previousFps;
 
-	FontClass* m_Font;
-	TextClass* m_fpsText;
-
 	float* m_ObjectPosX;
 	float* m_ObjectPosY;
 };
-
-#endif

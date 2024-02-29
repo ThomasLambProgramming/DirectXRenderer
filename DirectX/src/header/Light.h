@@ -3,14 +3,13 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-class LightClass
+class Light
 {
 public:
-    LightClass();
-    LightClass(const LightClass&);
-    ~LightClass();
+    Light();
+    Light(const Light&);
+    ~Light();
 
-public:
     XMFLOAT3 m_LightDirection;
     float m_SpecularPower;
     XMFLOAT4 m_DiffuseColor;

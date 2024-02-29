@@ -1,15 +1,13 @@
-﻿#ifndef _CAMERACLASS_H_
-#define _CAMERACLASS_H_
-
+﻿#pragma once 
 #include <DirectXMath.h>
 using namespace DirectX;
 
-class CameraClass
+class Camera
 {
 public:
-    CameraClass();
-    CameraClass(const CameraClass& a_Copy);
-    ~CameraClass();
+    Camera();
+    Camera(const Camera& a_Copy);
+    ~Camera();
 
     void SetPosition(float x, float y, float z);
     void SetRotation(float x, float y, float z);
@@ -24,4 +22,3 @@ private:
 	float m_RotationX, m_RotationY, m_RotationZ;
 	XMMATRIX m_ViewMatrix;
 };
-#endif

@@ -1,21 +1,21 @@
-#include "InputClass.h"
+#include "InputManager.h"
 
-InputClass::InputClass()
+InputManager::InputManager()
 {
 	m_directInput = nullptr;
 	m_keyboard = nullptr;
 	m_mouse = nullptr;
 }
 
-InputClass::InputClass(const InputClass&)
+InputManager::InputManager(const InputManager&)
 {
 }
 
-InputClass::~InputClass()
+InputManager::~InputManager()
 {
 }
 //HINSTANCE = handle to instance.
-bool InputClass::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWidth, int screenHeight)
+bool InputManager::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWidth, int screenHeight)
 {
 	HRESULT result;
 	m_screenWidth = screenWidth;
@@ -67,7 +67,7 @@ bool InputClass::Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWi
 	return true;
 }
 
-void InputClass::Shutdown()
+void InputManager::Shutdown()
 {
 	if (m_mouse)
 	{
@@ -88,7 +88,7 @@ void InputClass::Shutdown()
 	}
 }
 
-bool InputClass::Frame()
+bool InputManager::Frame()
 {
 	bool result;
 	result = ReadKeyboard();
@@ -102,19 +102,19 @@ bool InputClass::Frame()
 	return true;
 }
 
-bool InputClass::IsEscapePressed()
+bool InputManager::IsEscapePressed()
 {
 	//do a bitwise and on the keyboard state to check if the escape key is being pressed. (will later have to do a on down register and up register.
 	return (m_keyboardState[DIK_ESCAPE] & 0x80);
 }
 
-void InputClass::GetMouseLocation(int& posX, int& posY)
+void InputManager::GetMouseLocation(int& posX, int& posY)
 {
 	posX = m_mouseX;
 	posY = m_mouseY;
 }
 
-bool InputClass::IsMousePressed(int mouseButton)
+bool InputManager::IsMousePressed(int mouseButton)
 {
 	switch(mouseButton)
 	{
@@ -130,7 +130,7 @@ bool InputClass::IsMousePressed(int mouseButton)
 	}
 }
 
-bool InputClass::ReadKeyboard()
+bool InputManager::ReadKeyboard()
 {
 	//Keyboard can fail for one of 5 reaons, we only care about if focus is lost or it becomes unacquired, we call acquire each frame until control
 	//has come back. if the window is minimized acquire will fail.
@@ -146,7 +146,7 @@ bool InputClass::ReadKeyboard()
 	return true;
 }
 
-bool InputClass::ReadMouse()
+bool InputManager::ReadMouse()
 {
 	//the state of the mouse is just the delta of the mouse, this is somewhat annoying but at least we can track it to find out where it is.
 	HRESULT result;
@@ -162,7 +162,7 @@ bool InputClass::ReadMouse()
 	return true;
 }
 
-void InputClass::ProcessInput()
+void InputManager::ProcessInput()
 {
 	m_mouseX += m_mouseState.lX;
 	m_mouseY += m_mouseState.lY;

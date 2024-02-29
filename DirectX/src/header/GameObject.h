@@ -2,13 +2,13 @@
 
 #include <d3d11.h>
 #include <DirectXMath.h>
-#include "TextureClass.h"
+#include "Texture.h"
 #include <vector>
 
 using namespace std;
 using namespace DirectX;
 
-class ObjectClass  // NOLINT(cppcoreguidelines-special-member-functions)
+class GameObject  // NOLINT(cppcoreguidelines-special-member-functions)
 {
 public:
     //This is just a quick temp struct thing to show off assets before archiving, otherwise transform would
@@ -59,9 +59,9 @@ private:
         float tu, tv;
     };
 public:
-    ObjectClass();
-    ObjectClass(const ObjectClass& a_copy);
-    ~ObjectClass();
+    GameObject();
+    GameObject(const GameObject& a_copy);
+    ~GameObject();
 
     bool Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount);
     bool InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount);
@@ -129,7 +129,7 @@ private:
     int m_prevPosX, m_prevPosY;
 
     //Keeping as a list since right now texture amounts are unknown
-    vector<TextureClass*> m_textures;
+    vector<Texture*> m_textures;
 
     ModelInformation* m_model;
     ObjectType m_objectType;

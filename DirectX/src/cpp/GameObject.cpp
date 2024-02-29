@@ -1,7 +1,7 @@
-﻿#include "ObjectClass.h"
+﻿#include "GameObject.h"
 #include <fstream>
 
-ObjectClass::ObjectClass()
+GameObject::GameObject()
 {
 	m_VertexBuffer = nullptr;
 	m_IndexBuffer = nullptr;
@@ -20,7 +20,7 @@ ObjectClass::ObjectClass()
 	m_objectType = ThreeDimensional;
 }
 //Copy constructor and destructor definitions to avoid auto generated versions.
-ObjectClass::ObjectClass(const ObjectClass& a_copy): m_position(), m_rotation(), m_scale(), m_VertexBuffer(nullptr),
+GameObject::GameObject(const GameObject& a_copy): m_position(), m_rotation(), m_scale(), m_VertexBuffer(nullptr),
                                                      m_IndexBuffer(nullptr),
                                                      m_vertexCount(0), m_indexCount(0), m_screenWidth(0),
                                                      m_screenHeight(0), m_2DWidth(0),
@@ -31,9 +31,9 @@ ObjectClass::ObjectClass(const ObjectClass& a_copy): m_position(), m_rotation(),
 {
 }
 
-ObjectClass::~ObjectClass() {}
+GameObject::~GameObject() {}
 
-bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount)
+bool GameObject::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, const char* a_modelFileName, char* a_textureFileNames[], int a_textureCount)
 {
 	const string testString = string(a_modelFileName);
 	bool result;
@@ -65,7 +65,7 @@ bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
     if (!result)
         return false;
 
-	m_textures = vector<TextureClass*>();
+	m_textures = vector<Texture*>();
 
 	for (int i = 0; i < a_textureCount; i++)
 	{
@@ -78,7 +78,7 @@ bool ObjectClass::Initialize(ID3D11Device* a_device, ID3D11DeviceContext* a_devi
 }
 
 //This function cannot take in Primitive::NonPrimitive. Use Initialize() instead.
-bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount)
+bool GameObject::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, PrimitiveType a_primitive, char* a_textureFileNames[], int a_textureCount)
 {
 	char modelFileName[128];
 	strcpy_s(modelFileName, "./data/");
@@ -112,7 +112,7 @@ bool ObjectClass::InitializePrimitive(ID3D11Device* a_device, ID3D11DeviceContex
 }
 
 //Since a quad is simple the buffer and 2d information is done all in this function.
-bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth,
+bool GameObject::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_screenWidth,
 	int a_screenHeight, int a_renderX, int a_renderY, char* a_textureFileNames[], int a_textureCount, int a_bitmapWidth, int a_bitmapHeight)
 {
 	m_objectType = TwoDimensional;
@@ -184,7 +184,7 @@ bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* 
 	vertices = nullptr;
 	indices = nullptr;
 	
-	m_textures = vector<TextureClass*>();
+	m_textures = vector<Texture*>();
 
 	for (int i = 0; i < a_textureCount; i++)
 	{
@@ -201,32 +201,32 @@ bool ObjectClass::Initialize2DQuad(ID3D11Device* a_device, ID3D11DeviceContext* 
 	return true;
 }
 
-void ObjectClass::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const
+void GameObject::SetAsObjectToRender(ID3D11DeviceContext* a_deviceContext) const
 {
     SetVertexIndexBuffers(a_deviceContext);
 }
 
-int ObjectClass::GetIndexCount() const
+int GameObject::GetIndexCount() const
 {
     return m_indexCount;
 }
 
-int ObjectClass::GetVertexCount() const
+int GameObject::GetVertexCount() const
 {
 	return m_vertexCount;
 }
 
-int ObjectClass::GetTextureCount() const
+int GameObject::GetTextureCount() const
 {
 	return m_textures.size();
 }
 
-ObjectClass::ModelInformation* ObjectClass::GetModelData() const
+GameObject::ModelInformation* GameObject::GetModelData() const
 {
 	return m_model;
 }
 
-ID3D11ShaderResourceView* ObjectClass::GetTexture(const int a_texture) const
+ID3D11ShaderResourceView* GameObject::GetTexture(const int a_texture) const
 {
 	if (a_texture > m_textures.size() - 1 || a_texture < 0)
 		return nullptr;
@@ -235,30 +235,30 @@ ID3D11ShaderResourceView* ObjectClass::GetTexture(const int a_texture) const
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst again, its modifying member variables why are you trying to set it to const rider!
-bool ObjectClass::SetNewTextureAtId(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_texId, char* a_textureFileName)
+bool GameObject::SetNewTextureAtId(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, int a_texId, char* a_textureFileName)
 {
 	//We never want to go over max textures for one object as it will break when making buffers.
 	if (a_texId + 1 > m_textures.size())
 	{
-		m_textures.push_back(new TextureClass());
+		m_textures.push_back(new Texture());
 		a_texId = m_textures.size() - 1;
 	}
 	if (a_texId < 0)
 	{
-		m_textures.insert(m_textures.begin(), new TextureClass());
+		m_textures.insert(m_textures.begin(), new Texture());
 		a_texId = 0;	
 	}
 	else
 	{
 		m_textures[a_texId]->Shutdown();
-		m_textures[a_texId] = new TextureClass();
+		m_textures[a_texId] = new Texture();
 	}
 	
 	return m_textures[a_texId]->Initialize(a_device, a_deviceContext, a_textureFileName);
 }
 
 //remove from font and back arent used at the moment and will only implement if needed by certain shaders or effects as needed.
-void ObjectClass::RemoveTextureFromFront()
+void GameObject::RemoveTextureFromFront()
 {
 	if (m_textures.size() == 0)
 		return;
@@ -266,7 +266,7 @@ void ObjectClass::RemoveTextureFromFront()
 	m_textures.erase(m_textures.begin());
 }
 
-void ObjectClass::RemoveTextureFromBack()
+void GameObject::RemoveTextureFromBack()
 {
 	if (m_textures.size() == 0)
 		return;
@@ -274,37 +274,37 @@ void ObjectClass::RemoveTextureFromBack()
 	m_textures.pop_back();
 }
 
-XMFLOAT3 ObjectClass::GetPosition() const
+XMFLOAT3 GameObject::GetPosition() const
 {
 	return m_position;
 }
 
-XMFLOAT3 ObjectClass::GetRotation() const
+XMFLOAT3 GameObject::GetRotation() const
 {
 	return m_rotation;
 }
 
-XMFLOAT3 ObjectClass::GetScale() const
+XMFLOAT3 GameObject::GetScale() const
 {
 	return m_scale;
 }
 
-void ObjectClass::SetPosition(XMFLOAT3 a_value)
+void GameObject::SetPosition(XMFLOAT3 a_value)
 {
 	m_position = a_value;
 }
 
-void ObjectClass::SetRotation(XMFLOAT3 a_value)
+void GameObject::SetRotation(XMFLOAT3 a_value)
 {
 	m_rotation = a_value;
 }
 
-void ObjectClass::SetScale(XMFLOAT3 a_value)
+void GameObject::SetScale(XMFLOAT3 a_value)
 {
 	m_scale = a_value;
 }
 
-bool ObjectClass::Update2DBuffers(ID3D11DeviceContext* a_context)
+bool GameObject::Update2DBuffers(ID3D11DeviceContext* a_context)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 
@@ -370,12 +370,12 @@ bool ObjectClass::Update2DBuffers(ID3D11DeviceContext* a_context)
 	return true;
 }
 
-ObjectClass::ObjectType ObjectClass::GetObjectType() const
+GameObject::ObjectType GameObject::GetObjectType() const
 {
 	return m_objectType;
 }
 
-void ObjectClass::Shutdown()
+void GameObject::Shutdown()
 {
 	ReleaseModel();
 	ReleaseTexture();
@@ -386,7 +386,7 @@ void ObjectClass::Shutdown()
 	m_scale = XMFLOAT3(0.0f,0.0f,0.0f);
 }
 
-bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
+bool GameObject::LoadModelTxt(const char* a_modelFileName)
 {
 	ifstream fin;
     char input;
@@ -429,19 +429,19 @@ bool ObjectClass::LoadModelTxt(const char* a_modelFileName)
     return true;
 }
 
-bool ObjectClass::LoadModelObj(const char* a_modelFileName)
+bool GameObject::LoadModelObj(const char* a_modelFileName)
 {
     m_model = new ModelInformation[0];
 	return false;
 }
 
-bool ObjectClass::LoadModelFbx(const char* a_modelFileName)
+bool GameObject::LoadModelFbx(const char* a_modelFileName)
 {
     m_model = new ModelInformation[0];
 	return false;
 }
 
-bool ObjectClass::Initialize3DBuffers(ID3D11Device* a_device)
+bool GameObject::Initialize3DBuffers(ID3D11Device* a_device)
 {
 	D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -522,7 +522,7 @@ bool ObjectClass::Initialize3DBuffers(ID3D11Device* a_device)
 	return true;
 }
 
-void ObjectClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const
+void GameObject::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) const
 {
 	unsigned int stride;
 	unsigned int offset;
@@ -540,15 +540,15 @@ void ObjectClass::SetVertexIndexBuffers(ID3D11DeviceContext* a_deviceContext) co
 
 //Rider suggests it to be const but it modifies m_texture so its not correct I believe
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool ObjectClass::AddTextureToModel(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName)
+bool GameObject::AddTextureToModel(ID3D11Device* a_device, ID3D11DeviceContext* a_deviceContext, char* a_textureName)
 {
-	m_textures.push_back(new TextureClass());
+	m_textures.push_back(new Texture());
 	return m_textures[m_textures.size() - 1]->Initialize(a_device, a_deviceContext, a_textureName);
 }
 
 //Rider keeps giving me this warning about the function being const is good but it modifies m_Model so that's wrong no?
 // ReSharper disable once CppMemberFunctionMayBeConst
-void ObjectClass::CalculateModelVectors()
+void GameObject::CalculateModelVectors()
 {
 	TempVertexType vertex1, vertex2, vertex3;
     XMFLOAT3 tangent, binormal;
@@ -613,7 +613,7 @@ void ObjectClass::CalculateModelVectors()
 }
 
 //Made 2 attempts at this function copying down and modifying from tutorials but errors kept coming up. 
-void ObjectClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal)
+void GameObject::CalculateTangentBinormal(const TempVertexType& a_vertex1, const TempVertexType& a_vertex2, const TempVertexType& a_vertex3, XMFLOAT3& a_tangent, XMFLOAT3& a_binormal)
 {
     float vector1[3], vector2[3];
     float tuVector[2], tvVector[2];
@@ -663,7 +663,7 @@ void ObjectClass::CalculateTangentBinormal(const TempVertexType& a_vertex1, cons
     a_binormal.z = a_binormal.z / length;
 }
 
-void ObjectClass::ShutdownBuffers()
+void GameObject::ShutdownBuffers()
 {
 	if (m_IndexBuffer)
 	{
@@ -677,7 +677,7 @@ void ObjectClass::ShutdownBuffers()
 	}
 }
 
-void ObjectClass::ReleaseTexture()
+void GameObject::ReleaseTexture()
 {
 	if (m_textures.empty())
 	{
@@ -690,7 +690,7 @@ void ObjectClass::ReleaseTexture()
 	m_textures.clear();
 }
 
-void ObjectClass::ReleaseModel()
+void GameObject::ReleaseModel()
 {
 	if (m_model)
 	{

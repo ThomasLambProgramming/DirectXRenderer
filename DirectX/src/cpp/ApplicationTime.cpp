@@ -1,18 +1,18 @@
-﻿#include "TimerClass.h"
+﻿#include "ApplicationTime.h"
 
-TimerClass::TimerClass()
+ApplicationTime::ApplicationTime()
 {
 }
 
-TimerClass::TimerClass(const TimerClass& a_Copy)
+ApplicationTime::ApplicationTime(const ApplicationTime& a_Copy)
 {
 }
 
-TimerClass::~TimerClass()
+ApplicationTime::~ApplicationTime()
 {
 }
 
-bool TimerClass::Initialize()
+bool ApplicationTime::Initialize()
 {
     INT64 frequency;
 
@@ -28,7 +28,7 @@ bool TimerClass::Initialize()
     return true;
 }
 
-void TimerClass::Frame()
+void ApplicationTime::Frame()
 {
     INT64 currentTime;
     INT64 elapsedTicks;
@@ -39,7 +39,7 @@ void TimerClass::Frame()
     m_startTime = currentTime;
 }
 
-float TimerClass::GetDeltaTime()
+float ApplicationTime::GetDeltaTime()
 {
     return m_deltaTime;
 }

@@ -12,7 +12,7 @@ using namespace std;
 
 //This is a general purpose shader class for testing and learning shaders buffers and everything inbetween without needing
 //to create a class and rewrite alot of code every time.
-class ShaderClass
+class DEPRICATED_ShaderClass
 {
 private:
     //Vertex Shader buffers
@@ -82,9 +82,9 @@ private:
     
 public:
 
-    ShaderClass();
-    ShaderClass(const ShaderClass& a_Copy);
-    ~ShaderClass();
+    DEPRICATED_ShaderClass();
+    DEPRICATED_ShaderClass(const DEPRICATED_ShaderClass& a_Copy);
+    ~DEPRICATED_ShaderClass();
 
     bool Initialize(ID3D11Device* a_Device, HWND a_WindowHandle, char* a_vertexShaderEntryPoint, char* a_pixelShaderEntryPoint);
     void Shutdown();

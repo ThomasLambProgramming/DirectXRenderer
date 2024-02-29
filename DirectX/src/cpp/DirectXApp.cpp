@@ -1,9 +1,9 @@
-﻿#include "Direct3DClass.h"
+﻿#include "DirectXApp.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-Direct3DClass::Direct3DClass()
+DirectXApp::DirectXApp()
 {
 	//Set all pointers to 0;
     m_swapChain = nullptr;
@@ -19,15 +19,15 @@ Direct3DClass::Direct3DClass()
 	m_alphaDisableBlendState = nullptr;
 }
 
-Direct3DClass::Direct3DClass(const Direct3DClass&)
+DirectXApp::DirectXApp(const DirectXApp&)
 {
 }
 
-Direct3DClass::~Direct3DClass()
+DirectXApp::~DirectXApp()
 {
 }
 
-bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, float screenDepth, float screenNear)
+bool DirectXApp::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, float screenDepth, float screenNear)
 {
 	//hresult is an int, but bits are split into flags, the code result, and severity etc.
 	HRESULT result;
@@ -429,7 +429,7 @@ bool Direct3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HW
 	return true;
 }
 
-void Direct3DClass::Shutdown()
+void DirectXApp::Shutdown()
 {
 	//before shutting down set to windowed mode or when you relase the swap chain it will throw an exception
 	if (m_swapChain)
@@ -499,7 +499,7 @@ void Direct3DClass::Shutdown()
 	return;
 }
 
-void Direct3DClass::BeginScene(float red, float green, float blue, float alpha)
+void DirectXApp::BeginScene(float red, float green, float blue, float alpha)
 {
 	float color[4];
 	//setup color to clear the buffer to.
@@ -517,7 +517,7 @@ void Direct3DClass::BeginScene(float red, float green, float blue, float alpha)
 	return;
 }
 
-void Direct3DClass::EndScene()
+void DirectXApp::EndScene()
 {
 	//present the back buffer to the screen since rendering is complete
 	if (m_vsync_enabled)
@@ -533,68 +533,68 @@ void Direct3DClass::EndScene()
 	return;
 }
 
-ID3D11Device* Direct3DClass::GetDevice()
+ID3D11Device* DirectXApp::GetDevice()
 {
 	return m_device;
 }
 
-ID3D11DeviceContext* Direct3DClass::GetDeviceContext()
+ID3D11DeviceContext* DirectXApp::GetDeviceContext()
 {
 	return m_deviceContext;
 }
 
-void Direct3DClass::GetProjectionMatrix(XMMATRIX& projectionMatrix)
+void DirectXApp::GetProjectionMatrix(XMMATRIX& projectionMatrix)
 {
 	projectionMatrix = m_projectionMatrix;
 	return;
 }
 
-void Direct3DClass::GetWorldMatrix(XMMATRIX& worldMatrix)
+void DirectXApp::GetWorldMatrix(XMMATRIX& worldMatrix)
 {
 	worldMatrix = m_worldMatrix;
 	return;
 }
 
-void Direct3DClass::GetOrthoMatrix(XMMATRIX& orthoMatrix)
+void DirectXApp::GetOrthoMatrix(XMMATRIX& orthoMatrix)
 {
 	orthoMatrix = m_orthoMatrix;
 	return;
 }
 
-void Direct3DClass::GetVideoCardInfo(char* cardName, int& memory)
+void DirectXApp::GetVideoCardInfo(char* cardName, int& memory)
 {
 	strcpy_s(cardName, 128, m_videoCardDescription);
 	memory = m_videoCardMemory;
 	return;
 }
 
-void Direct3DClass::SetBackBufferRenderTarget()
+void DirectXApp::SetBackBufferRenderTarget()
 {
 	//bind the render target view and depth stencil buffer to the output render pipeline,
 	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 	return;
 }
 
-void Direct3DClass::ResetViewport()
+void DirectXApp::ResetViewport()
 {
 	//set the viewport
 	m_deviceContext->RSSetViewports(1, &m_viewport);
 	return;
 }
 
-void Direct3DClass::TurnZBufferOn()
+void DirectXApp::TurnZBufferOn()
 {
 	m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
 	return;
 }
 
-void Direct3DClass::TurnZBufferOff()
+void DirectXApp::TurnZBufferOff()
 {
 	m_deviceContext->OMSetDepthStencilState(m_depthDisabledStencilState, 1);
 	return;
 }
 
-void Direct3DClass::EnableAlphaBlending()
+void DirectXApp::EnableAlphaBlending()
 {
 	float blendFactor[4];
 	blendFactor[0] = 0.0f;
@@ -604,7 +604,7 @@ void Direct3DClass::EnableAlphaBlending()
 	m_deviceContext->OMSetBlendState(m_alphaEnableBlendState, blendFactor, 0xffffffff);
 }
 
-void Direct3DClass::DisableAlphaBlending()
+void DirectXApp::DisableAlphaBlending()
 {
 	float blendFactor[4];
 	blendFactor[0] = 0.0f;

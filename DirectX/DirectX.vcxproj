@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\CameraClass.cpp">
+    <ClCompile Include="src\cpp\Camera.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -169,8 +169,8 @@
       <AdditionalIncludeDirectories>F:\PersonalProjects\DirectX\DirectX\/src;F:\PersonalProjects\DirectX\DirectX\/src/header;F:\PersonalProjects\DirectX\DirectX\/src/cpp;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\Direct3DClass.cpp" />
-    <ClCompile Include="src\cpp\InputClass.cpp">
+    <ClCompile Include="src\cpp\DirectXApp.cpp" />
+    <ClCompile Include="src\cpp\InputManager.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -244,7 +244,7 @@
       <SDLCheck>true</SDLCheck>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\LightClass.cpp">
+    <ClCompile Include="src\cpp\Light.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -319,7 +319,7 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\ObjectClass.cpp">
+    <ClCompile Include="src\cpp\GameObject.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -469,7 +469,7 @@
       <AdditionalIncludeDirectories>D:\PersonalProjects\DirectXRenderer\DirectX\/src;D:\PersonalProjects\DirectXRenderer\DirectX\/src/header/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/cpp/;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/pixelshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/shaders/vertexshaders;D:\PersonalProjects\DirectXRenderer\DirectX\/src/thirdparty/imgui;D:\PersonalProjects\DirectXRenderer\DirectX\/src/thirdparty/imgui/backends</AdditionalIncludeDirectories>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\SystemClass.cpp">
+    <ClCompile Include="src\cpp\ApplicationDirector.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -543,9 +543,9 @@
       <SDLCheck>true</SDLCheck>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
-    <ClCompile Include="src\cpp\TextureClass.cpp" />
-    <ClCompile Include="src\cpp\ShaderClass.cpp" />
-    <ClCompile Include="src\cpp\TimerClass.cpp">
+    <ClCompile Include="src\cpp\Texture.cpp" />
+    <ClCompile Include="src\cpp\DEPRICATED_ShaderClass.cpp" />
+    <ClCompile Include="src\cpp\ApplicationTime.cpp">
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
@@ -656,16 +656,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\header\ApplicationClass.h" />
-    <ClInclude Include="src\header\CameraClass.h" />
-    <ClInclude Include="src\header\Direct3DClass.h" />
-    <ClInclude Include="src\header\InputClass.h" />
-    <ClInclude Include="src\header\LightClass.h" />
-    <ClInclude Include="src\header\ObjectClass.h" />
+    <ClInclude Include="src\header\Camera.h" />
+    <ClInclude Include="src\header\DirectXApp.h" />
+    <ClInclude Include="src\header\InputManager.h" />
+    <ClInclude Include="src\header\Light.h" />
+    <ClInclude Include="src\header\GameObject.h" />
     <ClInclude Include="src\header\ShaderBase.h" />
-    <ClInclude Include="src\header\SystemClass.h" />
-    <ClInclude Include="src\header\TextureClass.h" />
-    <ClInclude Include="src\header\ShaderClass.h" />
-    <ClInclude Include="src\header\TimerClass.h" />
+    <ClInclude Include="src\header\ApplicationDirector.h" />
+    <ClInclude Include="src\header\Texture.h" />
+    <ClInclude Include="src\header\DEPRICATED_ShaderClass.h" />
+    <ClInclude Include="src\header\ApplicationTime.h" />
     <ClInclude Include="src\thirdparty\imgui\imconfig.h" />
     <ClInclude Include="src\thirdparty\imgui\imgui.h" />
     <ClInclude Include="src\thirdparty\imgui\imgui_impl_dx11.h" />

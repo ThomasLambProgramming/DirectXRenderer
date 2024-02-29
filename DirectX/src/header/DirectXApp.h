@@ -1,5 +1,4 @@
-﻿#ifndef _D3DCLASS_H_ 
-#define _D3DCLASS_H_ 
+﻿#pragma once
 
 //Linking #pragma comment links these libraries when using this object module
 /*
@@ -18,14 +17,13 @@
 #include <directxmath.h>
 using namespace DirectX;
 
-class Direct3DClass 
+class DirectXApp 
 {
 public:
-    Direct3DClass();
-    Direct3DClass(const Direct3DClass&);
-    ~Direct3DClass();
+    DirectXApp();
+    DirectXApp(const DirectXApp&);
+    ~DirectXApp();
 
-    //HWND = handle to a window.
     bool Initialize(int, int, bool, HWND, bool, float, float);
     void Shutdown();
     void BeginScene(float, float, float, float);
@@ -72,4 +70,3 @@ private:
     ID3D11BlendState* m_alphaEnableBlendState;
     ID3D11BlendState* m_alphaDisableBlendState;
 };
-#endif

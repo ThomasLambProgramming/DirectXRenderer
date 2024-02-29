@@ -42,7 +42,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 {
 	m_windowHandle = a_windowHandle;
 	m_startTime = timeGetTime();
-    m_Direct3D = new Direct3DClass;
+    m_Direct3D = new DirectXApp;
 
     bool result = m_Direct3D->Initialize(a_screenWidth, a_screenHeight, VSYNC_ENABLED, a_windowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)
@@ -97,7 +97,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(SimpleLightingPixelShader));
 	strcpy_s(shaderVertexEntryPoint, VertexEntryPointToChar(TextureVertexShader));
 	
-	m_ModelShader = new ShaderClass;
+	m_ModelShader = new DEPRICATED_ShaderClass;
 	bool result = m_ModelShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	if (!result)
 	{
@@ -106,7 +106,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 	}
 	
 	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(FontPixelShader));
-	m_FontShader = new ShaderClass;
+	m_FontShader = new DEPRICATED_ShaderClass;
 	result = m_FontShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	
 	if (!result)
@@ -116,7 +116,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 	}
 	
 	strcpy_s(shaderPixelEntryPoint, PixelEntryPointToChar(TextureSamplePixelShader));
-	m_SpriteShader = new ShaderClass;
+	m_SpriteShader = new DEPRICATED_ShaderClass;
 	result = m_SpriteShader->Initialize(m_Direct3D->GetDevice(), a_windowHandle, shaderVertexEntryPoint , shaderPixelEntryPoint);
 	
 	if (!result)
@@ -129,7 +129,7 @@ bool ApplicationClass::InitializeShaders(const HWND a_windowHandle)
 
 void ApplicationClass::CameraInitialize()
 {
-	m_Camera = new CameraClass;
+	m_Camera = new Camera;
 	m_Camera->SetPosition(0.0f,0.0f,-10.0f);
 	//m_Camera->SetRotation(20.0f,0.0f,0.0f);
 }
@@ -142,7 +142,7 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 	char blendTexture3FileName[128];
 	char blendTexture4FileName[128];
 
-	m_3DObjects = vector<ObjectClass*>();
+	m_3DObjects = vector<GameObject*>();
 	strcpy_s(textureFileName, "./data/stone02.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
@@ -158,10 +158,10 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 		blendTexture2FileName
 	};
 
-	m_3DObjects.push_back(new ObjectClass());
-	m_2DObjects.push_back(new ObjectClass());
+	m_3DObjects.push_back(new GameObject());
+	m_2DObjects.push_back(new GameObject());
 	
-	bool result = m_3DObjects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), ObjectClass::Sphere, textureFileNames, 6);
+	bool result = m_3DObjects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Sphere, textureFileNames, 6);
 	if (!result)
 	{
 		MessageBox(a_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -179,7 +179,7 @@ bool ApplicationClass::SetupModels(const int a_screenWidth, const int a_screenHe
 
 void ApplicationClass::InitializeLights()
 {
-	m_MainLight = new LightClass;
+	m_MainLight = new Light;
 	m_MainLight->m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
 	m_MainLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
 	m_MainLight->m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
@@ -187,7 +187,7 @@ void ApplicationClass::InitializeLights()
 	m_MainLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
 
 	//Pointlight variables for now to display multi lighting.
-	m_PointLights = new LightClass[NUM_LIGHTS];
+	m_PointLights = new Light[NUM_LIGHTS];
 	m_PointLights[0].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
 	m_PointLights[0].m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
 	m_PointLights[1].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
@@ -293,7 +293,7 @@ void ApplicationClass::Shutdown()
     ImGui::DestroyContext();
 }
 
-bool ApplicationClass::Frame(InputClass* a_InputClass)
+bool ApplicationClass::Frame(InputManager* a_InputClass)
 {
 	if (a_InputClass->IsEscapePressed())
 		return false;

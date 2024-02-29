@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <dxgiformat.h>
-
 #include "ApplicationClass.h"
 
 class ShaderBase

@@ -1,7 +1,4 @@
-
-//Im pretty sure #pragma once is what this ifndef is but hey the tutorial had that there.
-#ifndef _INPUTCLASS_H_
-#define _INPUTCLASS_H_
+#pragma once
 
 //Specify that it is version 8 or there will be alot of annoying warning messages
 #define DIRECTINPUT_VERSION 0x0800
@@ -12,12 +9,12 @@
 
 #include <dinput.h>
 
-class InputClass
+class InputManager
 {
 public:
-	InputClass();
-	InputClass(const InputClass&);
-	~InputClass();
+	InputManager();
+	InputManager(const InputManager&);
+	~InputManager();
 
 	bool Initialize(HINSTANCE hInstance, HWND windowHandle, int screenWidth, int screenHeight);
 	void Shutdown();
@@ -33,8 +30,6 @@ private:
 	bool ReadMouse();
 	void ProcessInput();
 
-private:
-
 	IDirectInput8* m_directInput;
 	IDirectInputDevice8* m_keyboard;
 	IDirectInputDevice8* m_mouse;
@@ -47,6 +42,3 @@ private:
 	int m_mouseX;
 	int m_mouseY;
 };
-
-#endif
-

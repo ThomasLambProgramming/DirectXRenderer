@@ -1,21 +1,23 @@
-﻿#include "TextureClass.h"
+﻿#include "Texture.h"
 
-TextureClass::TextureClass()
+#include <cstdio>
+
+Texture::Texture()
 {
     m_Texture = nullptr;
     m_TargaData = nullptr;
     m_TextureView = nullptr;
 }
 
-TextureClass::TextureClass(const TextureClass& a_Copy)
+Texture::Texture(const Texture& a_Copy)
 {
 }
 
-TextureClass::~TextureClass()
+Texture::~Texture()
 {
 }
 
-bool TextureClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName)
+bool Texture::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_DeviceContext, char* a_FileName)
 {
     bool result;
     D3D11_TEXTURE2D_DESC textureDesc;
@@ -76,7 +78,7 @@ bool TextureClass::Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Dev
     return true;
 }
 
-void TextureClass::Shutdown()
+void Texture::Shutdown()
 {
     if (m_TextureView)
     {
@@ -96,22 +98,22 @@ void TextureClass::Shutdown()
     return;
 }
 
-ID3D11ShaderResourceView* TextureClass::GetTexture()
+ID3D11ShaderResourceView* Texture::GetTexture()
 {
     return m_TextureView;
 }
 
-int TextureClass::GetWidth()
+int Texture::GetWidth()
 {
     return m_Width;
 }
 
-int TextureClass::GetHeight()
+int Texture::GetHeight()
 {
     return m_Height;
 }
 
-bool TextureClass::LoadTarga32Bit(char* a_FileName)
+bool Texture::LoadTarga32Bit(char* a_FileName)
 {
     int error, bpp, imagesize, index, i,j,k;
     FILE* filePtr;
