@@ -6,6 +6,7 @@ ApplicationClass::ApplicationClass(): m_FontShader(nullptr),
                                       m_Font(nullptr),
                                       m_fpsText(nullptr)
 {
+	Instance = this;
 	//Safety setting to 0/nullptr;
 	m_Direct3D = nullptr;
 	m_Camera = nullptr;
@@ -39,6 +40,7 @@ ApplicationClass::~ApplicationClass() {}
 
 bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHeight, const HWND a_windowHandle)
 {
+	m_windowHandle = a_windowHandle;
 	m_startTime = timeGetTime();
     m_Direct3D = new Direct3DClass;
 
@@ -349,7 +351,7 @@ bool ApplicationClass::Render(float a_Rotation) const
 	};
 
 	//Clip plane works but just for now we dont have a use for it.
-	XMFLOAT4 clipPlane = XMFLOAT4(0.0f,1.0f,0.0f,0.0f);
+	XMFLOAT4 clipPlane = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
  
 	
 	//update cameras view matrix

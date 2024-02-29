@@ -51,7 +51,7 @@ public:
 	ApplicationClass();
 	ApplicationClass(const ApplicationClass&);
 	~ApplicationClass();
-	
+
 	bool Initialize(int, int, HWND);
 
 	void CameraInitialize();
@@ -64,16 +64,20 @@ public:
 	void Shutdown();
 	bool Frame(InputClass* a_InputClass);
 
-private:
+	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
+	static ApplicationClass* Instance;
+
+public:
 	bool Render(float a_Rotation) const;
 	
 	bool UpdateFps();
 	static const char* PixelEntryPointToChar(PixelShaderEntryPoint a_entryPoint);
 	static const char* VertexEntryPointToChar(VertexShaderEntryPoint a_entryPoint);
 
-private:
 	Direct3DClass* m_Direct3D;
 	CameraClass* m_Camera;
+
+	HWND m_windowHandle;
 
 	std::vector<ObjectClass*> m_3DObjects;
 	std::vector<ObjectClass*> m_2DObjects;

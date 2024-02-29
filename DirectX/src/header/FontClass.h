@@ -29,7 +29,7 @@ public:
     FontClass();
     FontClass(const FontClass& a_Copy);
     ~FontClass();
-
+    
     bool Initialize(ID3D11Device* a_Device, ID3D11DeviceContext* a_Context, int a_FontChoice);
     void ShutDown();
     ID3D11ShaderResourceView* GetTexture();
