@@ -5,18 +5,20 @@ ApplicationClass* ApplicationClass::Instance = nullptr;
 
 ApplicationClass::ApplicationClass()
 {
-	Instance = this;
 	//Safety setting to 0/nullptr;
+	Instance = this;
 	m_Direct3D = nullptr;
 	m_Camera = nullptr;
-	m_mainDirectionalLight = nullptr;
+	m_windowHandle = 0;
+	m_lights = 0;
+	m_basicLighting = 0;
 }
 ApplicationClass::~ApplicationClass() {}
 
 bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHeight, const HWND a_windowHandle)
 {
 	m_windowHandle = a_windowHandle;
-    m_Direct3D = new DirectXApp;
+    m_Direct3D = new DirectXApp();
 
     bool result = m_Direct3D->Initialize(a_screenWidth, a_screenHeight, VSYNC_ENABLED, a_windowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)
@@ -25,7 +27,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
         return false;
     }
 
-	ImguiInitialize();
+	//ImguiInitialize();
 	
 	m_Camera = new Camera;
 	m_Camera->SetPosition(0.0f,0.0f,-10.0f);
@@ -43,6 +45,8 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 
 	//Setup basic light data structures with default values.
 	InitializeLights();
+
+	
 
     return true;
 }
@@ -62,10 +66,19 @@ void ApplicationClass::ImguiInitialize() const
 
 bool ApplicationClass::InitializeShaders()
 {
-	char shaderVertexEntryPoint[128];
-	char shaderPixelEntryPoint[128];
-	strcpy_s(shaderPixelEntryPoint, "");
-	strcpy_s(shaderVertexEntryPoint, "");
+	m_shaders.push_back(new Shader(L"./src/shaders/textureVS.hlsl", L"./src/shaders/texturePS.hlsl", "TextureVertexShader", "SpecularMapPixelShader"));
+
+	
+	//Light information buffer 
+	if (!m_shaders[0]->CreateDynamicBuffer(sizeof(LightInformationBufferType), false))
+		return false;
+	//Matrix buffer
+	if (!m_shaders[0]->CreateDynamicBuffer(sizeof(MatrixBufferType), true))
+		return false;
+	//Camera Buffer
+	if (!m_shaders[0]->CreateDynamicBuffer(sizeof(CameraBufferType), true))
+		return false;
+	
 	return true;
 }
 
@@ -74,28 +87,21 @@ bool ApplicationClass::SetupModels()
 	char textureFileName[128];
 	char blendTexture1FileName[128];
 	char blendTexture2FileName[128];
-	char blendTexture3FileName[128];
-	char blendTexture4FileName[128];
 
 	m_objects = vector<GameObject*>();
 	strcpy_s(textureFileName, "./data/stone02.tga");
 	strcpy_s(blendTexture1FileName, "./data/normal02.tga");
 	strcpy_s(blendTexture2FileName, "./data/spec02.tga");
-	strcpy_s(blendTexture3FileName, "./data/alpha01.tga");
-	strcpy_s(blendTexture4FileName, "./data/font01.tga");
 	
 	char* textureFileNames[] = {
 		textureFileName,
 		blendTexture1FileName,
 		blendTexture2FileName,
-		blendTexture3FileName,
-		blendTexture4FileName,
-		blendTexture2FileName
 	};
 
 	m_objects.push_back(new GameObject());
 	
-	bool result = m_objects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Sphere, textureFileNames, 6);
+	bool result = m_objects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Sphere, textureFileNames, 3);
 	if (!result)
 	{
 		MessageBox(m_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -106,23 +112,31 @@ bool ApplicationClass::SetupModels()
 
 void ApplicationClass::InitializeLights()
 {
-	m_mainDirectionalLight = new Light;
-	m_mainDirectionalLight->m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
-	m_mainDirectionalLight->m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-	m_mainDirectionalLight->m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-	m_mainDirectionalLight->m_SpecularPower = 16.0f;
-	m_mainDirectionalLight->m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
+	//first light is main directional light and the others are point lights
+	m_lights = new Light[NUM_LIGHTS + 1];
+	m_lights[0].m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
+	m_lights[0].m_Position = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
+	m_lights[0].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_lights[0].m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_lights[0].m_SpecularPower = 16.0f;
+	m_lights[0].m_AmbientColor = XMFLOAT4(0.1f,0.1f,0.1f,1.0f);
+	m_lights[1].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
+	m_lights[1].m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
+	m_lights[2].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
+	m_lights[2].m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
+	m_lights[3].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
+	m_lights[3].m_Position = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
+	m_lights[4].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+	m_lights[4].m_Position = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
 
-	//Pointlight variables for now to display multi lighting.
-	m_PointLights = new Light[NUM_LIGHTS];
-	m_PointLights[0].m_DiffuseColor = XMFLOAT4(1.0f,0.0f,0.0f,1.0f);
-	m_PointLights[0].m_Position = XMFLOAT4(-3.0f, 1.0f, 3.0f,1.0f);
-	m_PointLights[1].m_DiffuseColor = XMFLOAT4(0.0f,1.0f,0.0f,1.0f);
-	m_PointLights[1].m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
-	m_PointLights[2].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
-	m_PointLights[2].m_Position = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
-	m_PointLights[3].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-	m_PointLights[3].m_Position = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		m_lights[i].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+		m_lights[i].m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+		if (i > 0)
+			m_lights[i].m_LightDirection = XMFLOAT3(1.0f,1.0f,1.0f);
+		m_lights[i].m_SpecularPower = 1.0f;
+	}
 }
 
 void ApplicationClass::Shutdown()
@@ -133,13 +147,26 @@ void ApplicationClass::Shutdown()
         delete m_Direct3D;
         m_Direct3D = nullptr;
     }
-	
-	if (m_mainDirectionalLight)
+	if (m_lights)
 	{
-		delete m_mainDirectionalLight;
-		m_mainDirectionalLight = nullptr;
+		delete[] m_lights;
+		m_lights = nullptr;
 	}
-	
+	if (m_basicLighting)
+	{
+		delete m_basicLighting;
+		m_basicLighting = nullptr;
+	}
+	while (m_objects.size() > 0)
+	{
+		delete m_objects.back();
+		m_objects.pop_back();
+	}
+	while (m_shaders.size() > 0)
+	{
+		delete m_shaders.back();
+		m_shaders.pop_back();
+	}
 	// Release the camera object.
 	if (m_Camera)
 	{
@@ -147,62 +174,88 @@ void ApplicationClass::Shutdown()
 		m_Camera = nullptr;
 	}
 	
-	ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
+	//ImGui_ImplDX11_Shutdown();
+    //ImGui_ImplWin32_Shutdown();
+    //ImGui::DestroyContext();
 }
 
-bool ApplicationClass::Frame(InputManager* a_InputClass) const
+bool ApplicationClass::Frame(InputManager* a_InputClass) 
 {
 	if (a_InputClass->IsEscapePressed())
 		return false;
-
+	
+	// Update the rotation variable each frame.
+    rotation -= 0.0174532925f * 0.25f;
+    if(rotation <= 0.0f)
+    {
+        rotation += 360.0f;
+    }
 	//Render Scene
     return Render();
 }
 
-bool ApplicationClass::Render() const
+bool ApplicationClass::Render() 
 {
 	XMMATRIX world;
-	XMMATRIX worldRotation;
 	XMMATRIX view;
 	XMMATRIX projection;
+	XMMATRIX worldRotation;
 	XMMATRIX ortho;
-	
-	//constexpr XMFLOAT2 translationAmount = XMFLOAT2(0,0.0f);
-	//constexpr float blendAmount = 0.1f;
-	//constexpr float waterTranslation = 0;
-	//constexpr float reflectRefractScale = 0;
-	//constexpr XMFLOAT4 pixelColor = XMFLOAT4(1,1,1,1);
-	//constexpr float fogStart = 1000.0f;
-	//constexpr float fogEnd = 10000.0f;
-	//constexpr float fogColor = 0.5f;
 	
 	//clear buffers to begin the scene
 	//the above makes the fog work but as we dont need it right now it is not used.
 	//m_Direct3D->BeginScene(fogColor, fogColor, fogColor,1.0f);
 	//This is a number that was taken from a rgba color picker.
-	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
+	m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
 
-	//Clip plane works but just for now we dont have a use for it.
-	//XMFLOAT4 clipPlane = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
- 
-	
 	//update cameras view matrix
 	m_Camera->Render();
 
 	//get all the matrices
 	m_Direct3D->GetWorldMatrix(world);
-	m_Direct3D->GetWorldMatrix(worldRotation);
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
-	//worldRotation = XMMatrixRotationY(a_Rotation);
-	m_Direct3D->GetOrthoMatrix(ortho);
 
+	MatrixBufferType* matrixData = new MatrixBufferType;
+	matrixData->world = world;
+	matrixData->view = view;
+	matrixData->projection = projection;
+	
+	CameraBufferType* cameraData = new CameraBufferType;
+	cameraData->padding = 0;
+	cameraData->cameraPos = m_Camera->GetPosition();
+	
+	LightInformationBufferType* lightData = new LightInformationBufferType;
+	for (int i = 0 ; i < NUM_LIGHTS; i++)
+	{
+		lightData->lightPosition[i] = m_lights[i].m_Position;
+		lightData->lightDiffuse[i] = m_lights[i].m_DiffuseColor;
+		lightData->lightSpecularColor[i] = m_lights[i].m_SpecularColor;
+		lightData->lightSpecularPower[i] = m_lights[i].m_SpecularPower;
+		lightData->lightDirection[i] = m_lights[i].m_LightDirection;
+		lightData->lightAmbient[i] = m_lights[i].m_AmbientColor;
+	}
+	XMMatrixTranspose(matrixData->world);
+	XMMatrixTranspose(matrixData->view);
+	XMMatrixTranspose(matrixData->projection);
 
 	//RENDERING 3D SHIT HERE!
-
-
+	m_shaders[0]->SetBufferData(0, matrixData, sizeof(MatrixBufferType), true);
+	m_shaders[0]->SetBufferData(1, cameraData, sizeof(CameraBufferType), true);
+	m_shaders[0]->SetBufferData(0, lightData, sizeof(LightInformationBufferType), false);
+	
+	
+	for (int j = 0; j < m_objects[0]->GetTextureCount(); j++)
+		m_shaders[0]->SetShaderResources(j, m_objects[0]->GetTexture(j));
+	m_objects[0]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+	m_shaders[0]->RenderShader(m_objects[0]->GetIndexCount());
+	
+	delete matrixData;
+	matrixData = nullptr;
+	delete lightData;
+	lightData = nullptr;
+	delete cameraData;
+	cameraData = nullptr;
 
 	
 	//2D SECTION-----------------------------------------------------------

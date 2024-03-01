@@ -15,7 +15,7 @@ public:
     //Set the textures for the shader 
     static void SetShaderResources(UINT a_index, ID3D11ShaderResourceView* a_resource);
     
-    bool SetBufferData(UINT a_index, void* a_data, bool a_vertexShader);
+    bool SetBufferData(UINT a_index, void* a_data, UINT a_byteAmount, bool a_vertexShader);
     bool CreateDynamicBuffer(UINT a_byteSize, bool a_vertexBuffer);
 
     bool FailedAction() const;

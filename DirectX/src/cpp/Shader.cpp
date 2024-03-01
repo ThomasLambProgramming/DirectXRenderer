@@ -34,13 +34,6 @@ Shader::Shader(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFi
     if (FAILED(m_result))
         return;
 
-    vertexShaderBuffer->Release();
-    pixelShaderBuffer->Release();
-    errorMessage->Release();
-    vertexShaderBuffer = nullptr;
-    pixelShaderBuffer = nullptr;
-    errorMessage = nullptr;
-
     CreateDefaultInputLayoutDescription();
     //I have no idea why rider is giving me an error for m_inputElementDescriptions and count when the function before this defines and inits them.
     m_result = ApplicationClass::Instance->m_Direct3D->GetDevice()->CreateInputLayout(m_inputElementDescriptions, m_inputLayoutCount, vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &m_inputLayout);
@@ -51,6 +44,14 @@ Shader::Shader(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFi
     m_result = ApplicationClass::Instance->m_Direct3D->GetDevice()->CreateSamplerState(&m_samplerDescription, &m_samplerState);
     if (FAILED(m_result))
         return;
+    
+    vertexShaderBuffer->Release();
+    pixelShaderBuffer->Release();
+    if (errorMessage)
+        errorMessage->Release();
+    vertexShaderBuffer = nullptr;
+    pixelShaderBuffer = nullptr;
+    errorMessage = nullptr;
 }
 
 Shader::~Shader()
@@ -94,8 +95,8 @@ void Shader::RenderShader(int a_indexCount) const
 {
     //set the vertex input layout
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->IASetInputLayout(m_inputLayout);
-    ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->VSSetShader(m_vertexShader, nullptr, 0);
-    ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->PSSetShader(m_pixelShader, nullptr, 0);
+    ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->VSSetShader(m_vertexShader, NULL, 0);
+    ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->PSSetShader(m_pixelShader, NULL, 0);
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->PSSetSamplers(0, 1, &m_samplerState);
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->DrawIndexed(a_indexCount, 0, 0);
 }
@@ -105,7 +106,7 @@ void Shader::SetShaderResources(UINT a_index, ID3D11ShaderResourceView* a_resour
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->PSSetShaderResources(a_index, 1, &a_resource);
 }
 
-bool Shader::SetBufferData(UINT a_index, void* a_data, bool a_vertexShader) 
+bool Shader::SetBufferData(UINT a_index, void* a_data, UINT a_byteAmount, bool a_vertexShader) 
 {
     m_result = ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->Map(
         a_vertexShader ? m_vsShaderBuffers[a_index] : m_psShaderBuffers[a_index],
@@ -116,7 +117,7 @@ bool Shader::SetBufferData(UINT a_index, void* a_data, bool a_vertexShader)
 
     if (FAILED(m_result))
         return false;
-    m_mappedSubresource.pData = a_data;
+    memcpy(m_mappedSubresource.pData, a_data, a_byteAmount);
     
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->Unmap(
         a_vertexShader ? m_vsShaderBuffers[a_index] : m_psShaderBuffers[a_index],

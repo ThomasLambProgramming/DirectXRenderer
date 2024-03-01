@@ -17,6 +17,24 @@ cbuffer CameraBuffer
     float3 cameraPosition;
     float cameraPadding;
 }
+cbuffer LightPositionBuffer
+{
+    float4 lightPosition[NUM_LIGHTS];
+}
+cbuffer FogBuffer
+{
+    float fogStart;
+    float fogEnd;
+    float2 fogPadding;
+}
+cbuffer ClipPlaneBuffer
+{
+    float4 clipPlane;
+}
+cbuffer ReflectionBuffer
+{
+    matrix reflectionMatrix;
+}
 
 struct VertexInputType
 {
@@ -35,6 +53,11 @@ struct PixelInputType
     float3 tangent : TANGENT;
     float3 binormal : BINORMAL;
     float3 viewDirection : TEXCOORD1;
+    float fogFactor : FOG;
+    float clip : SV_ClipDistance0;
+    float4 reflectionPosition : TEXCOORD2;
+    float4 refractionPosition : TEXCOORD3;
+    float3 lightPos[NUM_LIGHTS] : TEXCOORD4;
 };
 
 
@@ -47,6 +70,8 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
 
     //Place object in correct position for rendering using world, view and projection matrices.
     output.position = mul(a_input.position, worldMatrix);
+    
+    
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
     
@@ -56,7 +81,21 @@ PixelInputType TextureVertexShader(VertexInputType a_input)
     output.tangent = normalize(mul(a_input.tangent, (float3x3)worldMatrix));
     output.binormal = normalize(mul(a_input.binormal, (float3x3)worldMatrix));
 
+    float4 camFogPosition = mul(a_input.position, worldMatrix);
+    camFogPosition = mul(camFogPosition, viewMatrix);
+
+    output.fogFactor = output.fogFactor = saturate((fogEnd - camFogPosition.z) / (fogEnd - fogStart));
+    output.clip = dot(mul(a_input.position, worldMatrix), clipPlane);
+    output.reflectionPosition = reflectionMatrix[0][0];
+    output.refractionPosition = 0;
+
     float4 worldPosition = mul(a_input.position, worldMatrix);
+    //Avoiding making another variable when we can just do the calculations before moving to view space.
     output.viewDirection = normalize(cameraPosition.xyz - worldPosition.xyz);
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        output.lightPos[i] = normalize(lightPosition[i].xyz - worldPosition.xyz);
+    }
+    
     return output;
 }

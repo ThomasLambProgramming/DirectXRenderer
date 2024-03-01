@@ -44,6 +44,26 @@ class ApplicationClass
 		TransparentColorPixelShader,
 		TextureSampleFogPixelShader,
 	};
+	struct MatrixBufferType
+	{
+		XMMATRIX world;
+		XMMATRIX view;
+		XMMATRIX projection;
+	};
+	struct CameraBufferType 
+	{
+		XMFLOAT3 cameraPos;
+		float padding;
+	};
+	struct LightInformationBufferType 
+	{
+		XMFLOAT4 lightPosition[NUM_LIGHTS];
+		XMFLOAT4 lightDiffuse[NUM_LIGHTS];
+		XMFLOAT4 lightSpecularColor[NUM_LIGHTS];
+		XMFLOAT3 lightDirection[NUM_LIGHTS];
+		float lightSpecularPower[NUM_LIGHTS];
+		XMFLOAT4 lightAmbient[NUM_LIGHTS];
+	};
 public:
 	ApplicationClass();
 	~ApplicationClass();
@@ -60,17 +80,18 @@ public:
 	void InitializeLights();
 
 	void Shutdown();
-	bool Frame(InputManager* a_InputClass) const;
-	bool Render() const;
+	bool Frame(InputManager* a_InputClass);
+	bool Render();
 
 	HWND m_windowHandle;
 	DirectXApp* m_Direct3D;
 	Camera* m_Camera;
 	std::vector<GameObject*> m_objects;
-	Light* m_mainDirectionalLight;
-	Light* m_PointLights;
+	std::vector<Shader*> m_shaders;
+	Light* m_lights;
 	Shader* m_basicLighting;
-	
-	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
 	static ApplicationClass* Instance;
+private:
+	float rotation;
+	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
 };
