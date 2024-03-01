@@ -2,13 +2,13 @@
 #include <dxgiformat.h>
 #include "ApplicationClass.h"
 
-class ShaderBase
+class Shader
 {
 public:
-    ShaderBase(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFilePath, const char* a_vertexShaderEntryPoint, const char* a_pixelShaderEntryPoint);
-    ~ShaderBase();
+    Shader(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFilePath, const char* a_vertexShaderEntryPoint, const char* a_pixelShaderEntryPoint);
+    ~Shader();
     //we dont ever want to be able to copy a shader, always make new and init or use the current shader.
-    ShaderBase(const ShaderBase& a_copy) = delete;
+    Shader(const Shader& a_copy) = delete;
     
     void RenderShader(int a_indexCount) const;
     

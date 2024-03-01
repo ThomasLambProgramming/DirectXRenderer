@@ -1,7 +1,10 @@
-﻿#include "ShaderBase.h"
+﻿#include "..\header\Shader.h"
+#include <d3dcompiler.h>
+#include <fstream>
+
 #include "ApplicationClass.h"
 
-ShaderBase::ShaderBase(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFilePath, const char* a_vertexShaderEntryPoint, const char* a_pixelShaderEntryPoint)
+Shader::Shader(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixelShaderFilePath, const char* a_vertexShaderEntryPoint, const char* a_pixelShaderEntryPoint)
 {
     ID3D10Blob* vertexShaderBuffer;
     ID3D10Blob* pixelShaderBuffer;
@@ -50,7 +53,7 @@ ShaderBase::ShaderBase(const WCHAR* a_vertexShaderFilePath, const WCHAR* a_pixel
         return;
 }
 
-ShaderBase::~ShaderBase()
+Shader::~Shader()
 {
     if (m_vertexShader)
     {
@@ -87,7 +90,7 @@ ShaderBase::~ShaderBase()
     }
 }
 
-void ShaderBase::RenderShader(int a_indexCount) const
+void Shader::RenderShader(int a_indexCount) const
 {
     //set the vertex input layout
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->IASetInputLayout(m_inputLayout);
@@ -97,12 +100,12 @@ void ShaderBase::RenderShader(int a_indexCount) const
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->DrawIndexed(a_indexCount, 0, 0);
 }
 
-void ShaderBase::SetShaderResources(UINT a_index, ID3D11ShaderResourceView* a_resource)
+void Shader::SetShaderResources(UINT a_index, ID3D11ShaderResourceView* a_resource)
 {
     ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->PSSetShaderResources(a_index, 1, &a_resource);
 }
 
-bool ShaderBase::SetBufferData(UINT a_index, void* a_data, bool a_vertexShader) 
+bool Shader::SetBufferData(UINT a_index, void* a_data, bool a_vertexShader) 
 {
     m_result = ApplicationClass::Instance->m_Direct3D->GetDeviceContext()->Map(
         a_vertexShader ? m_vsShaderBuffers[a_index] : m_psShaderBuffers[a_index],
@@ -126,7 +129,7 @@ bool ShaderBase::SetBufferData(UINT a_index, void* a_data, bool a_vertexShader)
     return true;
 }
 
-bool ShaderBase::CreateDynamicBuffer(UINT a_byteSize, bool a_vertexBuffer)
+bool Shader::CreateDynamicBuffer(UINT a_byteSize, bool a_vertexBuffer)
 {
     ID3D11Buffer* newBuffer;
     if (a_vertexBuffer)
@@ -144,12 +147,12 @@ bool ShaderBase::CreateDynamicBuffer(UINT a_byteSize, bool a_vertexBuffer)
 }
 
 //Since the initialization
-bool ShaderBase::FailedAction() const
+bool Shader::FailedAction() const
 {
     return FAILED(m_result);
 }
 
-bool ShaderBase::CreateDefaultSamplerDescription()
+bool Shader::CreateDefaultSamplerDescription()
 {
     //Filter is the most important element of the sampler. it tells the sampler how to pick what pixels to be used or combine to create the final look of the texture on the polygon face.
     //the filter below is more expensive but gives a good(it says best but i am not sure about that) visual result. it tells the sampler to use lin-interp for minification, magnification and mip-level sampling.
@@ -171,7 +174,7 @@ bool ShaderBase::CreateDefaultSamplerDescription()
     return !(FAILED(m_result));
 }
 
-void ShaderBase::SetInputDescriptionElement(UINT a_index, const char* a_semanticName, DXGI_FORMAT a_format) const
+void Shader::SetInputDescriptionElement(UINT a_index, const char* a_semanticName, DXGI_FORMAT a_format) const
 {
     m_inputElementDescriptions[a_index].SemanticName = a_semanticName;
 	m_inputElementDescriptions[a_index].SemanticIndex = 0;
@@ -187,7 +190,7 @@ void ShaderBase::SetInputDescriptionElement(UINT a_index, const char* a_semantic
 	m_inputElementDescriptions[a_index].InstanceDataStepRate = 0;
 }
 
-void ShaderBase::CreateDefaultInputLayoutDescription()
+void Shader::CreateDefaultInputLayoutDescription()
 {
     m_inputElementDescriptions = new D3D11_INPUT_ELEMENT_DESC[5];
     m_inputLayoutCount = 5;
@@ -199,7 +202,7 @@ void ShaderBase::CreateDefaultInputLayoutDescription()
     SetInputDescriptionElement(4, "BINORMAL");
 }
 
-void ShaderBase::ResetBufferDescription()
+void Shader::ResetBufferDescription()
 {
     m_bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     m_bufferDesc.ByteWidth = 0;
@@ -209,7 +212,7 @@ void ShaderBase::ResetBufferDescription()
     m_bufferDesc.StructureByteStride = 0;
 }
 
-bool ShaderBase::CheckShaderCompileResult(ID3D10Blob* a_errorMessage, const WCHAR* a_shaderFileName) const
+bool Shader::CheckShaderCompileResult(ID3D10Blob* a_errorMessage, const WCHAR* a_shaderFileName) const
 {
     if (FAILED(m_result))
     {

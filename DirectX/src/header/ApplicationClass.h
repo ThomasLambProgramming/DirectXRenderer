@@ -1,14 +1,15 @@
 #pragma once
+#define NUM_LIGHTS 4
 
 #include "DirectXApp.h"
 #include "Camera.h"
 #include "GameObject.h"
-#include "DEPRICATED_ShaderClass.h"
 #include "InputManager.h"
 #include "Light.h"
-
+#include <complex>
 #include <Windows.h>
 #include <mmsystem.h>
+#include "Shader.h"
 
 #include "thirdparty/imgui/imgui_impl_dx11.h"
 #include "thirdparty/imgui/imgui_impl_win32.h"
@@ -16,8 +17,7 @@
 
 #pragma comment(lib, "winmm.lib")
 
-class FontShaderClass;
-
+class Shader;
 //GLOBALS
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
@@ -46,54 +46,31 @@ class ApplicationClass
 	};
 public:
 	ApplicationClass();
-	ApplicationClass(const ApplicationClass&);
 	~ApplicationClass();
+	ApplicationClass(const ApplicationClass&) = delete;
+	ApplicationClass(ApplicationClass&&) = delete;
+	ApplicationClass& operator=(const ApplicationClass&) = delete;
+	ApplicationClass& operator=(ApplicationClass&&) = delete;
 
 	bool Initialize(int, int, HWND);
 
-	void CameraInitialize();
-	bool SetupModels(int a_screenWidth, int a_screenHeight, HWND a_windowHandle);
+	bool SetupModels();
+	void ImguiInitialize() const;
+	bool InitializeShaders();
 	void InitializeLights();
-	bool InitializeFontAndText(int a_screenWidth, int a_screenHeight, HWND a_windowHandle);
-	void ImguiInitialize(HWND a_windowHandle) const;
-	bool InitializeShaders(HWND a_windowHandle);
 
 	void Shutdown();
-	bool Frame(InputManager* a_InputClass);
-
-	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
-	static ApplicationClass* Instance;
-
-public:
-	bool Render(float a_Rotation) const;
-	
-	bool UpdateFps();
-	static const char* PixelEntryPointToChar(PixelShaderEntryPoint a_entryPoint);
-	static const char* VertexEntryPointToChar(VertexShaderEntryPoint a_entryPoint);
-
-	DirectXApp* m_Direct3D;
-	Camera* m_Camera;
+	bool Frame(InputManager* a_InputClass) const;
+	bool Render() const;
 
 	HWND m_windowHandle;
-
-	std::vector<GameObject*> m_3DObjects;
-	std::vector<GameObject*> m_2DObjects;
-	
-	Light* m_MainLight;
-
-	//This is an array that has 4 elements as per NUM_LIGHTS constant.
+	DirectXApp* m_Direct3D;
+	Camera* m_Camera;
+	std::vector<GameObject*> m_objects;
+	Light* m_mainDirectionalLight;
 	Light* m_PointLights;
+	Shader* m_basicLighting;
 	
-	DEPRICATED_ShaderClass* m_ModelShader;
-	DEPRICATED_ShaderClass* m_FontShader;
-	DEPRICATED_ShaderClass* m_SpriteShader;
-
-	//Fps related variables.
-	unsigned long m_startTime;
-	int m_fps;
-	int m_count;
-	int m_previousFps;
-
-	float* m_ObjectPosX;
-	float* m_ObjectPosY;
+	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling
+	static ApplicationClass* Instance;
 };
