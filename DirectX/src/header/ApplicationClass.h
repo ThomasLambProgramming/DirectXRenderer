@@ -57,12 +57,9 @@ class ApplicationClass
 	};
 	struct LightInformationBufferType 
 	{
-		XMFLOAT4 lightPosition[NUM_LIGHTS];
-		XMFLOAT4 lightDiffuse[NUM_LIGHTS];
-		XMFLOAT4 lightSpecularColor[NUM_LIGHTS];
-		XMFLOAT3 lightDirection[NUM_LIGHTS];
-		float lightSpecularPower[NUM_LIGHTS];
-		XMFLOAT4 lightAmbient[NUM_LIGHTS];
+		XMFLOAT4 lightDiffuse;
+		XMFLOAT3 lightDirection;
+		float lightSpecularPower;
 	};
 public:
 	ApplicationClass();

@@ -31,7 +31,6 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	
 	m_Camera = new Camera;
 	m_Camera->SetPosition(0.0f,0.0f,-10.0f);
-	//m_Camera->SetRotation(20.0f,0.0f,0.0f);
 	
 	if (!InitializeShaders())
 		return true;
@@ -113,7 +112,7 @@ bool ApplicationClass::SetupModels()
 void ApplicationClass::InitializeLights()
 {
 	//first light is main directional light and the others are point lights
-	m_lights = new Light[NUM_LIGHTS + 1];
+	m_lights = new Light[NUM_LIGHTS];
 	m_lights[0].m_LightDirection = XMFLOAT3(0.0f,-0.4f,1.0f);
 	m_lights[0].m_Position = XMFLOAT4(0.0f,0.0f,0.0f,0.0f);
 	m_lights[0].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
@@ -126,13 +125,12 @@ void ApplicationClass::InitializeLights()
 	m_lights[2].m_Position = XMFLOAT4(3.0f, 1.0f, 3.0f,1.0f);
 	m_lights[3].m_DiffuseColor = XMFLOAT4(0.0f,0.0f,1.0f,1.0f);
 	m_lights[3].m_Position = XMFLOAT4(-3.0f,1.0f, -3.0f, 1.0f);
-	m_lights[4].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-	m_lights[4].m_Position = XMFLOAT4(3.0f,1.0f, -3.0f, 1.0f);
 
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		m_lights[i].m_DiffuseColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
-		m_lights[i].m_SpecularColor = XMFLOAT4(1.0f,1.0f,1.0f,1.0f);
+		m_lights[i].m_SpecularColor = XMFLOAT4(1.0f,1.0f,0.0f,1.0f);
+		m_lights[i].m_AmbientColor = XMFLOAT4(0.7f,0.7f,0.7f,0.7f);
 		if (i > 0)
 			m_lights[i].m_LightDirection = XMFLOAT3(1.0f,1.0f,1.0f);
 		m_lights[i].m_SpecularPower = 1.0f;
@@ -213,31 +211,27 @@ bool ApplicationClass::Render()
 
 	//get all the matrices
 	m_Direct3D->GetWorldMatrix(world);
+	m_Direct3D->GetWorldMatrix(worldRotation);
+	worldRotation = XMMatrixRotationY(rotation);
+	
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
-
 	MatrixBufferType* matrixData = new MatrixBufferType;
-	matrixData->world = world;
+	matrixData->world = worldRotation;
 	matrixData->view = view;
 	matrixData->projection = projection;
 	
 	CameraBufferType* cameraData = new CameraBufferType;
 	cameraData->padding = 0;
 	cameraData->cameraPos = m_Camera->GetPosition();
-	
+
 	LightInformationBufferType* lightData = new LightInformationBufferType;
-	for (int i = 0 ; i < NUM_LIGHTS; i++)
-	{
-		lightData->lightPosition[i] = m_lights[i].m_Position;
-		lightData->lightDiffuse[i] = m_lights[i].m_DiffuseColor;
-		lightData->lightSpecularColor[i] = m_lights[i].m_SpecularColor;
-		lightData->lightSpecularPower[i] = m_lights[i].m_SpecularPower;
-		lightData->lightDirection[i] = m_lights[i].m_LightDirection;
-		lightData->lightAmbient[i] = m_lights[i].m_AmbientColor;
-	}
-	XMMatrixTranspose(matrixData->world);
-	XMMatrixTranspose(matrixData->view);
-	XMMatrixTranspose(matrixData->projection);
+	lightData->lightDiffuse = m_lights[0].m_DiffuseColor;
+	lightData->lightSpecularPower = m_lights[0].m_SpecularPower;
+	lightData->lightDirection = m_lights[0].m_LightDirection;
+	matrixData->world = XMMatrixTranspose(matrixData->world);
+	matrixData->view = XMMatrixTranspose(matrixData->view);
+	matrixData->projection = XMMatrixTranspose(matrixData->projection);
 
 	//RENDERING 3D SHIT HERE!
 	m_shaders[0]->SetBufferData(0, matrixData, sizeof(MatrixBufferType), true);
@@ -245,9 +239,9 @@ bool ApplicationClass::Render()
 	m_shaders[0]->SetBufferData(0, lightData, sizeof(LightInformationBufferType), false);
 	
 	
+	m_objects[0]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 	for (int j = 0; j < m_objects[0]->GetTextureCount(); j++)
 		m_shaders[0]->SetShaderResources(j, m_objects[0]->GetTexture(j));
-	m_objects[0]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 	m_shaders[0]->RenderShader(m_objects[0]->GetIndexCount());
 	
 	delete matrixData;

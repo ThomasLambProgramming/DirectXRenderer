@@ -6,12 +6,9 @@ SamplerState Sampler : register(s0);
 
 cbuffer LightInformationBuffer
 {
-    float4 lightPosition[NUM_LIGHTS];
-    float4 lightDiffuse[NUM_LIGHTS];
-    float4 lightSpecularColor[NUM_LIGHTS];
-    float3 lightDirection[NUM_LIGHTS];
-    float lightSpecularPower[NUM_LIGHTS];
-    float4 lightAmbient[NUM_LIGHTS];
+    float4 lightDiffuse;
+    float3 lightDirection;
+    float lightSpecularPower;
 }
 struct PixelInputType
 {
@@ -30,7 +27,7 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
     float4 normalMap = ShaderTexture2.Sample(Sampler, input.tex);
     normalMap = (normalMap * 2.0f) - 1.0f;
     float3 bumpNormal = normalize((normalMap.x * input.tangent) + (normalMap.y * input.binormal) + (normalMap.z * input.normal));
-    float lightIntensity = saturate(dot(bumpNormal, -lightDirection[0]));
+    float lightIntensity = saturate(dot(bumpNormal, -normalize(lightDirection)));
     float4 color = saturate(lightDiffuse[0] * lightIntensity) * textureColor;
 
     if (lightIntensity <= 0.0f)
@@ -40,9 +37,9 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
 
     //Make sure to use the normal maps so specular isnt just going off a flat surface.
     //reflection is the direction.
-    float3 reflection = normalize(2 * lightIntensity * bumpNormal + lightDirection[0]);
+    float3 reflection = normalize(2 * lightIntensity * bumpNormal + normalize(lightDirection));
     //limit the dot of the reflection direction and the view direction and then multiply by the preset specular power amount)
-    float4 specular = pow(saturate(dot(reflection, input.viewDirection)), lightSpecularPower[0]) * specularIntensity;
+    float4 specular = pow(saturate(dot(reflection, input.viewDirection)), lightSpecularPower) * (specularIntensity * 0.5);
     color = saturate(color + specular);
 
     return color;
