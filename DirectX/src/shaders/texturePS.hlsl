@@ -39,7 +39,7 @@ float4 SpecularMapPixelShader(PixelInputType input) : SV_TARGET
     //reflection is the direction.
     float3 reflection = normalize(2 * lightIntensity * bumpNormal + normalize(lightDirection));
     //limit the dot of the reflection direction and the view direction and then multiply by the preset specular power amount)
-    float4 specular = pow(saturate(dot(reflection, input.viewDirection)), lightSpecularPower) * (specularIntensity * 0.5);
+    float4 specular = pow(saturate(dot(reflection, input.viewDirection)), lightSpecularPower) * (specularIntensity * 0.2);
     color = saturate(color + specular);
 
     return color;

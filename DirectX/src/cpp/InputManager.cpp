@@ -1,5 +1,7 @@
 #include "InputManager.h"
 
+#include <DirectXMath.h>
+
 InputManager::InputManager()
 {
 	m_directInput = nullptr;
@@ -106,6 +108,40 @@ bool InputManager::IsEscapePressed()
 {
 	//do a bitwise and on the keyboard state to check if the escape key is being pressed. (will later have to do a on down register and up register.
 	return (m_keyboardState[DIK_ESCAPE] & 0x80);
+}
+DirectX::XMFLOAT2 InputManager::GetWasdValue()
+{
+	DirectX::XMFLOAT2 vectorValue = DirectX::XMFLOAT2(0,0);
+	if (m_keyboardState[DIK_W] & 0x80)
+	{
+		vectorValue.y += 1.0f;
+	}
+	if (m_keyboardState[DIK_A] & 0x80)
+	{
+		vectorValue.x -= 1.0f;
+	}
+	if (m_keyboardState[DIK_S] & 0x80)
+	{
+		vectorValue.y -= 1.0f;
+	}
+	if (m_keyboardState[DIK_D] & 0x80)
+	{
+		vectorValue.x += 1.0f;
+	}
+	if (vectorValue.x != 0 && vectorValue.y != 0)
+	{
+		vectorValue.x /= sqrt(vectorValue.x * vectorValue.x + vectorValue.y * vectorValue.y);
+		vectorValue.y /= sqrt(vectorValue.x * vectorValue.x + vectorValue.y * vectorValue.y);
+	}
+	return vectorValue;
+}
+bool InputManager::IsSpacePressed()
+{
+	return (m_keyboardState[DIK_SPACE] & 0x80);
+}
+bool InputManager::IsShiftPressed()
+{
+	return (m_keyboardState[DIK_LSHIFT] & 0x80);
 }
 
 void InputManager::GetMouseLocation(int& posX, int& posY)

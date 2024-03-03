@@ -9,6 +9,8 @@
 #include <complex>
 #include <Windows.h>
 #include <mmsystem.h>
+
+#include "ApplicationTime.h"
 #include "Shader.h"
 
 #include "thirdparty/imgui/imgui_impl_dx11.h"
@@ -88,6 +90,7 @@ public:
 	Light* m_lights;
 	Shader* m_basicLighting;
 	static ApplicationClass* Instance;
+	ApplicationTime* m_time;
 private:
 	float rotation;
 	//In large cleanup of code to make using this renderer much simpler and easier I am using a singleton for access to the Direct3DClass and etc so its not argument tunneling

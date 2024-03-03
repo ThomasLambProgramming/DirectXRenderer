@@ -8,6 +8,7 @@
 #pragma comment (lib, "dxguid.lib")
 
 #include <dinput.h>
+#include <DirectXMath.h>
 
 class InputManager
 {
@@ -21,6 +22,9 @@ public:
 	bool Frame();
 
 	bool IsEscapePressed();
+	DirectX::XMFLOAT2 GetWasdValue();
+	bool IsSpacePressed();
+	bool IsShiftPressed();
 	void GetMouseLocation(int& posX, int& posY);
 	//0 = left, 1 = right, 2 = middle
 	bool IsMousePressed(int mouseButton);

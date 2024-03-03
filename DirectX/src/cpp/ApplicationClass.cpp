@@ -19,7 +19,8 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 {
 	m_windowHandle = a_windowHandle;
     m_Direct3D = new DirectXApp();
-
+	m_time = new ApplicationTime();
+	m_time->Initialize();
     bool result = m_Direct3D->Initialize(a_screenWidth, a_screenHeight, VSYNC_ENABLED, a_windowHandle, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     if (!result)
     {
@@ -100,7 +101,7 @@ bool ApplicationClass::SetupModels()
 
 	m_objects.push_back(new GameObject());
 	
-	bool result = m_objects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Sphere, textureFileNames, 3);
+	bool result = m_objects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Cube, textureFileNames, 3);
 	if (!result)
 	{
 		MessageBox(m_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
@@ -171,7 +172,11 @@ void ApplicationClass::Shutdown()
 		delete m_Camera;
 		m_Camera = nullptr;
 	}
-	
+	if (m_time)
+	{
+		delete m_time;
+		m_time = nullptr;
+	}
 	//ImGui_ImplDX11_Shutdown();
     //ImGui_ImplWin32_Shutdown();
     //ImGui::DestroyContext();
@@ -179,8 +184,21 @@ void ApplicationClass::Shutdown()
 
 bool ApplicationClass::Frame(InputManager* a_InputClass) 
 {
+	m_time->Frame();
 	if (a_InputClass->IsEscapePressed())
 		return false;
+	
+	XMFLOAT2 camInput = a_InputClass->GetWasdValue();
+	XMFLOAT3 cameraPosition = m_Camera->GetPosition();
+	cameraPosition.x += camInput.x * m_time->GetDeltaTime();
+	cameraPosition.z += camInput.y * m_time->GetDeltaTime();
+	camInput.y = 0;
+	if (a_InputClass->IsSpacePressed())
+		camInput.y += 1;
+	if (a_InputClass->IsShiftPressed())
+		camInput.y -= 1;
+	cameraPosition.y += camInput.y * m_time->GetDeltaTime();
+	m_Camera->SetPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 	
 	// Update the rotation variable each frame.
     rotation -= 0.0174532925f * 0.25f;
@@ -204,11 +222,11 @@ bool ApplicationClass::Render()
 	//the above makes the fog work but as we dont need it right now it is not used.
 	//m_Direct3D->BeginScene(fogColor, fogColor, fogColor,1.0f);
 	//This is a number that was taken from a rgba color picker.
-	m_Direct3D->BeginScene(0.0f,0.0f,0.0f,1.0f);
+	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
 
 	//update cameras view matrix
 	m_Camera->Render();
-
+	
 	//get all the matrices
 	m_Direct3D->GetWorldMatrix(world);
 	m_Direct3D->GetWorldMatrix(worldRotation);
