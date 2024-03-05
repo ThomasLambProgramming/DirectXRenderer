@@ -206,7 +206,7 @@ void Shader::CreateDefaultInputLayoutDescription()
 void Shader::ResetBufferDescription()
 {
     m_bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    m_bufferDesc.ByteWidth = 0;
+    m_bufferDesc.ByteWidth = 0; 
     m_bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     m_bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     m_bufferDesc.MiscFlags = 0;

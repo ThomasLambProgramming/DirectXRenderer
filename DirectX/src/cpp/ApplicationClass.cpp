@@ -185,16 +185,8 @@ void ApplicationClass::Shutdown()
     //ImGui::DestroyContext();
 }
 
-bool ApplicationClass::Frame(InputManager* a_InputClass) 
+void ApplicationClass::ProcessMouseInput(InputManager* a_InputClass)
 {
-	m_time->Frame();
-	if (GetForegroundWindow() != m_windowHandle)
-	{
-		return true;
-	}
-	if (a_InputClass->IsEscapePressed())
-		return false;
-	
 	XMFLOAT2 camInput = a_InputClass->GetWasdValue();
 	XMFLOAT3 cameraPosition = m_Camera->GetPosition();
 	cameraPosition.x += camInput.x * m_time->GetDeltaTime();
@@ -213,24 +205,24 @@ bool ApplicationClass::Frame(InputManager* a_InputClass)
 	m_Camera->SetPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
 	RECT rect;
-    GetClientRect(m_windowHandle, &rect);
+	GetClientRect(m_windowHandle, &rect);
 
-    POINT ul;
-    ul.x = rect.left;
-    ul.y = rect.top;
+	POINT ul;
+	ul.x = rect.left;
+	ul.y = rect.top;
 
-    POINT lr;
-    lr.x = rect.right;
-    lr.y = rect.bottom;
+	POINT lr;
+	lr.x = rect.right;
+	lr.y = rect.bottom;
 
-    MapWindowPoints(m_windowHandle, nullptr, &ul, 1);
-    MapWindowPoints(m_windowHandle, nullptr, &lr, 1);
+	MapWindowPoints(m_windowHandle, nullptr, &ul, 1);
+	MapWindowPoints(m_windowHandle, nullptr, &lr, 1);
 
-    rect.left = ul.x;
-    rect.top = ul.y;
+	rect.left = ul.x;
+	rect.top = ul.y;
 
-    rect.right = lr.x;
-    rect.bottom = lr.y;
+	rect.right = lr.x;
+	rect.bottom = lr.y;
 
 	XMFLOAT2 middlePosition = XMFLOAT2((rect.right - rect.left) / 2 + rect.left, (rect.bottom - rect.top) / 2 + rect.top);
 
@@ -247,40 +239,41 @@ bool ApplicationClass::Frame(InputManager* a_InputClass)
 	
 	m_Camera->SetRotation(cameraRotation.x, cameraRotation.y, cameraRotation.z);
 	m_prevMousePos = m_currentMousePos;
-    rotation -= 0.0174532925f * 0.25f;
-    if(rotation <= 0.0f)
-    {
-        rotation += 360.0f;
-    }
-    ClipCursor(&rect);
+	rotation -= 0.0174532925f * 0.25f;
+	if(rotation <= 0.0f)
+	{
+		rotation += 360.0f;
+	}
+	ClipCursor(&rect);
 
 	SetCursorPos(middlePosition.x, middlePosition.y);
+}
+
+bool ApplicationClass::Frame(InputManager* a_InputClass) 
+{
+	m_time->Frame();
+	
+	if (GetForegroundWindow() == m_windowHandle)
+		ProcessMouseInput(a_InputClass);
+	
+	if (a_InputClass->IsEscapePressed())
+		return false;
+	
 	//Render Scene
     return Render();
 }
 
 bool ApplicationClass::Render() 
 {
-	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
-	XMMATRIX worldRotation;
 	
-	//clear buffers to begin the scene
-	//the above makes the fog work but as we dont need it right now it is not used.
-	//m_Direct3D->BeginScene(fogColor, fogColor, fogColor,1.0f);
-	//This is a number that was taken from a rgba color picker.
 	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
 
 	//get all the matrices
-	m_Direct3D->GetWorldMatrix(world);
-	m_Direct3D->GetWorldMatrix(worldRotation);
-	worldRotation = XMMatrixRotationY(rotation);
-	
 	m_Camera->GetViewMatrix(view);
 	m_Direct3D->GetProjectionMatrix(projection);
 	MatrixBufferType* matrixData = new MatrixBufferType;
-	matrixData->world = worldRotation;
 	matrixData->view = view;
 	matrixData->projection = projection;
 	
@@ -292,20 +285,24 @@ bool ApplicationClass::Render()
 	lightData->lightDiffuse = m_lights[0].m_DiffuseColor;
 	lightData->lightSpecularPower = m_lights[0].m_SpecularPower;
 	lightData->lightDirection = m_lights[0].m_LightDirection;
-	matrixData->world = XMMatrixTranspose(matrixData->world);
+	
 	matrixData->view = XMMatrixTranspose(matrixData->view);
 	matrixData->projection = XMMatrixTranspose(matrixData->projection);
 
 	//RENDERING 3D SHIT HERE!
-	m_shaders[0]->SetBufferData(0, matrixData, sizeof(MatrixBufferType), true);
 	m_shaders[0]->SetBufferData(1, cameraData, sizeof(CameraBufferType), true);
 	m_shaders[0]->SetBufferData(0, lightData, sizeof(LightInformationBufferType), false);
-	
-	
-	m_objects[0]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
-	for (int j = 0; j < m_objects[0]->GetTextureCount(); j++)
-		m_shaders[0]->SetShaderResources(j, m_objects[0]->GetTexture(j));
-	m_shaders[0]->RenderShader(m_objects[0]->GetIndexCount());
+
+	for (int i = 0; i < m_objects.size(); i++)
+	{
+		m_objects[0]->SetRotation({0, rotation, 0 });
+		matrixData->world = XMMatrixTranslation(m_objects[0]->GetPosition().x, m_objects[0]->GetPosition().y, m_objects[0]->GetPosition().z) * (XMMatrixRotationX(m_objects[i]->GetRotation().x) * XMMatrixRotationY(m_objects[i]->GetRotation().y) * XMMatrixRotationZ(m_objects[i]->GetRotation().z));
+		m_shaders[0]->SetBufferData(0, matrixData, sizeof(MatrixBufferType), true);
+		m_objects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
+		for (int j = 0; j < m_objects[i]->GetTextureCount(); j++)
+			m_shaders[0]->SetShaderResources(j, m_objects[i]->GetTexture(j));
+		m_shaders[0]->RenderShader(m_objects[i]->GetIndexCount());
+	}
 	
 	delete matrixData;
 	matrixData = nullptr;

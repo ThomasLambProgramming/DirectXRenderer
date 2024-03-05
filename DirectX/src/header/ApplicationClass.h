@@ -79,6 +79,7 @@ public:
 	void InitializeLights();
 
 	void Shutdown();
+	void ProcessMouseInput(InputManager* a_InputClass);
 	bool Frame(InputManager* a_InputClass);
 	bool Render();
 
