@@ -39,7 +39,7 @@ bool ApplicationClass::Initialize(const int a_screenWidth, const int a_screenHei
 	if (!InitializeShaders())
 		return true;
 
-	result = SetupModels();
+	result = MakeObjects();
 	if (!result)
 	{
         MessageBox(a_windowHandle, L"Failed to init models", L"Error", MB_OK);
@@ -85,7 +85,21 @@ bool ApplicationClass::InitializeShaders()
 	return true;
 }
 
-bool ApplicationClass::SetupModels()
+bool ApplicationClass::AddObject(char* textureFileNames[], int a_textureCount, XMFLOAT3 a_position, XMFLOAT3 a_rotation, GameObject::PrimitiveType a_primitive)
+{
+	m_objects.push_back(new GameObject());
+	bool result = m_objects[m_objects.size() - 1]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), a_primitive, textureFileNames, a_textureCount);
+	m_objects[m_objects.size() - 1]->SetPosition(a_position);
+	m_objects[m_objects.size() - 1]->SetRotation(a_rotation);
+	if (!result)
+	{
+		MessageBox(m_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
+		return false;
+	}
+	return true;
+}
+
+bool ApplicationClass::MakeObjects()
 {
 	char textureFileName[128];
 	char blendTexture1FileName[128];
@@ -102,14 +116,11 @@ bool ApplicationClass::SetupModels()
 		blendTexture2FileName,
 	};
 
-	m_objects.push_back(new GameObject());
-	
-	bool result = m_objects[0]->InitializePrimitive(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), GameObject::Cube, textureFileNames, 3);
-	if (!result)
-	{
-		MessageBox(m_windowHandle, L"Could not initialize model object", L"Error", MB_OK);
+	if (!AddObject(textureFileNames, 3, {-4,0,0}, {0, 0, 0}, GameObject::Sphere))
 		return false;
-	}
+	if (!AddObject(textureFileNames, 3, {4,0,0}, {0, 0, 0}, GameObject::Cube))
+		return false;
+	
 	return true;
 }
 
@@ -295,8 +306,7 @@ bool ApplicationClass::Render()
 
 	for (int i = 0; i < m_objects.size(); i++)
 	{
-		m_objects[0]->SetRotation({0, rotation, 0 });
-		matrixData->world = XMMatrixTranslation(m_objects[0]->GetPosition().x, m_objects[0]->GetPosition().y, m_objects[0]->GetPosition().z) * (XMMatrixRotationX(m_objects[i]->GetRotation().x) * XMMatrixRotationY(m_objects[i]->GetRotation().y) * XMMatrixRotationZ(m_objects[i]->GetRotation().z));
+		matrixData->world = XMMatrixTranspose(XMMatrixTranslation(m_objects[i]->GetPosition().x, m_objects[i]->GetPosition().y, m_objects[i]->GetPosition().z)) * (XMMatrixRotationX(m_objects[i]->GetRotation().x) * XMMatrixRotationY(m_objects[i]->GetRotation().y) * XMMatrixRotationZ(m_objects[i]->GetRotation().z));
 		m_shaders[0]->SetBufferData(0, matrixData, sizeof(MatrixBufferType), true);
 		m_objects[i]->SetAsObjectToRender(m_Direct3D->GetDeviceContext());
 		for (int j = 0; j < m_objects[i]->GetTextureCount(); j++)

@@ -73,7 +73,7 @@ public:
 
 	bool Initialize(int, int, HWND);
 
-	bool SetupModels();
+	bool MakeObjects();
 	void ImguiInitialize() const;
 	bool InitializeShaders();
 	void InitializeLights();
@@ -82,6 +82,7 @@ public:
 	void ProcessMouseInput(InputManager* a_InputClass);
 	bool Frame(InputManager* a_InputClass);
 	bool Render();
+	bool AddObject(char* textureFileNames[], int a_textureCount, XMFLOAT3 a_position, XMFLOAT3 a_rotation, GameObject::PrimitiveType a_primitive = GameObject::Cube);
 
 	HWND m_windowHandle;
 	DirectXApp* m_Direct3D;
