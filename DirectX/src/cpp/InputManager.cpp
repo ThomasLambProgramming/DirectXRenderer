@@ -144,10 +144,9 @@ bool InputManager::IsShiftPressed()
 	return (m_keyboardState[DIK_LSHIFT] & 0x80);
 }
 
-void InputManager::GetMouseLocation(int& posX, int& posY)
+DirectX::XMFLOAT2 InputManager::GetMouseLocation()
 {
-	posX = m_mouseX;
-	posY = m_mouseY;
+	return DirectX::XMFLOAT2(m_mouseX, m_mouseY);
 }
 
 bool InputManager::IsMousePressed(int mouseButton)

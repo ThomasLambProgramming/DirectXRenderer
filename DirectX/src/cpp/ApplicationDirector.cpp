@@ -1,5 +1,7 @@
 #include "ApplicationDirector.h"
 
+#include <iostream>
+
 ApplicationDirector::ApplicationDirector()
 {
 	//always init everything to null.
@@ -225,8 +227,16 @@ void ApplicationDirector::InitializeWindows(int& screenWidth, int& screenHeight)
 	//Hide cursor
 	ShowCursor(false);
 
+
+	RAWINPUTDEVICE rawInputDevices[1];
+    rawInputDevices[0].usUsagePage = 0x01;  // Mouse
+    rawInputDevices[0].usUsage = 0x02;      // Mouse
+    rawInputDevices[0].dwFlags = 0;
+    rawInputDevices[0].hwndTarget = m_hwnd;
+    
+    RegisterRawInputDevices(rawInputDevices, 1, sizeof(RAWINPUTDEVICE));
+	
 	return;
-	//What i get from this is that direct x has its own window manager/context unlike opengl where everyone uses glew and etc.
 }
 
 void ApplicationDirector::ShutdownWindows()
@@ -265,6 +275,35 @@ LRESULT WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 			PostQuitMessage(0);
 			return 0;
 		}
+		case WM_MOUSEMOVE:
+		{
+			XMFLOAT2 mousePosition = XMFLOAT2(LOWORD(lparam), HIWORD(lparam));
+			if (ApplicationClass::Instance)
+			{
+				ApplicationClass::Instance->m_currentMousePos = mousePosition;
+				//std::cout << "Mouse:" << ApplicationClass::Instance->m_currentMousePos.x << " : " << ApplicationClass::Instance->m_currentMousePos.y << std::endl;
+			}
+			break;
+		}
+		case WM_INPUT:
+            UINT dataSize;
+            GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam), RID_INPUT, nullptr, &dataSize, sizeof(RAWINPUTHEADER));
+
+            if (dataSize > 0)
+            {
+                std::vector<BYTE> buffer(dataSize);
+                if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam), RID_INPUT, buffer.data(), &dataSize, sizeof(RAWINPUTHEADER)) == dataSize)
+                {
+                    RAWINPUT* rawInput = reinterpret_cast<RAWINPUT*>(buffer.data());
+
+                    //if (rawInput->header.dwType == RIM_TYPEMOUSE && ApplicationClass::Instance != nullptr)
+                    //{
+	                //    ApplicationClass::Instance->m_currentMousePos.x = rawInput->data.mouse.lLastX;
+                    //	ApplicationClass::Instance->m_currentMousePos.y = rawInput->data.mouse.lLastY;
+                    //	std::cout << "Mouse:" << rawInput->data.mouse.lLastX << " : " << rawInput->data.mouse.lLastY << std::endl;
+                    //}
+                }
+            }
 
 		default:
 		{

@@ -25,7 +25,7 @@ public:
 	DirectX::XMFLOAT2 GetWasdValue();
 	bool IsSpacePressed();
 	bool IsShiftPressed();
-	void GetMouseLocation(int& posX, int& posY);
+	DirectX::XMFLOAT2 GetMouseLocation();
 	//0 = left, 1 = right, 2 = middle
 	bool IsMousePressed(int mouseButton);
 

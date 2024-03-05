@@ -1,4 +1,7 @@
 #include "ApplicationClass.h"
+
+#include <iostream>
+
 #include "Shader.h"
 
 ApplicationClass* ApplicationClass::Instance = nullptr;
@@ -185,6 +188,10 @@ void ApplicationClass::Shutdown()
 bool ApplicationClass::Frame(InputManager* a_InputClass) 
 {
 	m_time->Frame();
+	if (GetForegroundWindow() != m_windowHandle)
+	{
+		return true;
+	}
 	if (a_InputClass->IsEscapePressed())
 		return false;
 	
@@ -192,20 +199,62 @@ bool ApplicationClass::Frame(InputManager* a_InputClass)
 	XMFLOAT3 cameraPosition = m_Camera->GetPosition();
 	cameraPosition.x += camInput.x * m_time->GetDeltaTime();
 	cameraPosition.z += camInput.y * m_time->GetDeltaTime();
+
+	XMVECTOR cameraPositionVector = XMLoadFloat3(&cameraPosition);
+	cameraPositionVector += XMLoadFloat3(&m_Camera->m_rightVector) * camInput.x * 0.1f;
+	cameraPositionVector += XMLoadFloat3(&m_Camera->m_forwardVector) * camInput.y * 0.1f;
+	XMStoreFloat3(&cameraPosition, cameraPositionVector);
 	camInput.y = 0;
 	if (a_InputClass->IsSpacePressed())
 		camInput.y += 1;
 	if (a_InputClass->IsShiftPressed())
 		camInput.y -= 1;
-	cameraPosition.y += camInput.y * m_time->GetDeltaTime();
+	cameraPosition.y += camInput.y * m_time->GetDeltaTime() * 5;
 	m_Camera->SetPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+	RECT rect;
+    GetClientRect(m_windowHandle, &rect);
+
+    POINT ul;
+    ul.x = rect.left;
+    ul.y = rect.top;
+
+    POINT lr;
+    lr.x = rect.right;
+    lr.y = rect.bottom;
+
+    MapWindowPoints(m_windowHandle, nullptr, &ul, 1);
+    MapWindowPoints(m_windowHandle, nullptr, &lr, 1);
+
+    rect.left = ul.x;
+    rect.top = ul.y;
+
+    rect.right = lr.x;
+    rect.bottom = lr.y;
+
+	XMFLOAT2 middlePosition = XMFLOAT2((rect.right - rect.left) / 2 + rect.left, (rect.bottom - rect.top) / 2 + rect.top);
+
+	XMFLOAT2 mouseDelta = XMFLOAT2(m_currentMousePos.x - (middlePosition.x - rect.left), m_currentMousePos.y - (middlePosition.y - rect.top));
+
+	if (m_currentMousePos.x == 0 && m_currentMousePos.y == 0)
+	{
+		mouseDelta.y = 0;
+		mouseDelta.x = 0;
+	}
+	XMFLOAT3 cameraRotation = m_Camera->GetRotation();
+	cameraRotation.y += mouseDelta.x * m_time->GetDeltaTime() * 5;
+	cameraRotation.x += mouseDelta.y * m_time->GetDeltaTime() * 5;
 	
-	// Update the rotation variable each frame.
+	m_Camera->SetRotation(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+	m_prevMousePos = m_currentMousePos;
     rotation -= 0.0174532925f * 0.25f;
     if(rotation <= 0.0f)
     {
         rotation += 360.0f;
     }
+    ClipCursor(&rect);
+
+	SetCursorPos(middlePosition.x, middlePosition.y);
 	//Render Scene
     return Render();
 }
@@ -216,7 +265,6 @@ bool ApplicationClass::Render()
 	XMMATRIX view;
 	XMMATRIX projection;
 	XMMATRIX worldRotation;
-	XMMATRIX ortho;
 	
 	//clear buffers to begin the scene
 	//the above makes the fog work but as we dont need it right now it is not used.
@@ -224,9 +272,6 @@ bool ApplicationClass::Render()
 	//This is a number that was taken from a rgba color picker.
 	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
 
-	//update cameras view matrix
-	m_Camera->Render();
-	
 	//get all the matrices
 	m_Direct3D->GetWorldMatrix(world);
 	m_Direct3D->GetWorldMatrix(worldRotation);
