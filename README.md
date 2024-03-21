@@ -1,2 +1,1 @@
-# Direct X
 
