@@ -279,7 +279,7 @@ bool ApplicationClass::Render()
 	XMMATRIX view;
 	XMMATRIX projection;
 	
-	m_Direct3D->BeginScene(216.0f / 255.0f,148.0f /255.0f,120.0f /255, 1);
+	m_Direct3D->BeginScene(168,153,132, 1);
 
 	//get all the matrices
 	m_Camera->GetViewMatrix(view);

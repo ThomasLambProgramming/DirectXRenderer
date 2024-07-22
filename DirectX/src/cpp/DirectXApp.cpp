@@ -503,9 +503,9 @@ void DirectXApp::BeginScene(float red, float green, float blue, float alpha)
 {
 	float color[4];
 	//setup color to clear the buffer to.
-	color[0] = red;
-	color[1] = green;
-	color[2] = blue;
+	color[0] = red / 255.0f;
+	color[1] = green / 255.0f;
+	color[2] = blue / 255.0f;
 	color[3] = alpha;
 
 	//clear the back buffer.
